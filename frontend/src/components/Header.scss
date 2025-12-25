@@ -4,16 +4,249 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  transition: var(--transition);
-  box-shadow: var(--shadow-sm);
+  background-color: transparent;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
+  box-shadow: none;
+  transform: translateY(0);
+  
+  // Create smooth blur fade effect using pseudo-element
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    mask: linear-gradient(to bottom, 
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 85%,
+      rgba(0, 0, 0, 0.8) 90%,
+      rgba(0, 0, 0, 0.4) 95%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    -webkit-mask: linear-gradient(to bottom, 
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 85%,
+      rgba(0, 0, 0, 0.8) 90%,
+      rgba(0, 0, 0, 0.4) 95%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
 
-  &.scrolled {
+  // When over hero section - transparent
+  &.over-hero {
+    background-color: transparent;
+    box-shadow: none;
+    
+    &::before {
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+  }
+  
+  // When over white sections (About, Features, Contact) - with transparent overlay
+  &.over-white {
     box-shadow: var(--shadow-md);
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    
+    &::before {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+  }
+  
+  // When over grey sections (Services, Process) - with transparent overlay
+  &.over-grey {
+    box-shadow: var(--shadow-md);
+    background-color: rgba(249, 250, 251, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    
+    &::before {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+  }
+  
+  // When scrolled (general class)
+  &.scrolled {
+    
+    // Compact logo when scrolled
+    .logo-container {
+      .logo-image-wrapper {
+        width: 50px;
+        height: 50px;
+
+        @media (min-width: 768px) {
+          width: 60px;
+          height: 60px;
+        }
+      }
+
+      .logo-text {
+        .logo-name {
+          font-size: 1.25rem;
+          color: var(--text-primary);
+
+          @media (min-width: 768px) {
+            font-size: 1.5rem;
+          }
+        }
+
+        .logo-tagline {
+          font-size: 0.6rem;
+          color: var(--text-secondary);
+
+          @media (min-width: 768px) {
+            font-size: 0.7rem;
+          }
+        }
+      }
+    }
+    
+    // Reset text colors to dark when scrolled
+    .nav a {
+      color: var(--text-primary);
+      
+      &:hover {
+        color: var(--primary-color);
+        
+        &::after {
+          background-color: var(--primary-color);
+        }
+      }
+    }
+    
+    .mobile-menu-toggle span {
+      background-color: var(--text-primary);
+      
+      &:hover {
+        background-color: var(--primary-color);
+      }
+    }
+    
+    // Mobile menu styling when header is scrolled (over white content)
+    .nav.open {
+      background-color: white;
+      
+      a {
+        color: var(--text-primary);
+        
+        &:hover {
+          color: var(--primary-color);
+        }
+      }
+    }
+  }
+
+  // Text colors when over hero (transparent background)
+  &.over-hero {
+    .logo-text {
+      .logo-name {
+        color: white;
+      }
+      .logo-tagline {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+    
+    .nav a {
+      color: rgba(255, 255, 255, 0.9);
+      
+      &:hover {
+        color: white;
+        
+        &::after {
+          background-color: white;
+        }
+      }
+    }
+    
+    .mobile-menu-toggle span {
+      background-color: white;
+    }
+    
+    .nav.open {
+      background: rgba(26, 95, 63, 0.95);
+      backdrop-filter: blur(10px);
+      
+      a {
+        color: rgba(255, 255, 255, 0.9);
+        
+        &:hover {
+          color: white;
+        }
+      }
+    }
+  }
+  
+  // Text colors when over white sections
+  &.over-white {
+    .logo-text {
+      .logo-name {
+        color: var(--text-primary);
+      }
+      .logo-tagline {
+        color: var(--text-secondary);
+      }
+    }
+    
+    .nav a {
+      color: var(--text-primary);
+      
+      &:hover {
+        color: var(--primary-color);
+        
+        &::after {
+          background-color: var(--primary-color);
+        }
+      }
+    }
+  }
+  
+  // Text colors when over grey sections
+  &.over-grey {
+    .logo-text {
+      .logo-name {
+        color: var(--text-primary);
+      }
+      .logo-tagline {
+        color: var(--text-secondary);
+      }
+    }
+    
+    .nav a {
+      color: var(--text-primary);
+      
+      &:hover {
+        color: var(--primary-color);
+        
+        &::after {
+          background-color: var(--primary-color);
+        }
+      }
+    }
+  }
+
+  &.visible {
+    transform: translateY(0);
+  }
+
+  &.hidden {
+    transform: translateY(-100%);
   }
 
   .header-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -24,23 +257,7 @@
     }
   }
 
-  .logo {
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin: 0;
-      line-height: 1.2;
-    }
 
-    .tagline {
-      display: block;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      font-weight: 400;
-      margin-top: 2px;
-    }
-  }
 
   .nav {
     display: none;
@@ -53,7 +270,7 @@
 
     a {
       font-weight: 500;
-      color: var(--text-primary);
+      color: rgba(255, 255, 255, 0.9); // Default to white for initial load over hero
       position: relative;
       padding: 8px 0;
 
@@ -69,10 +286,11 @@
       }
 
       &:hover {
-        color: var(--primary-color);
+        color: white;
 
         &::after {
           width: 100%;
+          background-color: white;
         }
       }
     }
@@ -84,13 +302,28 @@
       top: 100%;
       left: 0;
       right: 0;
-      background-color: white;
       padding: 24px;
       box-shadow: var(--shadow-lg);
       gap: 16px;
       align-items: flex-start;
+      background-color: white;
     }
   }
+  
+  // Mobile menu styling when header is not scrolled (over hero)
+  &:not(.scrolled) .nav.open {
+    background: linear-gradient(135deg, rgba(26, 95, 63, 0.98) 0%, rgba(13, 79, 47, 0.95) 100%);
+    backdrop-filter: blur(10px);
+    
+    a {
+      color: rgba(255, 255, 255, 0.9);
+      
+      &:hover {
+        color: white;
+      }
+    }
+  }
+  
 
   .mobile-menu-toggle {
     display: flex;

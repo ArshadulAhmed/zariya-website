@@ -1,5 +1,5 @@
 .footer {
-  background-color: var(--bg-dark);
+  background-color: var(--primary-color);
   color: rgba(255, 255, 255, 0.8);
   padding: 60px 0 20px;
 
@@ -20,6 +20,16 @@
   }
 
   .footer-section {
+    .footer-logo {
+      margin-bottom: 16px;
+
+      img {
+        height: 50px;
+        width: auto;
+        object-fit: contain;
+      }
+    }
+
     h3 {
       color: white;
       font-size: 1.5rem;
@@ -73,10 +83,25 @@
       padding: 0;
 
       li {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
         margin-bottom: 12px;
         font-size: 0.9375rem;
         color: rgba(255, 255, 255, 0.7);
         line-height: 1.6;
+
+        .footer-icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+          margin-top: 2px;
+          filter: brightness(0) invert(1);
+        }
+
+        span {
+          flex: 1;
+        }
       }
     }
   }

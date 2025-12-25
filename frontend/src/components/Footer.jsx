@@ -1,4 +1,8 @@
 import React from 'react'
+import logoImage from '../assets/logo.jpeg'
+import LocationIcon from './icons/LocationIcon'
+import PhoneIcon from './icons/PhoneIcon'
+import EmailIcon from './icons/EmailIcon'
 import './Footer.scss'
 
 const Footer = () => {
@@ -11,7 +15,9 @@ const Footer = () => {
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
-            <h3>Zariya</h3>
+            <div className="footer-logo">
+              <img src={logoImage} alt="Zariya Logo" />
+            </div>
             <p className="footer-tagline">The Thrift and Credit Co-operative Society Limited</p>
             <p className="footer-description">
               Empowering individuals and small businesses through accessible financial solutions.
@@ -38,9 +44,18 @@ const Footer = () => {
           <div className="footer-section">
             <h4>Contact Info</h4>
             <ul className="footer-contact">
-              <li>📍 123 Financial District, Your City</li>
-              <li>📞 +1 (555) 123-4567</li>
-              <li>✉️ info@zariya.coop</li>
+              <li>
+                <LocationIcon className="footer-icon" />
+                <span>123 Financial District, Your City</span>
+              </li>
+              <li>
+                <PhoneIcon className="footer-icon" />
+                <span>+1 (555) 123-4567</span>
+              </li>
+              <li>
+                <EmailIcon className="footer-icon" />
+                <span>info@zariya.coop</span>
+              </li>
             </ul>
           </div>
         </div>

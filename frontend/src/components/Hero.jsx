@@ -21,23 +21,8 @@ const Hero = () => {
             <span className="highlight"> Financial Inclusion</span>
           </h1>
           <p className="hero-subtitle">
-            Zariya provides accessible microfinance solutions to individuals and small businesses, 
-            helping you achieve your financial goals with trust, transparency, and support.
+            Accessible microfinance solutions for individuals and small businesses
           </p>
-          <div className="hero-buttons">
-            <button 
-              className="btn btn-primary"
-              onClick={() => scrollToSection('contact')}
-            >
-              Get Started
-            </button>
-            <button 
-              className="btn btn-secondary"
-              onClick={() => scrollToSection('about')}
-            >
-              Learn More
-            </button>
-          </div>
         </div>
       </div>
       <div className="hero-scroll-indicator">
