@@ -1,0 +1,121 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+
+  &.scrolled {
+    box-shadow: var(--shadow-md);
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+
+    @media (min-width: 768px) {
+      padding: 24px 0;
+    }
+  }
+
+  .logo {
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .tagline {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+  }
+
+  .nav {
+    display: none;
+    gap: 32px;
+    align-items: center;
+
+    @media (min-width: 768px) {
+      display: flex;
+    }
+
+    a {
+      font-weight: 500;
+      color: var(--text-primary);
+      position: relative;
+      padding: 8px 0;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--primary-color);
+        transition: width 0.3s ease;
+      }
+
+      &:hover {
+        color: var(--primary-color);
+
+        &::after {
+          width: 100%;
+        }
+      }
+    }
+
+    &.open {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: white;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      gap: 16px;
+      align-items: flex-start;
+    }
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    z-index: 1001;
+
+    @media (min-width: 768px) {
+      display: none;
+    }
+
+    span {
+      width: 24px;
+      height: 2px;
+      background-color: var(--text-primary);
+      transition: var(--transition);
+    }
+
+    &:hover span {
+      background-color: var(--primary-color);
+    }
+  }
+}
+
