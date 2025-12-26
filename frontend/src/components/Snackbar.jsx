@@ -7,7 +7,7 @@ const Snackbar = ({
   message,
   severity = 'error', // 'error' | 'warning' | 'info' | 'success'
   autoHideDuration = 6000,
-  anchorOrigin = { vertical: 'top', horizontal: 'right' }
+  anchorOrigin = { vertical: 'bottom', horizontal: 'right' }
 }) => {
   return (
     <MUISnackbar

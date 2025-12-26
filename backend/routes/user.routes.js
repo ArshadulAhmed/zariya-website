@@ -6,13 +6,12 @@ import {
   updateUser,
   deleteUser
 } from '../controllers/user.controller.js';
-import { protect, isAdmin } from '../middleware/auth.middleware.js';
+import { protect, isAdmin, isAdminOrEmployee } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-// All routes require authentication and admin role
+// All routes require authentication
 router.use(protect);
-router.use(isAdmin);
 
 // Validation rules
 const updateUserValidation = [
@@ -36,11 +35,12 @@ const updateUserValidation = [
     .withMessage('Please provide a valid email')
 ];
 
-// Routes
-router.get('/', getUsers);
-router.get('/:id', getUser);
-router.put('/:id', updateUserValidation, updateUser);
-router.delete('/:id', deleteUser);
+// GET routes - allow admin and employee (read-only for employees)
+router.get('/', isAdminOrEmployee, getUsers);
+router.get('/:id', isAdminOrEmployee, getUser);
+
+// Create, Update, Delete routes - admin only
+router.put('/:id', isAdmin, updateUserValidation, updateUser);
+router.delete('/:id', isAdmin, deleteUser);
 
 export default router;
-

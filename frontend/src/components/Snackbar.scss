@@ -1,11 +1,14 @@
 @import '../styles/main.scss';
 
 .custom-snackbar {
+  z-index: 9999 !important;
+  
   .custom-alert {
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 300px;
 
     &.MuiAlert-filledError {
       background: #dc2626;

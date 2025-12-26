@@ -179,3 +179,10 @@ section {
   color: var(--primary-color);
 }
 
+// Animations
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

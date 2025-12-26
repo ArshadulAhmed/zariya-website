@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { logout } from '../store/slices/authSlice'
 import Logo from './Logo'
 import './Header.scss'
 
@@ -7,7 +9,10 @@ const sections = ['home', 'about', 'services', 'features', 'process', 'contact']
 
 const Header = () => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const headerRef = useRef(null)
   const lastScrollY = useRef(0)
   const ticking = useRef(false)
@@ -110,12 +115,21 @@ const Header = () => {
       if (isMobileMenuOpen && !event.target.closest('.nav') && !event.target.closest('.mobile-menu-toggle')) {
         setIsMobileMenuOpen(false)
       }
+      if (showUserMenu && !event.target.closest('.user-menu')) {
+        setShowUserMenu(false)
+      }
     }
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || showUserMenu) {
       document.addEventListener('click', handleClickOutside)
     }
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [isMobileMenuOpen])
+  }, [isMobileMenuOpen, showUserMenu])
+
+  const handleLogout = () => {
+    dispatch(logout())
+    setShowUserMenu(false)
+    navigate('/')
+  }
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
@@ -136,9 +150,38 @@ const Header = () => {
             <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection('services') }}>Services</a>
             <a href="#features" onClick={(e) => { e.preventDefault(); scrollToSection('features') }}>Features</a>
             <a href="#contact" onClick={(e) => { e.preventDefault(); scrollToSection('contact') }}>Contact</a>
-            <button className="btn-login" onClick={() => navigate('/login')}>
-              Login
-            </button>
+            {isAuthenticated && user ? (
+              <div className="user-menu">
+                <button 
+                  className="nav-user" 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  onMouseEnter={() => setShowUserMenu(true)}
+                >
+                  <span className="user-name">{user.fullName || user.email}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {showUserMenu && (
+                  <div className="user-dropdown">
+                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/dashboard'); setShowUserMenu(false) }}>
+                      Dashboard
+                    </a>
+                    <button onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <a 
+                href="#login" 
+                className="nav-link"
+                onClick={(e) => { e.preventDefault(); navigate('/login') }}
+              >
+                Login
+              </a>
+            )}
           </nav>
           <button 
             className="mobile-menu-toggle"

@@ -1,12 +1,34 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
+// Load initial state from localStorage
+const loadInitialState = () => {
+  const token = localStorage.getItem('token')
+  const userStr = localStorage.getItem('user')
+  const user = userStr ? JSON.parse(userStr) : null
+
+  // Clear dummy/mock data
+  if (user && user.id === '1' && !user.email) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+    }
+  }
+
+  return {
+    user,
+    token,
+    isAuthenticated: !!(token && user),
+    isLoading: false,
+    error: null,
+  }
 }
+
+const initialState = loadInitialState()
 
 const authSlice = createSlice({
   name: 'auth',
@@ -22,6 +44,10 @@ const authSlice = createSlice({
       state.user = action.payload.user
       state.token = action.payload.token
       state.error = null
+      
+      // Save to localStorage
+      localStorage.setItem('token', action.payload.token)
+      localStorage.setItem('user', JSON.stringify(action.payload.user))
     },
     loginFailure: (state, action) => {
       state.isLoading = false
@@ -35,6 +61,10 @@ const authSlice = createSlice({
       state.token = null
       state.isAuthenticated = false
       state.error = null
+      
+      // Clear localStorage
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
     },
     clearError: (state) => {
       state.error = null

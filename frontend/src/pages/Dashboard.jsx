@@ -12,7 +12,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     dispatch(logout())
-    navigate('/')
+    navigate('/login')
   }
 
   return (
@@ -22,7 +22,7 @@ const Dashboard = () => {
           <div className="header-content">
             <Logo />
             <div className="header-actions">
-              <span className="user-name">Welcome, {user?.fullName || user?.username}</span>
+              <span className="user-name">Welcome, {user?.fullName || user?.email}</span>
               <button onClick={handleLogout} className="btn-logout">
                 Logout
               </button>
