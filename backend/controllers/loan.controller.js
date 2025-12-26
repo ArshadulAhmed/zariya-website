@@ -1,0 +1,361 @@
+import Loan from '../models/Loan.model.js';
+import Membership from '../models/Membership.model.js';
+import { validationResult } from 'express-validator';
+
+// @desc    Create loan application
+// @route   POST /api/loans
+// @access  Private/Admin or Employee
+export const createLoan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { membership: membershipId } = req.body;
+
+    // Verify membership exists and is approved
+    const membership = await Membership.findById(membershipId);
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+
+    if (membership.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Membership must be approved before applying for a loan'
+      });
+    }
+
+    const loanData = {
+      ...req.body,
+      membership: membershipId,
+      createdBy: req.user.id
+    };
+
+    const loan = await Loan.create(loanData);
+
+    // Populate membership details
+    await loan.populate('membership', 'userId fullName');
+    await loan.populate('createdBy', 'username fullName');
+
+    res.status(201).json({
+      success: true,
+      message: 'Loan application submitted successfully',
+      data: {
+        loan
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error creating loan application'
+    });
+  }
+};
+
+// @desc    Get all loans
+// @route   GET /api/loans
+// @access  Private/Admin or Employee
+export const getLoans = async (req, res) => {
+  try {
+    const { status, membership, page = 1, limit = 10, search } = req.query;
+
+    // Build query
+    const query = {};
+    if (status) query.status = status;
+    if (membership) query.membership = membership;
+    
+    // Search by loan account number or membership userId
+    if (search) {
+      query.$or = [
+        { loanAccountNumber: { $regex: search, $options: 'i' } }
+      ];
+      
+      // Also search in membership
+      const memberships = await Membership.find({
+        userId: { $regex: search, $options: 'i' }
+      }).select('_id');
+      
+      if (memberships.length > 0) {
+        query.$or.push({ membership: { $in: memberships.map(m => m._id) } });
+      }
+    }
+
+    // Pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const loans = await Loan.find(query)
+      .populate('membership', 'userId fullName')
+      .populate('createdBy', 'username fullName')
+      .populate('reviewedBy', 'username fullName')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const total = await Loan.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        loans,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching loans'
+    });
+  }
+};
+
+// @desc    Get single loan
+// @route   GET /api/loans/:id
+// @access  Private/Admin or Employee
+export const getLoan = async (req, res) => {
+  try {
+    const loan = await Loan.findById(req.params.id)
+      .populate('membership')
+      .populate('createdBy', 'username fullName')
+      .populate('reviewedBy', 'username fullName');
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        loan
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching loan'
+    });
+  }
+};
+
+// @desc    Get loan by loan account number
+// @route   GET /api/loans/account/:loanAccountNumber
+// @access  Private/Admin or Employee
+export const getLoanByAccountNumber = async (req, res) => {
+  try {
+    const loan = await Loan.findOne({ loanAccountNumber: req.params.loanAccountNumber })
+      .populate('membership')
+      .populate('createdBy', 'username fullName')
+      .populate('reviewedBy', 'username fullName');
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        loan
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching loan'
+    });
+  }
+};
+
+// @desc    Review loan (Approve/Reject) - Admin only
+// @route   PUT /api/loans/:id/review
+// @access  Private/Admin
+export const reviewLoan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { status, rejectionReason } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be either approved or rejected'
+      });
+    }
+
+    const loan = await Loan.findById(req.params.id);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    if (loan.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Loan is already ${loan.status}`
+      });
+    }
+
+    loan.status = status;
+    loan.reviewedBy = req.user.id;
+    loan.reviewedAt = new Date();
+    
+    if (status === 'approved') {
+      loan.approvedAt = new Date();
+      // Loan account number will be generated by pre-save hook
+    }
+    
+    if (status === 'rejected' && rejectionReason) {
+      loan.rejectionReason = rejectionReason;
+    }
+
+    await loan.save();
+
+    // Populate for response
+    await loan.populate('membership', 'userId fullName');
+    await loan.populate('reviewedBy', 'username fullName');
+
+    res.status(200).json({
+      success: true,
+      message: `Loan ${status} successfully`,
+      data: {
+        loan
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error reviewing loan'
+    });
+  }
+};
+
+// @desc    Update loan - Admin only for approved loans, Admin/Employee for pending/rejected
+// @route   PUT /api/loans/:id
+// @access  Private/Admin or Employee (with restrictions)
+export const updateLoan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const loan = await Loan.findById(req.params.id);
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    // Critical: Only admin can modify approved loans
+    if (loan.status === 'approved' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admin can modify approved loans'
+      });
+    }
+
+    // Only admin can modify active or closed loans
+    if (['active', 'closed'].includes(loan.status) && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: `Only admin can modify ${loan.status} loans`
+      });
+    }
+
+    // Prevent changing status through update endpoint (use review endpoint for that)
+    const { status, ...updateData } = req.body;
+    if (status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection.'
+      });
+    }
+
+    // Prevent modifying critical fields if loan is approved
+    if (loan.status === 'approved') {
+      const restrictedFields = ['membership', 'loanAccountNumber', 'approvedAt', 'reviewedBy', 'reviewedAt'];
+      for (const field of restrictedFields) {
+        if (updateData[field] !== undefined) {
+          return res.status(400).json({
+            success: false,
+            message: `Cannot modify ${field} for approved loans`
+          });
+        }
+      }
+    }
+
+    // Update allowed fields
+    const allowedFields = [
+      'mobileNumber',
+      'email',
+      'loanAmount',
+      'loanTenure',
+      'purpose',
+      'installmentAmount',
+      'bankAccountNumber',
+      'nominee',
+      'guarantor',
+      'coApplicant'
+    ];
+
+    for (const field of allowedFields) {
+      if (updateData[field] !== undefined) {
+        loan[field] = updateData[field];
+      }
+    }
+
+    await loan.save();
+
+    // Populate for response
+    await loan.populate('membership', 'userId fullName');
+    await loan.populate('createdBy', 'username fullName');
+    await loan.populate('reviewedBy', 'username fullName');
+
+    res.status(200).json({
+      success: true,
+      message: 'Loan updated successfully',
+      data: {
+        loan
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating loan'
+    });
+  }
+};
+

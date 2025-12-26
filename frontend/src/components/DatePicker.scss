@@ -1,0 +1,113 @@
+@import '../styles/main.scss';
+
+.mui-date-picker-field {
+  .MuiOutlinedInput-root {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--primary-color);
+      }
+    }
+
+    &.Mui-focused {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--primary-color);
+        border-width: 2px;
+      }
+    }
+
+    &.Mui-error {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: #dc2626;
+      }
+    }
+  }
+
+  .MuiInputLabel-root {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--text-primary);
+
+    &.Mui-focused {
+      color: var(--primary-color);
+    }
+
+    &.Mui-error {
+      color: #dc2626;
+    }
+  }
+
+  .MuiFormHelperText-root {
+    font-family: 'Poppins', sans-serif;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+
+    &.Mui-error {
+      color: #dc2626;
+    }
+  }
+
+  .MuiOutlinedInput-input {
+    font-family: 'Poppins', sans-serif;
+    padding: 0.875rem 1rem;
+  }
+}
+
+// Date Picker Popover Styles
+.MuiPickersPopper-root {
+  .MuiPaper-root {
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .MuiPickersCalendarHeader-root {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 1rem;
+
+    .MuiPickersCalendarHeader-label {
+      color: white;
+      font-weight: 600;
+    }
+
+    .MuiIconButton-root {
+      color: white;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  .MuiDayCalendar-weekContainer {
+    .MuiPickersDay-root {
+      font-family: 'Poppins', sans-serif;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(26, 95, 63, 0.1);
+      }
+
+      &.Mui-selected {
+        background: var(--primary-color);
+        color: white;
+        font-weight: 600;
+
+        &:hover {
+          background: var(--primary-dark);
+        }
+      }
+
+      &.Mui-disabled {
+        color: #d1d5db;
+      }
+    }
+  }
+}
+

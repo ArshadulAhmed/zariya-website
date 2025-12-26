@@ -2,20 +2,45 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  base: '/',
   plugins: [react()],
+  resolve: {
+    dedupe: ['react', 'react-dom', '@mui/material', '@mui/x-date-pickers']
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      '@mui/material',
+      '@mui/icons-material',
+      '@mui/x-date-pickers',
+      '@mui/x-date-pickers/DatePicker',
+      '@mui/x-date-pickers/LocalizationProvider',
+      '@mui/x-date-pickers/AdapterDayjs',
+      'dayjs'
+    ],
+    esbuildOptions: {
+      jsx: 'automatic'
+    }
+  },
   build: {
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug']
-      }
-    },
+    minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor'
+            }
+            if (id.includes('@mui')) {
+              return 'mui-vendor'
+            }
+            if (id.includes('dayjs')) {
+              return 'date-vendor'
+            }
+            return 'vendor'
+          }
         },
         assetFileNames: 'assets/[name].[hash].[ext]',
         chunkFileNames: 'assets/[name].[hash].js',
@@ -30,6 +55,12 @@ export default defineConfig({
     headers: {
       'Cache-Control': 'public, max-age=31536000'
     }
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler' 
+      }
+    }
   }
 })
-

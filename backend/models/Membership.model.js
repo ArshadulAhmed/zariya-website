@@ -1,0 +1,151 @@
+import mongoose from 'mongoose';
+
+const addressSchema = new mongoose.Schema({
+  village: {
+    type: String,
+    required: [true, 'Village is required'],
+    trim: true
+  },
+  postOffice: {
+    type: String,
+    required: [true, 'Post office is required'],
+    trim: true
+  },
+  policeStation: {
+    type: String,
+    required: [true, 'Police station is required'],
+    trim: true
+  },
+  district: {
+    type: String,
+    required: [true, 'District is required'],
+    trim: true
+  },
+  pinCode: {
+    type: String,
+    required: [true, 'PIN code is required'],
+    trim: true,
+    match: [/^\d{6}$/, 'PIN code must be 6 digits']
+  },
+  landmark: {
+    type: String,
+    trim: true,
+    default: ''
+  }
+}, { _id: false });
+
+const membershipSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    unique: true,
+    required: false, // Generated in pre-save hook, so not required in schema
+    index: true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null // Will be set when user account is created
+  },
+  // Personal Information
+  fullName: {
+    type: String,
+    required: [true, 'Full name is required'],
+    trim: true
+  },
+  fatherOrHusbandName: {
+    type: String,
+    required: [true, 'Father\'s/Husband\'s name is required'],
+    trim: true
+  },
+  age: {
+    type: Number,
+    required: [true, 'Age is required'],
+    min: [18, 'Age must be at least 18'],
+    max: [100, 'Age cannot exceed 100']
+  },
+  dateOfBirth: {
+    type: Date,
+    required: [true, 'Date of birth is required']
+  },
+  occupation: {
+    type: String,
+    required: [true, 'Occupation is required'],
+    trim: true
+  },
+  // Address Details
+  address: {
+    type: addressSchema,
+    required: true
+  },
+  // Status
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  // Metadata
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  reviewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  reviewedAt: {
+    type: Date
+  },
+  rejectionReason: {
+    type: String,
+    trim: true
+  }
+}, {
+  timestamps: true
+});
+
+// Generate unique User ID before saving
+membershipSchema.pre('save', async function(next) {
+  // Always generate userId if it doesn't exist (for new documents)
+  if (!this.userId || this.isNew) {
+    // Generate format: ZAR-YYYYMMDD-XXXX (e.g., ZAR-20240115-0001)
+    const date = new Date();
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    
+    // Find the last membership created today
+    const todayStart = new Date(date);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(date);
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    const MembershipModel = this.constructor;
+    const lastMembership = await MembershipModel
+      .findOne({
+        createdAt: { $gte: todayStart, $lte: todayEnd }
+      })
+      .sort({ userId: -1 });
+    
+    let sequence = 1;
+    if (lastMembership && lastMembership.userId) {
+      const parts = lastMembership.userId.split('-');
+      if (parts.length === 3) {
+        const lastSeq = parseInt(parts[2]) || 0;
+        sequence = lastSeq + 1;
+      }
+    }
+    
+    this.userId = `ZAR-${dateStr}-${String(sequence).padStart(4, '0')}`;
+  }
+  next();
+});
+
+// Indexes for better query performance
+membershipSchema.index({ userId: 1 });
+membershipSchema.index({ status: 1 });
+membershipSchema.index({ createdAt: -1 });
+
+const Membership = mongoose.model('Membership', membershipSchema);
+
+export default Membership;
+

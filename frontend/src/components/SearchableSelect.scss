@@ -1,0 +1,91 @@
+@import '../styles/main.scss';
+
+.searchable-select {
+  width: 100%;
+
+  .searchable-select-field {
+    .MuiOutlinedInput-root {
+      font-family: 'Poppins', sans-serif;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        .MuiOutlinedInput-notchedOutline {
+          border-color: var(--primary-color);
+        }
+      }
+
+      &.Mui-focused {
+        .MuiOutlinedInput-notchedOutline {
+          border-color: var(--primary-color);
+          border-width: 2px;
+        }
+      }
+
+      &.Mui-error {
+        .MuiOutlinedInput-notchedOutline {
+          border-color: #dc2626;
+        }
+      }
+    }
+
+    .MuiOutlinedInput-input {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.875rem 1rem;
+    }
+
+    .MuiInputLabel-root {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      color: var(--text-primary);
+
+      &.Mui-focused {
+        color: var(--primary-color);
+      }
+
+      &.Mui-error {
+        color: #dc2626;
+      }
+
+      &.MuiInputLabel-shrink {
+        font-weight: 500;
+      }
+    }
+
+    .MuiFormHelperText-root {
+      font-family: 'Poppins', sans-serif;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+
+      &.Mui-error {
+        color: #dc2626;
+      }
+    }
+  }
+}
+
+// Autocomplete Popover Styles
+.MuiAutocomplete-popper {
+  .MuiPaper-root {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins', sans-serif;
+    margin-top: 0.5rem;
+  }
+
+  .MuiAutocomplete-option {
+    font-family: 'Poppins', sans-serif;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(26, 95, 63, 0.1);
+    }
+
+    &[aria-selected="true"] {
+      background: rgba(26, 95, 63, 0.15);
+      font-weight: 600;
+    }
+  }
+}
+

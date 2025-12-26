@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import './Header.scss'
 
 const sections = ['home', 'about', 'services', 'features', 'process', 'contact']
 
 const Header = () => {
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const headerRef = useRef(null)
   const lastScrollY = useRef(0)
@@ -134,6 +136,9 @@ const Header = () => {
             <a href="#services" onClick={(e) => { e.preventDefault(); scrollToSection('services') }}>Services</a>
             <a href="#features" onClick={(e) => { e.preventDefault(); scrollToSection('features') }}>Features</a>
             <a href="#contact" onClick={(e) => { e.preventDefault(); scrollToSection('contact') }}>Contact</a>
+            <button className="btn-login" onClick={() => navigate('/login')}>
+              Login
+            </button>
           </nav>
           <button 
             className="mobile-menu-toggle"

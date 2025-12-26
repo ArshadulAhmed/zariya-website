@@ -1,7 +1,10 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Hero.scss'
 
 const Hero = () => {
+  const navigate = useNavigate()
+
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId)
     if (element) {
@@ -23,6 +26,11 @@ const Hero = () => {
           <p className="hero-subtitle">
             Accessible microfinance solutions for individuals and small businesses
           </p>
+          <div className="hero-actions">
+            <button className="btn-primary" onClick={() => navigate('/apply-membership')}>
+              Become a Member
+            </button>
+          </div>
         </div>
       </div>
       <div className="hero-scroll-indicator">

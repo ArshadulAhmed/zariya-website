@@ -1,0 +1,27 @@
+@import '../styles/main.scss';
+
+.custom-snackbar {
+  .custom-alert {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    &.MuiAlert-filledError {
+      background: #dc2626;
+    }
+
+    &.MuiAlert-filledSuccess {
+      background: #10b981;
+    }
+
+    &.MuiAlert-filledWarning {
+      background: #f59e0b;
+    }
+
+    &.MuiAlert-filledInfo {
+      background: var(--primary-color);
+    }
+  }
+}
+
