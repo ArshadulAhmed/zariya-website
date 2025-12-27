@@ -26,7 +26,7 @@ const ConfirmationModal = ({
         </div>
 
         <div className="modal-body">
-          <p>{message}</p>
+          {typeof message === 'string' ? <p>{message}</p> : message}
         </div>
 
         <div className="modal-actions">

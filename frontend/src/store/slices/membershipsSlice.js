@@ -70,7 +70,14 @@ export const fetchMembership = createAsyncThunk(
   'memberships/fetchMembership',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await membershipsAPI.getMembership(id)
+      // Try to fetch by userId first (if it looks like a userId format)
+      // Otherwise fetch by database ID
+      let response
+      if (id.startsWith('ZAR-')) {
+        response = await membershipsAPI.getMembershipByUserId(id)
+      } else {
+        response = await membershipsAPI.getMembership(id)
+      }
       if (response.success) {
         return response.data.membership
       }
@@ -158,6 +165,8 @@ const membershipsSlice = createSlice({
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })
               }
             } catch (e) {
@@ -193,8 +202,69 @@ const membershipsSlice = createSlice({
         // Convert membership to serializable format
         const membership = action.payload
         const membershipId = safeToString(membership._id) || safeToString(membership.id) || ''
+        
+        // Format dates
+        let createdAtFormatted = ''
+        let reviewedAtFormatted = ''
+        let dateOfBirthFormatted = ''
+        
+        if (membership.createdAt) {
+          try {
+            const date = new Date(membership.createdAt)
+            if (!isNaN(date.getTime())) {
+              createdAtFormatted = date.toISOString()
+            }
+          } catch (e) {
+            console.error('Error formatting createdAt:', e)
+          }
+        }
+        
+        if (membership.reviewedAt) {
+          try {
+            const date = new Date(membership.reviewedAt)
+            if (!isNaN(date.getTime())) {
+              reviewedAtFormatted = date.toISOString()
+            }
+          } catch (e) {
+            console.error('Error formatting reviewedAt:', e)
+          }
+        }
+        
+        if (membership.dateOfBirth) {
+          try {
+            const date = new Date(membership.dateOfBirth)
+            if (!isNaN(date.getTime())) {
+              dateOfBirthFormatted = date.toISOString()
+            }
+          } catch (e) {
+            console.error('Error formatting dateOfBirth:', e)
+          }
+        }
+        
         state.selectedMembership = {
-          ...membership,
+          userId: String(membership.userId || ''),
+          fullName: String(membership.fullName || ''),
+          fatherOrHusbandName: String(membership.fatherOrHusbandName || ''),
+          age: Number(membership.age) || 0,
+          dateOfBirth: dateOfBirthFormatted,
+          occupation: String(membership.occupation || ''),
+          address: {
+            village: String(membership.address?.village || ''),
+            postOffice: String(membership.address?.postOffice || ''),
+            policeStation: String(membership.address?.policeStation || ''),
+            district: String(membership.address?.district || ''),
+            pinCode: String(membership.address?.pinCode || ''),
+            landmark: String(membership.address?.landmark || ''),
+          },
+          status: String(membership.status || 'pending'),
+          createdAt: createdAtFormatted,
+          reviewedAt: reviewedAtFormatted,
+          rejectionReason: String(membership.rejectionReason || ''),
+          reviewedBy: membership.reviewedBy ? {
+            id: safeToString(membership.reviewedBy._id || membership.reviewedBy.id),
+            username: String(membership.reviewedBy.username || ''),
+            fullName: String(membership.reviewedBy.fullName || ''),
+          } : null,
           id: String(membershipId),
         }
       })
@@ -219,6 +289,20 @@ const membershipsSlice = createSlice({
           state.memberships[index] = {
             ...state.memberships[index],
             status: String(updatedMembership.status || state.memberships[index].status),
+          }
+        }
+        // Also update selectedMembership if it's the same membership
+        if (state.selectedMembership && state.selectedMembership.id === String(membershipId)) {
+          state.selectedMembership = {
+            ...state.selectedMembership,
+            status: String(updatedMembership.status || state.selectedMembership.status),
+            reviewedBy: updatedMembership.reviewedBy ? {
+              id: safeToString(updatedMembership.reviewedBy._id || updatedMembership.reviewedBy.id),
+              username: String(updatedMembership.reviewedBy.username || ''),
+              fullName: String(updatedMembership.reviewedBy.fullName || ''),
+            } : state.selectedMembership.reviewedBy,
+            reviewedAt: updatedMembership.reviewedAt ? new Date(updatedMembership.reviewedAt).toISOString() : state.selectedMembership.reviewedAt,
+            rejectionReason: String(updatedMembership.rejectionReason || state.selectedMembership.rejectionReason || ''),
           }
         }
         state.snackbar = {

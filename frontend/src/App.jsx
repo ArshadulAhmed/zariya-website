@@ -11,6 +11,7 @@ import './styles/App.scss'
 // Lazy load dashboard pages
 const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome'))
 const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
+const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
@@ -76,6 +77,14 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <ApplyMembership hideHeader={true} successRedirectPath="/dashboard/memberships" />
+            </Suspense>
+          }
+        />
+        <Route
+          path="memberships/:id"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <MembershipDetails />
             </Suspense>
           }
         />

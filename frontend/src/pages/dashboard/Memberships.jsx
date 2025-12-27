@@ -47,8 +47,8 @@ const Memberships = memo(() => {
   }, [dispatch, filters.status, filters.search, filters.district, pagination.page, pagination.limit])
 
   const handleRowClick = (row) => {
-    // Navigate to membership details
-    console.log('View membership:', row.id)
+    // Navigate to membership details using userId instead of DB ID
+    navigate(`/dashboard/memberships/${row.userId}`)
   }
 
   const handleActions = (row) => (
@@ -57,7 +57,8 @@ const Memberships = memo(() => {
         className="btn-primary"
         onClick={(e) => {
           e.stopPropagation()
-          console.log('View:', row.id)
+          // Navigate using userId instead of DB ID
+          navigate(`/dashboard/memberships/${row.userId}`)
         }}
       >
         View

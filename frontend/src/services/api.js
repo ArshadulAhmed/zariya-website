@@ -179,6 +179,18 @@ export const membershipsAPI = {
     }
   },
 
+  getMembershipByUserId: async (userId) => {
+    try {
+      const data = await apiRequest(`/memberships/user/${userId}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Memberships API getMembershipByUserId error:', error)
+      throw error
+    }
+  },
+
   reviewMembership: async (id, reviewData) => {
     try {
       const data = await apiRequest(`/memberships/${id}/review`, {
