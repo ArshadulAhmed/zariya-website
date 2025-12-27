@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './slices/authSlice'
 import loanReducer from './slices/loanSlice'
 import membershipReducer from './slices/membershipSlice'
+import membershipsReducer from './slices/membershipsSlice'
 import usersReducer from './slices/usersSlice'
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     loan: loanReducer,
     membership: membershipReducer,
+    memberships: membershipsReducer,
     users: usersReducer,
   },
   middleware: (getDefaultMiddleware) =>
@@ -19,6 +21,9 @@ export const store = configureStore({
           'users/fetchUsers/fulfilled',
           'users/fetchUser/fulfilled',
           'users/updateUser/fulfilled',
+          'memberships/fetchMemberships/fulfilled',
+          'memberships/fetchMembership/fulfilled',
+          'memberships/reviewMembership/fulfilled',
         ],
       },
     }),

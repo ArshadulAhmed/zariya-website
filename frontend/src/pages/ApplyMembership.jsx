@@ -10,11 +10,12 @@ import TextField from '../components/TextField'
 import Select from '../components/Select'
 import Snackbar from '../components/Snackbar'
 import Logo from '../components/Logo'
+import apiRequest from '../services/api'
 import './ApplyMembership.scss'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
-const ApplyMembership = () => {
+const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { formData, isLoading, error, success, membershipId } = useAppSelector((state) => state.membership)
@@ -146,31 +147,53 @@ const ApplyMembership = () => {
     dispatch(submitMembershipStart())
 
     try {
-      const response = await fetch(`${API_BASE_URL}/memberships`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        // Handle validation errors
-        let errorMessage = 'Failed to submit membership application'
-        if (data.errors && Array.isArray(data.errors)) {
-          errorMessage = data.errors.map(err => err.msg || err.message).join(', ')
-        } else if (data.message) {
-          errorMessage = data.message
+      // Use apiRequest helper when in dashboard mode (includes auth token)
+      // Otherwise use fetch for public access
+      let data
+      if (hideHeader) {
+        try {
+          data = await apiRequest('/memberships', {
+            method: 'POST',
+            body: JSON.stringify(formData),
+          })
+        } catch (apiError) {
+          // apiRequest throws errors, extract message
+          let errorMessage = apiError.message || 'Failed to submit membership application'
+          dispatch(submitMembershipFailure(errorMessage))
+          setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+          return
         }
-        dispatch(submitMembershipFailure(errorMessage))
-        setSnackbar({ open: true, message: errorMessage, severity: 'error' })
-        return
+      } else {
+        const response = await fetch(`${API_BASE_URL}/memberships`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        })
+        data = await response.json()
+
+        // Check for errors
+        if (!response.ok || !data.success) {
+          // Handle validation errors
+          let errorMessage = 'Failed to submit membership application'
+          if (data.errors && Array.isArray(data.errors)) {
+            errorMessage = data.errors.map(err => err.msg || err.message).join(', ')
+          } else if (data.message) {
+            errorMessage = data.message
+          }
+          dispatch(submitMembershipFailure(errorMessage))
+          setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+          return
+        }
       }
 
       if (data.success) {
         dispatch(submitMembershipSuccess(data.data.membership))
+        // If in dashboard mode, redirect to memberships list instead of showing success page
+        if (hideHeader) {
+          navigate(successRedirectPath)
+        }
       }
     } catch (error) {
       const errorMessage = error.message || 'Failed to submit application. Please try again.'
@@ -179,7 +202,8 @@ const ApplyMembership = () => {
     }
   }
 
-  if (success) {
+  // Don't show success page in dashboard mode - redirect happens in handleSubmit
+  if (success && !hideHeader) {
     return (
       <div className="apply-membership-page">
         <div className="success-container">
@@ -250,8 +274,8 @@ const ApplyMembership = () => {
           </div>
 
           <div className="success-actions">
-            <button onClick={() => navigate('/')} className="btn-primary">
-              Return to Home
+            <button onClick={() => navigate(successRedirectPath)} className="btn-primary">
+              {successRedirectPath === '/' ? 'Return to Home' : 'Back to Memberships'}
             </button>
           </div>
         </div>
@@ -260,47 +284,51 @@ const ApplyMembership = () => {
   }
 
   return (
-    <div className="apply-membership-page">
+    <div className={`apply-membership-page ${hideHeader ? 'dashboard-mode' : ''}`}>
       <div className="apply-membership-container">
-        <div className="page-header">
-          <div className="breadcrumb">
-            <button onClick={() => navigate('/')} className="breadcrumb-link">Home</button>
-            <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current">Membership Application</span>
+        {!hideHeader && (
+          <div className="page-header">
+            <div className="breadcrumb">
+              <button onClick={() => navigate('/')} className="breadcrumb-link">Home</button>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">Membership Application</span>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="form-wrapper">
-          <div className="form-header">
-            <div className="header-content">
-              <div className="header-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+        <div className={`form-wrapper ${hideHeader ? 'no-header' : ''}`}>
+          {!hideHeader && (
+            <div className="form-header">
+              <div className="header-content">
+                <div className="header-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h1>Become a Member</h1>
+                <p className="header-subtitle">
+                  Join Zariya and unlock access to financial services. Fill in your details below to start your membership application.
+                </p>
               </div>
-              <h1>Become a Member</h1>
-              <p className="header-subtitle">
-                Join Zariya and unlock access to financial services. Fill in your details below to start your membership application.
-              </p>
+              <div className="trust-badges">
+                <div className="trust-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Secure & Confidential</span>
+                </div>
+                <div className="trust-badge">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Trusted Platform</span>
+                </div>
+              </div>
             </div>
-            <div className="trust-badges">
-              <div className="trust-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Secure & Confidential</span>
-              </div>
-              <div className="trust-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Trusted Platform</span>
-              </div>
-            </div>
-          </div>
+          )}
 
           <form className="membership-form" onSubmit={handleSubmit} noValidate>
             {snackbar && (
@@ -502,7 +530,7 @@ const ApplyMembership = () => {
                 <span>Your information is secure and will only be used for membership processing</span>
               </div>
               <div className="form-actions">
-                <button type="button" onClick={() => navigate('/')} className="btn-secondary">
+                <button type="button" onClick={() => navigate(successRedirectPath === '/' ? '/' : '/dashboard/memberships')} className="btn-secondary">
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={isLoading}>

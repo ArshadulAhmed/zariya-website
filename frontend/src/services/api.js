@@ -151,5 +151,47 @@ export const usersAPI = {
   },
 }
 
+// Memberships API
+export const membershipsAPI = {
+  getMemberships: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/memberships${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Memberships API getMemberships error:', error)
+      throw error
+    }
+  },
+
+  getMembership: async (id) => {
+    try {
+      const data = await apiRequest(`/memberships/${id}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Memberships API getMembership error:', error)
+      throw error
+    }
+  },
+
+  reviewMembership: async (id, reviewData) => {
+    try {
+      const data = await apiRequest(`/memberships/${id}/review`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+      })
+      return data
+    } catch (error) {
+      console.error('Memberships API reviewMembership error:', error)
+      throw error
+    }
+  },
+}
+
 export default apiRequest
 

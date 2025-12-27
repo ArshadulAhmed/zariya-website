@@ -72,6 +72,14 @@ function App() {
           }
         />
         <Route
+          path="memberships/new"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <ApplyMembership hideHeader={true} successRedirectPath="/dashboard/memberships" />
+            </Suspense>
+          }
+        />
+        <Route
           path="loans"
           element={
             <Suspense fallback={<PageLoader />}>

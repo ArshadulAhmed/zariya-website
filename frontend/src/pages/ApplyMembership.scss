@@ -10,12 +10,23 @@
   background: linear-gradient(to bottom, #f8faf9 0%, #ffffff 100%);
   padding-bottom: 4rem;
   padding-top: 2rem;
+
+  // When used in dashboard (no header), reduce top padding and change background
+  &.dashboard-mode {
+    padding-top: 1rem;
+    background: #ffffff;
+  }
 }
 
 .apply-membership-container {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 0rem;
+}
+
+// When used in dashboard, adjust container padding
+.apply-membership-page.dashboard-mode .apply-membership-container {
+  padding: 1rem 0rem;
 }
 
 .page-header {
@@ -315,6 +326,15 @@
         border-color: #d1d5db;
       }
     }
+  }
+}
+
+// When header is hidden, add top padding to form
+.form-wrapper.no-header .membership-form {
+  padding-top: 3rem;
+  
+  @media (max-width: 768px) {
+    padding-top: 2rem;
   }
 }
 
