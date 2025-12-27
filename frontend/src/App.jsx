@@ -13,6 +13,8 @@ const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome'))
 const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
 const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
+const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
+const NewLoan = lazy(() => import('./pages/dashboard/NewLoan'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 
@@ -93,6 +95,22 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <Loans />
+            </Suspense>
+          }
+        />
+        <Route
+          path="loans/new"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <NewLoan />
+            </Suspense>
+          }
+        />
+        <Route
+          path="loans/:id"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <LoanDetails />
             </Suspense>
           }
         />

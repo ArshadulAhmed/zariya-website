@@ -16,6 +16,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import membershipRoutes from './routes/membership.routes.js';
 import loanRoutes from './routes/loan.routes.js';
+import repaymentRoutes from './routes/repayment.routes.js';
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/memberships', membershipRoutes);
 app.use('/api/loans', loanRoutes);
+app.use('/api/repayments', repaymentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

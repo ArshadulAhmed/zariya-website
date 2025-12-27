@@ -205,5 +205,140 @@ export const membershipsAPI = {
   },
 }
 
+// Loans API
+export const loansAPI = {
+  getLoans: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/loans${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API getLoans error:', error)
+      throw error
+    }
+  },
+
+  getLoan: async (id) => {
+    try {
+      const data = await apiRequest(`/loans/${id}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API getLoan error:', error)
+      throw error
+    }
+  },
+
+  createLoan: async (loanData) => {
+    try {
+      const data = await apiRequest('/loans', {
+        method: 'POST',
+        body: JSON.stringify(loanData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API createLoan error:', error)
+      throw error
+    }
+  },
+
+  reviewLoan: async (id, reviewData) => {
+    try {
+      const data = await apiRequest(`/loans/${id}/review`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API reviewLoan error:', error)
+      throw error
+    }
+  },
+
+  updateLoan: async (id, loanData) => {
+    try {
+      const data = await apiRequest(`/loans/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(loanData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API updateLoan error:', error)
+      throw error
+    }
+  },
+}
+
+// Repayments API
+export const repaymentsAPI = {
+  createRepayment: async (repaymentData) => {
+    try {
+      const data = await apiRequest('/repayments', {
+        method: 'POST',
+        body: JSON.stringify(repaymentData),
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API createRepayment error:', error)
+      throw error
+    }
+  },
+
+  getRepaymentsByLoan: async (loanId, params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/repayments/loan/${loanId}${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API getRepaymentsByLoan error:', error)
+      throw error
+    }
+  },
+
+  getRepayment: async (id) => {
+    try {
+      const data = await apiRequest(`/repayments/${id}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API getRepayment error:', error)
+      throw error
+    }
+  },
+
+  updateRepayment: async (id, repaymentData) => {
+    try {
+      const data = await apiRequest(`/repayments/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(repaymentData),
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API updateRepayment error:', error)
+      throw error
+    }
+  },
+
+  deleteRepayment: async (id) => {
+    try {
+      const data = await apiRequest(`/repayments/${id}`, {
+        method: 'DELETE',
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API deleteRepayment error:', error)
+      throw error
+    }
+  },
+}
+
 export default apiRequest
 

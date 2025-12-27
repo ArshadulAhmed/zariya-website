@@ -219,34 +219,43 @@ const loanSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Generate unique Loan Account Number before saving (only when approved)
+// Generate unique Loan Account Number before saving
 loanSchema.pre('save', async function(next) {
-  if (this.status === 'approved' && !this.loanAccountNumber) {
+  // Generate loan account number if it doesn't exist
+  if (!this.loanAccountNumber) {
     // Generate format: LOAN-YYYYMMDD-XXXX (e.g., LOAN-20240115-0001)
     const date = new Date();
     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
     
-    // Find the last loan approved today
-    const todayStart = new Date(date.setHours(0, 0, 0, 0));
-    const todayEnd = new Date(date.setHours(23, 59, 59, 999));
+    // Find the last loan created today (for sequence numbering)
+    const todayStart = new Date(date);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(date);
+    todayEnd.setHours(23, 59, 59, 999);
     
     const LoanModel = this.constructor;
     const lastLoan = await LoanModel
       .findOne({
-        status: 'approved',
-        approvedAt: { $gte: todayStart, $lte: todayEnd }
+        createdAt: { $gte: todayStart, $lte: todayEnd }
       })
       .sort({ loanAccountNumber: -1 });
     
     let sequence = 1;
     if (lastLoan && lastLoan.loanAccountNumber) {
-      const lastSeq = parseInt(lastLoan.loanAccountNumber.split('-')[2]);
-      sequence = lastSeq + 1;
+      const parts = lastLoan.loanAccountNumber.split('-');
+      if (parts.length === 3) {
+        const lastSeq = parseInt(parts[2]);
+        if (!isNaN(lastSeq)) {
+          sequence = lastSeq + 1;
+        }
+      }
     }
     
     this.loanAccountNumber = `LOAN-${dateStr}-${String(sequence).padStart(4, '0')}`;
-    
-    // Set start and end dates
+  }
+  
+  // Set start and end dates when approved
+  if (this.status === 'approved') {
     if (!this.startDate) {
       this.startDate = new Date();
     }
@@ -255,6 +264,7 @@ loanSchema.pre('save', async function(next) {
       this.endDate.setDate(this.endDate.getDate() + this.loanTenure);
     }
   }
+  
   next();
 });
 

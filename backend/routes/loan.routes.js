@@ -211,12 +211,13 @@ const createLoanValidation = [
 ];
 
 const updateLoanValidation = [
-  // Prevent status changes through update endpoint
+  // Allow status change to 'closed' only (for admin when loan is fully paid)
+  // Other status changes should use /review endpoint
   body('status')
     .optional()
     .custom((value) => {
-      if (value !== undefined) {
-        throw new Error('Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection.');
+      if (value !== undefined && value !== 'closed') {
+        throw new Error('Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection, or set status to "closed" when loan is fully paid.');
       }
       return true;
     }),

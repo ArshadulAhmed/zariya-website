@@ -128,10 +128,21 @@ export const getLoans = async (req, res) => {
 // @access  Private/Admin or Employee
 export const getLoan = async (req, res) => {
   try {
-    const loan = await Loan.findById(req.params.id)
-      .populate('membership')
-      .populate('createdBy', 'username fullName')
-      .populate('reviewedBy', 'username fullName');
+    const { id } = req.params;
+    
+    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    let loan;
+    if (id.startsWith('LOAN-')) {
+      loan = await Loan.findOne({ loanAccountNumber: id })
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    } else {
+      loan = await Loan.findById(id)
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    }
 
     if (!loan) {
       return res.status(404).json({
@@ -295,13 +306,25 @@ export const updateLoan = async (req, res) => {
       });
     }
 
-    // Prevent changing status through update endpoint (use review endpoint for that)
+    // Allow status change to 'closed' only for admin when loan is fully paid
     const { status, ...updateData } = req.body;
     if (status) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection.'
-      });
+      // Only allow changing status to 'closed' for admin
+      if (status === 'closed' && req.user.role === 'admin') {
+        // Verify loan is approved/active and fully paid
+        if (!['approved', 'active'].includes(loan.status)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Only approved or active loans can be closed'
+          });
+        }
+        loan.status = 'closed';
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection, or close loan when fully paid.'
+        });
+      }
     }
 
     // Prevent modifying critical fields if loan is approved
