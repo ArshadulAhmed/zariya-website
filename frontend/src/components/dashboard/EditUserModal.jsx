@@ -93,13 +93,11 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
     )
 
     if (updateUser.fulfilled.match(result)) {
-      // Close modal after a short delay
-      setTimeout(() => {
-        onClose()
-        if (onSuccess) {
-          onSuccess()
-        }
-      }, 1500)
+      // Close modal immediately
+      onClose()
+      if (onSuccess) {
+        onSuccess()
+      }
     }
   }
 

@@ -116,13 +116,11 @@ const NewUserModal = ({ open, onClose, onSuccess }) => {
         verifyPassword: '',
         role: 'employee',
       })
-      // Close modal after a short delay
-      setTimeout(() => {
-        onClose()
-        if (onSuccess) {
-          onSuccess()
-        }
-      }, 1500)
+      // Close modal immediately
+      onClose()
+      if (onSuccess) {
+        onSuccess()
+      }
     }
   }
 

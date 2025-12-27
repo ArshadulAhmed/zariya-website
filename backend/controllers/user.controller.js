@@ -98,6 +98,14 @@ export const updateUser = async (req, res) => {
       });
     }
 
+    // Don't allow deactivating your own account
+    if (isActive === false && user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot deactivate your own account'
+      });
+    }
+
     // Update fields
     if (fullName !== undefined) user.fullName = fullName;
     if (role !== undefined) user.role = role;
