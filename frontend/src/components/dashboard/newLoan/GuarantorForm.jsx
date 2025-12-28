@@ -56,6 +56,20 @@ const GuarantorForm = () => {
         />
 
         <TextField
+          label="Mobile Number"
+          name="guarantor.mobileNumber"
+          type="tel"
+          value={formData.mobileNumber}
+          onChange={handleChange}
+          placeholder="Enter 10-digit mobile number"
+          error={errors['guarantor.mobileNumber']}
+          helperText={errors['guarantor.mobileNumber']}
+          required
+          maxLength={10}
+          inputProps={{ pattern: '[0-9]{10}' }}
+        />
+
+        <TextField
           label="Bank Account Number (Optional)"
           name="guarantor.bankAccountNumber"
           value={formData.bankAccountNumber}

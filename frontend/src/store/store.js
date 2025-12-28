@@ -32,6 +32,13 @@ export const store = configureStore({
           'loans/fetchLoan/fulfilled',
           'loans/createLoan/fulfilled',
           'loans/reviewLoan/fulfilled',
+          'membership/updateFormData', // Ignore file upload actions
+        ],
+        // Ignore these paths in state (File objects)
+        ignoredPaths: [
+          'membership.formData.aadharUpload',
+          'membership.formData.panUpload',
+          'membership.formData.passportPhoto',
         ],
       },
     }),

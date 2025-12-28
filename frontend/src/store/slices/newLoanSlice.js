@@ -30,6 +30,7 @@ const initialState = {
       name: '',
       fatherOrHusbandName: '',
       relationship: '',
+      mobileNumber: '',
       bankAccountNumber: '',
       address: {
         village: '',

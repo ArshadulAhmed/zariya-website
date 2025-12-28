@@ -9,6 +9,12 @@ const initialState = {
     age: '',
     dateOfBirth: '',
     occupation: '',
+    mobileNumber: '',
+    aadhar: '',
+    pan: '',
+    aadharUpload: null,
+    panUpload: null,
+    passportPhoto: null,
     address: {
       village: '',
       postOffice: '',

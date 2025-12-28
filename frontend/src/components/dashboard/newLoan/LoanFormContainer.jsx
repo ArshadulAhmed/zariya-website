@@ -24,7 +24,7 @@ const LoanFormContainer = () => {
       return
     }
 
-    const errors = validateLoanForm(formData, hasCoApplicant)
+    const errors = validateLoanForm(formData, hasCoApplicant, selectedMembership)
     if (Object.keys(errors).length > 0) {
       dispatch(setErrors(errors))
       return
@@ -32,7 +32,7 @@ const LoanFormContainer = () => {
 
     const loanData = {
       membership: selectedMembership._id || selectedMembership.id,
-      mobileNumber: formData.mobileNumber.trim(),
+      mobileNumber: selectedMembership.mobileNumber || formData.mobileNumber?.trim() || '',
       email: formData.email.trim() || undefined,
       loanAmount: parseFloat(formData.loanAmount),
       loanTenure: parseInt(formData.loanTenure),
@@ -56,6 +56,7 @@ const LoanFormContainer = () => {
         name: formData.guarantor.name.trim(),
         fatherOrHusbandName: formData.guarantor.fatherOrHusbandName.trim(),
         relationship: formData.guarantor.relationship.trim(),
+        mobileNumber: formData.guarantor.mobileNumber.trim(),
         bankAccountNumber: formData.guarantor.bankAccountNumber.trim() || undefined,
         address: {
           village: formData.guarantor.address.village.trim(),

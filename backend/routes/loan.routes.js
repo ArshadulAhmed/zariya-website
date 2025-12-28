@@ -6,7 +6,8 @@ import {
   getLoan,
   getLoanByAccountNumber,
   reviewLoan,
-  updateLoan
+  updateLoan,
+  downloadLoanContract
 } from '../controllers/loan.controller.js';
 import { protect, isAdminOrEmployee, isAdmin } from '../middleware/auth.middleware.js';
 
@@ -88,6 +89,12 @@ const createLoanValidation = [
     .trim()
     .notEmpty()
     .withMessage('Guarantor relationship is required'),
+  body('guarantor.mobileNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Guarantor mobile number is required')
+    .matches(/^\d{10}$/)
+    .withMessage('Guarantor mobile number must be 10 digits'),
   body('guarantor.bankAccountNumber')
     .optional()
     .trim(),
@@ -289,6 +296,9 @@ router.put('/:id', isAdminOrEmployee, updateLoanValidation, updateLoan);
 
 // Review loan - Admin only
 router.put('/:id/review', isAdmin, reviewLoanValidation, reviewLoan);
+
+// Download loan contract - Admin or Employee (only for approved loans)
+router.get('/:id/contract', isAdminOrEmployee, downloadLoanContract);
 
 export default router;
 

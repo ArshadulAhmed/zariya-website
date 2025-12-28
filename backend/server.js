@@ -25,6 +25,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (uploads) - only for local storage
+if (process.env.NODE_ENV !== 'production' || !process.env.AWS_ACCESS_KEY_ID) {
+  app.use('/uploads', express.static(join(__dirname, 'uploads')));
+}
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 

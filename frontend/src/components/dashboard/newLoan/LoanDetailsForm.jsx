@@ -30,29 +30,6 @@ const LoanDetailsForm = () => {
 
       <div className="form-grid">
         <TextField
-          label="Mobile Number"
-          name="mobileNumber"
-          value={formData.mobileNumber}
-          onChange={handleChange}
-          placeholder="10 digit mobile number"
-          error={errors.mobileNumber}
-          helperText={errors.mobileNumber}
-          required
-          maxLength={10}
-        />
-
-        <TextField
-          label="Email (Optional)"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="email@example.com"
-          error={errors.email}
-          helperText={errors.email}
-        />
-
-        <TextField
           label="Loan Amount"
           name="loanAmount"
           type="number"
@@ -78,19 +55,17 @@ const LoanDetailsForm = () => {
           inputProps={{ min: 1 }}
         />
 
-        <div className="form-group form-group-full">
-          <Select
-            label="Purpose of Loan"
-            name="purpose"
-            value={formData.purpose}
-            onChange={handleChange}
-            options={LOAN_PURPOSES}
-            placeholder="Select purpose of loan"
-            error={errors.purpose}
-            helperText={errors.purpose}
-            required
-          />
-        </div>
+        <Select
+          label="Purpose of Loan"
+          name="purpose"
+          value={formData.purpose}
+          onChange={handleChange}
+          options={LOAN_PURPOSES}
+          placeholder="Select purpose of loan"
+          error={errors.purpose}
+          helperText={errors.purpose}
+          required
+        />
 
         <TextField
           label="Installment Amount"
@@ -103,6 +78,17 @@ const LoanDetailsForm = () => {
           helperText={errors.installmentAmount}
           required
           inputProps={{ min: 1, step: 0.01 }}
+        />
+
+        <TextField
+          label="Email (Optional)"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="email@example.com"
+          error={errors.email}
+          helperText={errors.email}
         />
 
         <TextField

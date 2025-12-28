@@ -182,6 +182,12 @@ const AdditionalInfo = () => {
                 <span className="detail-label">Relationship</span>
                 <span className="detail-value">{guarantor.relationship || 'N/A'}</span>
               </div>
+              {guarantor.mobileNumber && (
+                <div className="detail-row">
+                  <span className="detail-label">Mobile Number</span>
+                  <span className="detail-value">{guarantor.mobileNumber}</span>
+                </div>
+              )}
               {guarantor.bankAccountNumber && (
                 <div className="detail-row">
                   <span className="detail-label">Bank Account Number</span>

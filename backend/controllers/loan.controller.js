@@ -1,6 +1,10 @@
 import Loan from '../models/Loan.model.js';
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
+import PDFDocument from 'pdfkit';
+import { generateLoanContractPDF } from '../templates/loanContract.template.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // @desc    Create loan application
 // @route   POST /api/loans
@@ -378,6 +382,77 @@ export const updateLoan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error updating loan'
+    });
+  }
+};
+
+// @desc    Download loan contract PDF
+// @route   GET /api/loans/:id/contract
+// @access  Private/Admin or Employee
+export const downloadLoanContract = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    let loan;
+    if (id.startsWith('LOAN-')) {
+      loan = await Loan.findOne({ loanAccountNumber: id })
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    } else {
+      loan = await Loan.findById(id)
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    }
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    // Only allow contract download for approved loans
+    if (loan.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Contract can only be downloaded for approved loans'
+      });
+    }
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="Loan_Contract_${loan.loanAccountNumber}.pdf"`
+    );
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Get logo path
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
+
+    // Generate PDF using template
+    generateLoanContractPDF(doc, loan, logoPath);
+
+    // Finalize PDF
+    doc.end();
+  } catch (error) {
+    console.error('Error generating contract PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error generating contract PDF'
     });
   }
 };

@@ -8,6 +8,7 @@ import DatePicker from '../components/DatePicker'
 import SearchableSelect from '../components/SearchableSelect'
 import TextField from '../components/TextField'
 import Select from '../components/Select'
+import FileUpload from '../components/FileUpload'
 import Snackbar from '../components/Snackbar'
 import Logo from '../components/Logo'
 import apiRequest from '../services/api'
@@ -44,6 +45,27 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
         [name]: '',
       })
     }
+  }
+
+  const handleFileChange = (e) => {
+    const { name, value } = e.target
+    dispatch(updateFormData({ [name]: value }))
+    
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: '',
+      })
+    }
+  }
+
+  const handleFileError = (errorMessage) => {
+    setSnackbar({
+      open: true,
+      message: errorMessage,
+      severity: 'error'
+    })
   }
 
   const calculateAge = (dateOfBirth) => {
@@ -111,6 +133,36 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
       newErrors.occupation = 'Occupation is required'
     }
 
+    if (!formData.mobileNumber.trim()) {
+      newErrors.mobileNumber = 'Mobile number is required'
+    } else if (!/^\d{10}$/.test(formData.mobileNumber.trim())) {
+      newErrors.mobileNumber = 'Mobile number must be 10 digits'
+    }
+
+    if (!formData.aadhar.trim()) {
+      newErrors.aadhar = 'Aadhar number is required'
+    } else if (!/^\d{12}$/.test(formData.aadhar.trim())) {
+      newErrors.aadhar = 'Aadhar number must be 12 digits'
+    }
+
+    if (!formData.pan.trim()) {
+      newErrors.pan = 'PAN number is required'
+    } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan.trim().toUpperCase())) {
+      newErrors.pan = 'PAN number must be in format: ABCDE1234F'
+    }
+
+    if (!formData.aadharUpload) {
+      newErrors.aadharUpload = 'Aadhar card upload is required'
+    }
+
+    if (!formData.panUpload) {
+      newErrors.panUpload = 'PAN card upload is required'
+    }
+
+    if (!formData.passportPhoto) {
+      newErrors.passportPhoto = 'Passport size photo is required'
+    }
+
     if (!formData.address.village.trim()) {
       newErrors['address.village'] = 'Village is required'
     }
@@ -147,45 +199,113 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
     dispatch(submitMembershipStart())
 
     try {
+      // Create FormData for file upload
+      const submitData = new FormData()
+      
+      // Add all form fields
+      submitData.append('fullName', formData.fullName.trim())
+      submitData.append('fatherOrHusbandName', formData.fatherOrHusbandName.trim())
+      submitData.append('age', formData.age)
+      submitData.append('dateOfBirth', formData.dateOfBirth)
+      submitData.append('occupation', formData.occupation.trim())
+      submitData.append('mobileNumber', formData.mobileNumber.trim())
+      submitData.append('aadhar', formData.aadhar.trim())
+      submitData.append('pan', formData.pan.trim().toUpperCase())
+      
+      // Add document uploads
+      if (formData.aadharUpload) {
+        submitData.append('aadharUpload', formData.aadharUpload)
+      }
+      if (formData.panUpload) {
+        submitData.append('panUpload', formData.panUpload)
+      }
+      if (formData.passportPhoto) {
+        submitData.append('passportPhoto', formData.passportPhoto)
+      }
+      
+      // Add address fields
+      submitData.append('address[village]', formData.address.village.trim())
+      submitData.append('address[postOffice]', formData.address.postOffice.trim())
+      submitData.append('address[policeStation]', formData.address.policeStation.trim())
+      submitData.append('address[district]', formData.address.district.trim())
+      submitData.append('address[pinCode]', formData.address.pinCode.trim())
+      if (formData.address.landmark) {
+        submitData.append('address[landmark]', formData.address.landmark.trim())
+      }
+
       // Use apiRequest helper when in dashboard mode (includes auth token)
       // Otherwise use fetch for public access
       let data
-      if (hideHeader) {
-        try {
-          data = await apiRequest('/memberships', {
+      let response
+      
+      try {
+        if (hideHeader) {
+          // For authenticated requests, we need to handle FormData differently
+          const token = localStorage.getItem('token')
+          response = await fetch(`${API_BASE_URL}/memberships`, {
             method: 'POST',
-            body: JSON.stringify(formData),
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              // Don't set Content-Type for FormData - browser will set it with boundary
+            },
+            body: submitData,
           })
-        } catch (apiError) {
-          // apiRequest throws errors, extract message
-          let errorMessage = apiError.message || 'Failed to submit membership application'
-          dispatch(submitMembershipFailure(errorMessage))
-          setSnackbar({ open: true, message: errorMessage, severity: 'error' })
-          return
+        } else {
+          response = await fetch(`${API_BASE_URL}/memberships`, {
+            method: 'POST',
+            // Don't set Content-Type for FormData - browser will set it with boundary
+            body: submitData,
+          })
         }
-      } else {
-        const response = await fetch(`${API_BASE_URL}/memberships`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        })
-        data = await response.json()
+
+        // Try to parse JSON response
+        let responseText = ''
+        try {
+          responseText = await response.text()
+          data = responseText ? JSON.parse(responseText) : {}
+        } catch (parseError) {
+          console.error('Failed to parse response:', parseError, responseText)
+          throw new Error('Invalid response from server')
+        }
 
         // Check for errors
         if (!response.ok || !data.success) {
           // Handle validation errors
           let errorMessage = 'Failed to submit membership application'
           if (data.errors && Array.isArray(data.errors)) {
-            errorMessage = data.errors.map(err => err.msg || err.message).join(', ')
+            errorMessage = data.errors.map(err => err.msg || err.message || JSON.stringify(err)).join(', ')
           } else if (data.message) {
             errorMessage = data.message
+          } else if (response.status === 400) {
+            errorMessage = 'Validation error. Please check all fields.'
+          } else if (response.status === 401) {
+            errorMessage = 'Authentication failed. Please login again.'
+          } else if (response.status === 500) {
+            errorMessage = 'Server error. Please try again later.'
           }
+          
+          console.error('Membership submission error:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+          })
+          
           dispatch(submitMembershipFailure(errorMessage))
           setSnackbar({ open: true, message: errorMessage, severity: 'error' })
           return
         }
+      } catch (apiError) {
+        console.error('Membership submission network error:', apiError)
+        let errorMessage = apiError.message || 'Failed to submit membership application. Please check your connection.'
+        
+        // Handle network errors
+        if (apiError.name === 'TypeError' && apiError.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.'
+        }
+        
+        dispatch(submitMembershipFailure(errorMessage))
+        setSnackbar({ open: true, message: errorMessage, severity: 'error' })
+        return
       }
 
       if (data.success) {
@@ -377,6 +497,79 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
                 </div>
 
                 <div className="form-group">
+                  <SearchableSelect
+                    label="Occupation"
+                    name="occupation"
+                    options={OCCUPATIONS}
+                    value={formData.occupation}
+                    onChange={handleChange}
+                    error={errors.occupation}
+                    helperText={errors.occupation}
+                    placeholder="Select or search your occupation"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <TextField
+                    label="Mobile Number"
+                    name="mobileNumber"
+                    type="text"
+                    value={formData.mobileNumber}
+                    onChange={handleChange}
+                    placeholder="10 digit mobile number"
+                    error={errors.mobileNumber}
+                    helperText={errors.mobileNumber}
+                    required
+                    maxLength={10}
+                    inputProps={{
+                      maxLength: 10,
+                      pattern: '[0-9]*'
+                    }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <TextField
+                    label="Aadhar Number"
+                    name="aadhar"
+                    type="text"
+                    value={formData.aadhar}
+                    onChange={handleChange}
+                    placeholder="12 digit Aadhar number"
+                    error={errors.aadhar}
+                    helperText={errors.aadhar}
+                    required
+                    maxLength={12}
+                    inputProps={{
+                      maxLength: 12,
+                      pattern: '[0-9]*'
+                    }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <TextField
+                    label="PAN Number"
+                    name="pan"
+                    type="text"
+                    value={formData.pan}
+                    onChange={(e) => {
+                      e.target.value = e.target.value.toUpperCase()
+                      handleChange(e)
+                    }}
+                    placeholder="ABCDE1234F"
+                    error={errors.pan}
+                    helperText={errors.pan || ''}
+                    required
+                    maxLength={10}
+                    inputProps={{
+                      style: { textTransform: 'uppercase' }
+                    }}
+                  />
+                </div>
+
+                <div className="form-group">
                   <DatePicker
                     label="Date of Birth"
                     name="dateOfBirth"
@@ -407,20 +600,6 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
                       max: 100,
                       readOnly: true
                     }}
-                  />
-                </div>
-
-                <div className="form-group form-group-full">
-                  <SearchableSelect
-                    label="Occupation"
-                    name="occupation"
-                    options={OCCUPATIONS}
-                    value={formData.occupation}
-                    onChange={handleChange}
-                    error={errors.occupation}
-                    helperText={errors.occupation}
-                    placeholder="Select or search your occupation"
-                    required
                   />
                 </div>
               </div>
@@ -483,7 +662,7 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
                     onChange={handleChange}
                     options={ASSAM_DISTRICTS}
                     error={errors['address.district']}
-                    helperText={errors['address.district'] || 'District is fixed as per organization policy'}
+                    helperText={errors['address.district'] || ''}
                     required
                     disabled
                   />
@@ -498,7 +677,7 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
                     onChange={handleChange}
                     placeholder="6 digit PIN code"
                     error={errors['address.pinCode']}
-                    helperText={errors['address.pinCode'] || 'Enter 6-digit postal code'}
+                    helperText={errors['address.pinCode'] || ''}
                     required
                     maxLength={6}
                     inputProps={{
@@ -515,6 +694,68 @@ const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
                     value={formData.address.landmark}
                     onChange={handleChange}
                     placeholder="e.g., Near Park, Opposite School"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="section-header-inline">
+                <div className="section-number">03</div>
+                <div className="section-title-group">
+                  <h2>Document Uploads</h2>
+                  <p className="section-description">
+                    Please upload clear, readable copies of your documents. Supported formats: Images (JPEG, PNG) or PDF. Maximum file size: 50KB per document.
+                  </p>
+                </div>
+              </div>
+
+              <div className="form-grid form-grid-three">
+                <div className="form-group">
+                  <FileUpload
+                    label=""
+                    name="aadharUpload"
+                    value={formData.aadharUpload}
+                    onChange={handleFileChange}
+                    accept="image/*,.pdf"
+                    error={errors.aadharUpload}
+                    helperText={errors.aadharUpload || ''}
+                    required
+                    maxSizeMB={0.05}
+                    placeholderLabel="Aadhar"
+                    onError={handleFileError}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <FileUpload
+                    label=""
+                    name="panUpload"
+                    value={formData.panUpload}
+                    onChange={handleFileChange}
+                    accept="image/*,.pdf"
+                    error={errors.panUpload}
+                    helperText={errors.panUpload || ''}
+                    required
+                    maxSizeMB={0.05}
+                    placeholderLabel="PAN"
+                    onError={handleFileError}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <FileUpload
+                    label=""
+                    name="passportPhoto"
+                    value={formData.passportPhoto}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    error={errors.passportPhoto}
+                    helperText={errors.passportPhoto || ''}
+                    required
+                    maxSizeMB={0.05}
+                    placeholderLabel="Photo"
+                    onError={handleFileError}
                   />
                 </div>
               </div>

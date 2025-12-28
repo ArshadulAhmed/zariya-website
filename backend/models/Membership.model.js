@@ -72,6 +72,34 @@ const membershipSchema = new mongoose.Schema({
     required: [true, 'Occupation is required'],
     trim: true
   },
+  mobileNumber: {
+    type: String,
+    trim: true,
+    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
+  },
+  aadhar: {
+    type: String,
+    trim: true,
+    match: [/^\d{12}$/, 'Aadhar number must be 12 digits']
+  },
+  pan: {
+    type: String,
+    trim: true,
+    match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'PAN must be in format: ABCDE1234F']
+  },
+  // Document uploads - store file paths/URLs
+  aadharUpload: {
+    type: String,
+    trim: true
+  },
+  panUpload: {
+    type: String,
+    trim: true
+  },
+  passportPhoto: {
+    type: String,
+    trim: true
+  },
   // Address Details
   address: {
     type: addressSchema,

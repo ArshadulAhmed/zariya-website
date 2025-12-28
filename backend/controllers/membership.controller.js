@@ -1,25 +1,55 @@
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
+import { getFileUrl } from '../config/fileUpload.config.js';
 
 // @desc    Create membership (Normal user registration)
 // @route   POST /api/memberships
 // @access  Public (or can be protected if needed)
 export const createMembership = async (req, res) => {
   try {
+    console.log('Creating membership - Body:', req.body);
+    console.log('Creating membership - Files:', req.files);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         errors: errors.array()
       });
     }
 
+    // Extract file paths from uploaded files
+    const files = req.files || {};
+    const aadharFile = files.aadharUpload?.[0];
+    const panFile = files.panUpload?.[0];
+    const passportFile = files.passportPhoto?.[0];
+    
+    console.log('Extracted files:', { aadharFile, panFile, passportFile });
+
+    // Prepare membership data
     const membershipData = {
-      ...req.body,
+      fullName: req.body.fullName,
+      fatherOrHusbandName: req.body.fatherOrHusbandName,
+      age: parseInt(req.body.age),
+      dateOfBirth: req.body.dateOfBirth,
+      occupation: req.body.occupation,
+      mobileNumber: req.body.mobileNumber,
+      aadhar: req.body.aadhar,
+      pan: req.body.pan?.toUpperCase(),
+      address: req.body.address, // Already parsed by parseFormDataAddress middleware
+      // Store file paths/URLs
+      aadharUpload: aadharFile ? getFileUrl(aadharFile) : null,
+      panUpload: panFile ? getFileUrl(panFile) : null,
+      passportPhoto: passportFile ? getFileUrl(passportFile) : null,
       createdBy: req.user?.id || null
     };
 
+    console.log('Membership data to save:', membershipData);
+    
     const membership = await Membership.create(membershipData);
+    
+    console.log('Membership created successfully:', membership.userId);
 
     res.status(201).json({
       success: true,
@@ -34,6 +64,7 @@ export const createMembership = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error creating membership:', error);
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -42,7 +73,8 @@ export const createMembership = async (req, res) => {
     }
     res.status(500).json({
       success: false,
-      message: error.message || 'Error creating membership'
+      message: error.message || 'Error creating membership',
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     });
   }
 };
