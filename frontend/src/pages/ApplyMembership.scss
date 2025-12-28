@@ -9,7 +9,7 @@
   min-height: 100vh;
   background: linear-gradient(to bottom, #f8faf9 0%, #ffffff 100%);
   padding-bottom: 4rem;
-  padding-top: 2rem;
+
 
   // When used in dashboard (no header), reduce top padding and change background
   &.dashboard-mode {
@@ -21,7 +21,6 @@
 .apply-membership-container {
   max-width: 90%;
   margin: 0 auto;
-  padding: 2rem 0rem;
 }
 
 // When used in dashboard, adjust container padding
@@ -31,8 +30,7 @@
 }
 
 .page-header {
-  padding: 1.5rem 0 1.25rem;
-  margin-bottom: 2rem;
+  padding-bottom: 20px;
 
   .back-button {
     display: flex;

@@ -1,15 +1,29 @@
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAppDispatch, useAppSelector } from '../../store/hooks'
+import { fetchDashboardStats, fetchRecentActivity } from '../../store/slices/dashboardSlice'
+import { formatIndianCurrency, formatNumber, getTimeAgo } from '../../utils/dashboardUtils'
 import StatCard from '../../components/dashboard/StatCard'
 import './DashboardHome.scss'
 
 const DashboardHome = memo(() => {
-  // Mock data - will be replaced with API calls later
-  const stats = [
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { stats, activities, isLoading, isLoadingActivities } = useAppSelector((state) => state.dashboard)
+
+  useEffect(() => {
+    // Fetch dashboard data on component mount
+    dispatch(fetchDashboardStats())
+    dispatch(fetchRecentActivity(10))
+  }, [dispatch])
+
+  // Prepare stats array for StatCard components
+  const statsArray = [
     {
       title: 'Total Members',
-      value: '1,234',
-      trend: 'up',
-      trendValue: '12% from last month',
+      value: stats.totalMembers ? formatNumber(stats.totalMembers.value) : '0',
+      trend: stats.totalMembers?.trend || 'neutral',
+      trendValue: stats.totalMembers?.trendValue || '',
       color: 'primary',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,9 +36,9 @@ const DashboardHome = memo(() => {
     },
     {
       title: 'Total Loans',
-      value: '856',
-      trend: 'up',
-      trendValue: '8% from last month',
+      value: stats.totalLoans ? formatNumber(stats.totalLoans.value) : '0',
+      trend: stats.totalLoans?.trend || 'neutral',
+      trendValue: stats.totalLoans?.trendValue || '',
       color: 'success',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,9 +49,9 @@ const DashboardHome = memo(() => {
     },
     {
       title: 'Pending Approvals',
-      value: '23',
-      trend: 'down',
-      trendValue: '5 from yesterday',
+      value: stats.pendingApprovals ? formatNumber(stats.pendingApprovals.value) : '0',
+      trend: stats.pendingApprovals?.trend || 'neutral',
+      trendValue: stats.pendingApprovals?.trendValue || '',
       color: 'warning',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -48,9 +62,9 @@ const DashboardHome = memo(() => {
     },
     {
       title: 'Total Disbursed',
-      value: '₹45.2L',
-      trend: 'up',
-      trendValue: '15% from last month',
+      value: stats.totalDisbursed ? formatIndianCurrency(stats.totalDisbursed.value) : '₹0',
+      trend: stats.totalDisbursed?.trend || 'neutral',
+      trendValue: stats.totalDisbursed?.trendValue || '',
       color: 'info',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -71,8 +85,8 @@ const DashboardHome = memo(() => {
       </div>
 
       <div className="stats-grid">
-        {stats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
+        {statsArray.map((stat, index) => (
+          <StatCard key={index} {...stat} isLoading={isLoading} />
         ))}
       </div>
 
@@ -80,24 +94,34 @@ const DashboardHome = memo(() => {
         <div className="content-card">
           <div className="card-header">
             <h2 className="card-title">Recent Activity</h2>
-            <button className="card-action">View All</button>
           </div>
           <div className="card-body">
-            <div className="activity-list">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div key={item} className="activity-item">
-                  <div className="activity-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+            {isLoadingActivities ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Loading activities...</p>
+              </div>
+            ) : activities.length > 0 ? (
+              <div className="activity-list">
+                {activities.map((activity) => (
+                  <div key={`${activity.type}-${activity.id}`} className="activity-item">
+                    <div className="activity-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div className="activity-content">
+                      <div className="activity-text">{activity.title}</div>
+                      <div className="activity-time">{getTimeAgo(activity.timestamp)}</div>
+                    </div>
                   </div>
-                  <div className="activity-content">
-                    <div className="activity-text">New membership application received</div>
-                    <div className="activity-time">2 hours ago</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p>No recent activity</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -107,21 +131,21 @@ const DashboardHome = memo(() => {
           </div>
           <div className="card-body">
             <div className="quick-actions">
-              <button className="action-btn">
+              <button className="action-btn" onClick={() => navigate('/dashboard/memberships/new')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span>New Membership</span>
               </button>
-              <button className="action-btn">
+              <button className="action-btn" onClick={() => navigate('/dashboard/loans/new')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span>New Loan</span>
               </button>
-              <button className="action-btn">
+              <button className="action-btn" onClick={() => navigate('/dashboard/memberships')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

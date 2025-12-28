@@ -383,5 +383,32 @@ export const repaymentsAPI = {
   },
 }
 
+// Dashboard API
+export const dashboardAPI = {
+  getStats: async () => {
+    try {
+      const data = await apiRequest('/dashboard/stats', {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Dashboard API getStats error:', error)
+      throw error
+    }
+  },
+
+  getRecentActivity: async (limit = 10) => {
+    try {
+      const data = await apiRequest(`/dashboard/activity?limit=${limit}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Dashboard API getRecentActivity error:', error)
+      throw error
+    }
+  },
+}
+
 export default apiRequest
 
