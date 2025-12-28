@@ -191,9 +191,12 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
   const applicantBoxWidth = 500;
   let applicantContentY = applicantBoxY + boxPadding;
   
-  // Applicant's Name and Father's/Husband's Name in single row
-  drawField('Applicant\'s Name', loan.membership?.fullName || '', applicantBoxX + boxPadding, applicantContentY, 85, 170);
-  drawField('Father\'s/Husband\'s Name', loan.membership?.fatherOrHusbandName || '', applicantBoxX + boxPadding + 270, applicantContentY, 115, 200);
+  // Applicant's Name in first row
+  drawField('Applicant\'s Name', loan.membership?.fullName || '', applicantBoxX + boxPadding, applicantContentY, 85, 400);
+  
+  applicantContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
+  // Father's/Husband's Name in second row
+  drawField('Father\'s/Husband\'s Name', loan.membership?.fatherOrHusbandName || '', applicantBoxX + boxPadding, applicantContentY, 115, 400);
   
   applicantContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
   // Address in single row - ensure it doesn't overflow
@@ -223,8 +226,12 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
   const nomineeBoxWidth = 500;
   let nomineeContentY = currentY + boxPadding;
   
-  drawField('Nominee\'s Name', loan.nominee?.name || '', nomineeBoxX + boxPadding, nomineeContentY, 85, 180);
-  drawField('Relationship', loan.nominee?.relationship || '', nomineeBoxX + boxPadding + 275, nomineeContentY, 85, 200);
+  // Nominee's Name in first row
+  drawField('Nominee\'s Name', loan.nominee?.name || '', nomineeBoxX + boxPadding, nomineeContentY, 85, 400);
+  
+  nomineeContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
+  // Relationship in second row
+  drawField('Relationship', loan.nominee?.relationship || '', nomineeBoxX + boxPadding, nomineeContentY, 85, 400);
   
   nomineeContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
   // Nominee Address in single row - ensure it doesn't overflow
@@ -248,11 +255,11 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
   const guarantorBoxWidth = 500;
   let guarantorContentY = currentY + boxPadding;
   
-  drawField('Guarantor\'s Name', loan.guarantor?.name || '', guarantorBoxX + boxPadding, guarantorContentY, 95, 170);
-  drawField('Account No. (if any)', loan.guarantor?.bankAccountNumber || '', guarantorBoxX + boxPadding + 275, guarantorContentY, 115, 200);
+  // Guarantor's Name in first row
+  drawField('Guarantor\'s Name', loan.guarantor?.name || '', guarantorBoxX + boxPadding, guarantorContentY, 95, 400);
   
   guarantorContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
-  drawField('Father\'s/Husband\'s Name', loan.guarantor?.fatherOrHusbandName || '', guarantorBoxX + boxPadding, guarantorContentY, 115, 365);
+  drawField('Father\'s/Husband\'s Name', loan.guarantor?.fatherOrHusbandName || '', guarantorBoxX + boxPadding, guarantorContentY, 115, 400);
   
   guarantorContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
   // Guarantor Address in single row - ensure it doesn't overflow
@@ -265,6 +272,14 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
     guarantorAddr?.pinCode ? `PIN-${guarantorAddr.pinCode}` : ''
   ].filter(Boolean).join(', ');
   drawField('Address', guarantorAddressLine, guarantorBoxX + boxPadding, guarantorContentY, 60, 420);
+  
+  guarantorContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
+  // Account No. (if any) in second last row
+  drawField('Account No. (if any)', loan.guarantor?.bankAccountNumber || '', guarantorBoxX + boxPadding, guarantorContentY, 115, 400);
+  
+  guarantorContentY += lineHeight + fieldSpacing + 3; // Match office section spacing
+  // Mobile Number in last row
+  drawField('Mobile Number', loan.guarantor?.mobileNumber || '', guarantorBoxX + boxPadding, guarantorContentY, 85, 120);
   
   const guarantorBoxHeight = guarantorContentY - guarantorBoxY + boxPadding + fieldSpacing;
   drawBox(guarantorBoxX, guarantorBoxY, guarantorBoxWidth, guarantorBoxHeight);
