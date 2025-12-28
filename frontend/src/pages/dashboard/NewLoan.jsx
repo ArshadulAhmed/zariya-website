@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { createLoan, closeSnackbar } from '../../store/slices/loansSlice'
 import { membershipsAPI } from '../../services/api'
@@ -14,6 +14,7 @@ const NewLoan = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { isLoading, snackbar } = useAppSelector((state) => state.loans)
+  const [searchParams] = useSearchParams()
 
   const [searchUserId, setSearchUserId] = useState('')
   const [searching, setSearching] = useState(false)
@@ -74,8 +75,98 @@ const NewLoan = () => {
   const [errors, setErrors] = useState({})
   const [hasCoApplicant, setHasCoApplicant] = useState(false)
 
+  // Auto-search if userId is provided in query params (only on mount)
+  useEffect(() => {
+    const userIdFromQuery = searchParams.get('userId')
+    if (userIdFromQuery && !membership && !searching) {
+      // Ensure userIdFromQuery is a string
+      const userIdString = typeof userIdFromQuery === 'string' ? userIdFromQuery : String(userIdFromQuery || '')
+      setSearchUserId(userIdString)
+      
+      // Trigger search after a brief delay to ensure state is set
+      const searchTimeout = setTimeout(async () => {
+        const userId = userIdString.trim()
+        if (!userId) return
+
+        setSearching(true)
+        setSearchError('')
+        setMembership(null)
+
+        try {
+          const response = await membershipsAPI.getMembershipByUserId(userId)
+          if (response.success && response.data.membership) {
+            const mem = response.data.membership
+            if (mem.status !== 'approved') {
+              setSearchError('Membership must be approved before applying for a loan')
+              return
+            }
+            setMembership(mem)
+            setSearchError('')
+          } else {
+            setSearchError('Membership not found')
+          }
+        } catch (error) {
+          setSearchError(error.message || 'Failed to search membership')
+        } finally {
+          setSearching(false)
+        }
+      }, 100)
+
+      return () => clearTimeout(searchTimeout)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
+
+  // Pre-fill form data when membership is loaded
+  useEffect(() => {
+    if (membership) {
+      setFormData((prev) => ({
+        ...prev,
+        // Pre-fill nominee address with member's address (common case)
+        nominee: {
+          ...prev.nominee,
+          address: {
+            village: membership.address?.village || prev.nominee.address.village,
+            postOffice: membership.address?.postOffice || prev.nominee.address.postOffice,
+            policeStation: membership.address?.policeStation || prev.nominee.address.policeStation,
+            district: membership.address?.district || prev.nominee.address.district,
+            pinCode: membership.address?.pinCode || prev.nominee.address.pinCode,
+            landmark: membership.address?.landmark || prev.nominee.address.landmark,
+          },
+        },
+        // Pre-fill guarantor address with member's address (common case)
+        guarantor: {
+          ...prev.guarantor,
+          address: {
+            village: membership.address?.village || prev.guarantor.address.village,
+            postOffice: membership.address?.postOffice || prev.guarantor.address.postOffice,
+            policeStation: membership.address?.policeStation || prev.guarantor.address.policeStation,
+            district: membership.address?.district || prev.guarantor.address.district,
+            pinCode: membership.address?.pinCode || prev.guarantor.address.pinCode,
+            landmark: membership.address?.landmark || prev.guarantor.address.landmark,
+          },
+        },
+        // Pre-fill co-applicant address with member's address (common case)
+        coApplicant: {
+          ...prev.coApplicant,
+          address: {
+            village: membership.address?.village || prev.coApplicant.address.village,
+            postOffice: membership.address?.postOffice || prev.coApplicant.address.postOffice,
+            policeStation: membership.address?.policeStation || prev.coApplicant.address.policeStation,
+            district: membership.address?.district || prev.coApplicant.address.district,
+            pinCode: membership.address?.pinCode || prev.coApplicant.address.pinCode,
+            landmark: membership.address?.landmark || prev.coApplicant.address.landmark,
+          },
+        },
+      }))
+    }
+  }, [membership])
+
   const handleSearch = async () => {
-    if (!searchUserId.trim()) {
+    // Ensure searchUserId is always a string
+    const userId = typeof searchUserId === 'string' ? searchUserId.trim() : String(searchUserId || '').trim()
+    
+    if (!userId) {
       setSearchError('Please enter a Membership ID')
       return
     }
@@ -85,7 +176,7 @@ const NewLoan = () => {
     setMembership(null)
 
     try {
-      const response = await membershipsAPI.getMembershipByUserId(searchUserId.trim())
+      const response = await membershipsAPI.getMembershipByUserId(userId)
       if (response.success && response.data.membership) {
         const mem = response.data.membership
         if (mem.status !== 'approved') {
@@ -375,9 +466,11 @@ const NewLoan = () => {
               <TextField
                 label="Membership ID"
                 name="searchUserId"
-                value={searchUserId}
+                value={typeof searchUserId === 'string' ? searchUserId : String(searchUserId || '')}
                 onChange={(e) => {
-                  setSearchUserId(e.target.value)
+                  // Ensure we always set a string value
+                  const value = e.target.value || ''
+                  setSearchUserId(typeof value === 'string' ? value : String(value))
                   setSearchError('')
                 }}
                 onKeyPress={(e) => {
@@ -399,6 +492,13 @@ const NewLoan = () => {
                       setMembership(null)
                       setSearchUserId('')
                       setSearchError('')
+                      // Remove userId query parameter from URL
+                      const newSearchParams = new URLSearchParams(searchParams)
+                      newSearchParams.delete('userId')
+                      const newUrl = newSearchParams.toString() 
+                        ? `/dashboard/loans/new?${newSearchParams.toString()}`
+                        : '/dashboard/loans/new'
+                      navigate(newUrl, { replace: true })
                     }}
                   >
                     Clear

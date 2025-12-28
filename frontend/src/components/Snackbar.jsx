@@ -1,29 +1,37 @@
 import { Snackbar as MUISnackbar, Alert } from '@mui/material'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { closeSnackbar } from '../store/slices/loansSlice'
 import './Snackbar.scss'
 
 const Snackbar = ({
-  open,
-  onClose,
-  message,
-  severity = 'error', // 'error' | 'warning' | 'info' | 'success'
   autoHideDuration = 6000,
   anchorOrigin = { vertical: 'bottom', horizontal: 'right' }
 }) => {
+  const dispatch = useAppDispatch()
+  // Use specific selector to prevent unnecessary re-renders
+  const snackbar = useAppSelector((state) => state.loans.snackbar)
+  
+  const handleClose = () => {
+    dispatch(closeSnackbar())
+  }
+
+  if (!snackbar) return null
+
   return (
     <MUISnackbar
-      open={open}
+      open={snackbar.open}
       autoHideDuration={autoHideDuration}
-      onClose={onClose}
+      onClose={handleClose}
       anchorOrigin={anchorOrigin}
       className="custom-snackbar"
     >
       <Alert
-        onClose={onClose}
-        severity={severity}
+        onClose={handleClose}
+        severity={snackbar.severity || 'error'}
         variant="filled"
         className="custom-alert"
       >
-        {message}
+        {snackbar.message}
       </Alert>
     </MUISnackbar>
   )

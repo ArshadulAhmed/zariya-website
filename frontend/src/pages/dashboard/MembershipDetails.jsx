@@ -112,6 +112,7 @@ const MembershipDetails = () => {
 
   const membership = selectedMembership
   const isPending = membership.status === 'pending'
+  const isApproved = membership.status === 'approved'
   const canReview = isPending
 
   return (
@@ -128,32 +129,45 @@ const MembershipDetails = () => {
           <h1 className="page-title">Membership Details</h1>
           <p className="page-subtitle">View and manage membership application</p>
         </div>
-        {canReview && (
-          <div className="action-buttons">
+        <div className="action-buttons">
+          {canReview && (
+            <>
+              <button
+                className="btn-success"
+                onClick={() => setApproveConfirm({ open: true })}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Approve
+              </button>
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  setRejectConfirm({ open: true })
+                  setRejectionReason('')
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Reject
+              </button>
+            </>
+          )}
+          {isApproved && (
             <button
-              className="btn-success"
-              onClick={() => setApproveConfirm({ open: true })}
+              className="btn-primary"
+              onClick={() => navigate(`/dashboard/loans/new?userId=${encodeURIComponent(membership.userId)}`)}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Approve
+              Apply Loan
             </button>
-            <button
-              className="btn-danger"
-              onClick={() => {
-                setRejectConfirm({ open: true })
-                setRejectionReason('')
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Reject
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="details-container">

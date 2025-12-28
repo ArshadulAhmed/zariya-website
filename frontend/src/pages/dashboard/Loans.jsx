@@ -6,6 +6,52 @@ import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import './Loans.scss'
 
+const columns = [
+  {
+    key: 'loanAccountNumber',
+    header: 'Loan Account',
+    width: '180px',
+    render: (value) => value === '-' ? <span style={{ color: '#9ca3af' }}>Pending</span> : value,
+  },
+  {
+    key: 'memberUserId',
+    header: 'User ID',
+    width: '180px',
+  },
+  {
+    key: 'memberName',
+    header: 'Member Name',
+    width: '200px',
+  },
+  {
+    key: 'loanAmount',
+    header: 'Loan Amount',
+    width: '150px',
+    render: (value) => `₹${Number(value).toLocaleString('en-IN')}`,
+  },
+  {
+    key: 'remainingAmount',
+    header: 'Remaining Amount',
+    width: '150px',
+    render: (value) => `₹${Number(value).toLocaleString('en-IN')}`,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    width: '120px',
+    render: (value) => (
+      <span className={`status-badge status-${value}`}>
+        {value.charAt(0).toUpperCase() + value.slice(1)}
+      </span>
+    ),
+  },
+  {
+    key: 'createdAt',
+    header: 'Created Date',
+    width: '150px',
+  },
+]
+
 const Loans = memo(() => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -60,52 +106,6 @@ const Loans = memo(() => {
   const handleFilterChange = (key, value) => {
     dispatch(setFilters({ [key]: value }))
   }
-
-  const columns = [
-    {
-      key: 'loanAccountNumber',
-      header: 'Loan Account',
-      width: '180px',
-      render: (value) => value === '-' ? <span style={{ color: '#9ca3af' }}>Pending</span> : value,
-    },
-    {
-      key: 'memberUserId',
-      header: 'User ID',
-      width: '180px',
-    },
-    {
-      key: 'memberName',
-      header: 'Member Name',
-      width: '200px',
-    },
-    {
-      key: 'loanAmount',
-      header: 'Loan Amount',
-      width: '150px',
-      render: (value) => `₹${Number(value).toLocaleString('en-IN')}`,
-    },
-    {
-      key: 'remainingAmount',
-      header: 'Remaining Amount',
-      width: '150px',
-      render: (value) => `₹${Number(value).toLocaleString('en-IN')}`,
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      width: '120px',
-      render: (value) => (
-        <span className={`status-badge status-${value}`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      header: 'Created Date',
-      width: '150px',
-    },
-  ]
 
   const handleRowClick = (row) => {
     // Use loanAccountNumber instead of DB ID
