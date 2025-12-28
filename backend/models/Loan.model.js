@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getNextSequence } from './Counter.model.js';
 
 const addressSchema = new mongoose.Schema({
   village: {
@@ -229,35 +230,19 @@ const loanSchema = new mongoose.Schema({
 loanSchema.pre('save', async function(next) {
   // Generate loan account number if it doesn't exist
   if (!this.loanAccountNumber) {
-    // Generate format: LOAN-YYYYMMDD-XXXX (e.g., LOAN-20240115-0001)
-    const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-    
-    // Find the last loan created today (for sequence numbering)
-    const todayStart = new Date(date);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(date);
-    todayEnd.setHours(23, 59, 59, 999);
-    
-    const LoanModel = this.constructor;
-    const lastLoan = await LoanModel
-      .findOne({
-        createdAt: { $gte: todayStart, $lte: todayEnd }
-      })
-      .sort({ loanAccountNumber: -1 });
-    
-    let sequence = 1;
-    if (lastLoan && lastLoan.loanAccountNumber) {
-      const parts = lastLoan.loanAccountNumber.split('-');
-      if (parts.length === 3) {
-        const lastSeq = parseInt(parts[2]);
-        if (!isNaN(lastSeq)) {
-          sequence = lastSeq + 1;
-        }
-      }
+    try {
+      // Generate format: LOAN-YYYYMMDD-XXXX (e.g., LOAN-20240115-0001)
+      const date = new Date();
+      const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+      
+      // Use atomic counter to get next sequence number
+      // This ensures thread-safe sequence generation
+      const sequence = await getNextSequence(`loan-${dateStr}`);
+      
+      this.loanAccountNumber = `LOAN-${dateStr}-${String(sequence).padStart(4, '0')}`;
+    } catch (error) {
+      return next(error);
     }
-    
-    this.loanAccountNumber = `LOAN-${dateStr}-${String(sequence).padStart(4, '0')}`;
   }
   
   // Set start and end dates when approved

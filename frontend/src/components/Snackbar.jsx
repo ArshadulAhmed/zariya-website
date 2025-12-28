@@ -5,21 +5,28 @@ import './Snackbar.scss'
 
 const Snackbar = ({
   autoHideDuration = 6000,
-  anchorOrigin = { vertical: 'bottom', horizontal: 'right' }
+  anchorOrigin = { vertical: 'bottom', horizontal: 'right' },
+  open = false,
+  message = '',
+  severity = '',
+  onClose = () => {},
 }) => {
   const dispatch = useAppDispatch()
   // Use specific selector to prevent unnecessary re-renders
   const snackbar = useAppSelector((state) => state.loans.snackbar)
+
+  console.log("snackbar", snackbar)
   
   const handleClose = () => {
     dispatch(closeSnackbar())
+    onClose()
   }
 
-  if (!snackbar) return null
+  if (!snackbar && !open ) return null
 
   return (
     <MUISnackbar
-      open={snackbar.open}
+      open={snackbar.open || open}
       autoHideDuration={autoHideDuration}
       onClose={handleClose}
       anchorOrigin={anchorOrigin}
@@ -27,11 +34,11 @@ const Snackbar = ({
     >
       <Alert
         onClose={handleClose}
-        severity={snackbar.severity || 'error'}
+        severity={severity || snackbar.severity}
         variant="filled"
         className="custom-alert"
       >
-        {snackbar.message}
+        {snackbar.message || message}
       </Alert>
     </MUISnackbar>
   )

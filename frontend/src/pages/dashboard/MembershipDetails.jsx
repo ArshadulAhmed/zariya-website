@@ -17,6 +17,7 @@ const MembershipDetails = () => {
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
   const [rejectionReason, setRejectionReason] = useState('')
   const [copied, setCopied] = useState(false)
+  const [enlargedImage, setEnlargedImage] = useState(null)
 
   useEffect(() => {
     if (id) {
@@ -71,6 +72,20 @@ const MembershipDetails = () => {
     }
   }
 
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    } catch (e) {
+      return dateString
+    }
+  }
+
   const handleCopyMembershipId = async () => {
     const userId = selectedMembership?.userId
     if (!userId) return
@@ -84,6 +99,29 @@ const MembershipDetails = () => {
     } catch (err) {
       console.error('Failed to copy:', err)
     }
+  }
+
+  const getDocumentUrl = (url) => {
+    if (!url) return null
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${url.startsWith('/') ? '' : '/'}${url}`
+  }
+
+  const isPdf = (url) => {
+    if (!url) return false
+    return url.toLowerCase().endsWith('.pdf')
+  }
+
+  const handleImageClick = (url) => {
+    if (url && !isPdf(url)) {
+      setEnlargedImage(getDocumentUrl(url))
+    }
+  }
+
+  const closeEnlargedImage = () => {
+    setEnlargedImage(null)
   }
 
   if (isLoading && !selectedMembership) {
@@ -212,95 +250,265 @@ const MembershipDetails = () => {
 
           <div className="details-grid">
             <div className="detail-section">
-              <h3>Personal Information</h3>
-              <div className="detail-row">
-                <span className="detail-label">Full Name</span>
-                <span className="detail-value">{membership.fullName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Father's / Husband's Name</span>
-                <span className="detail-value">{membership.fatherOrHusbandName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Date of Birth</span>
-                <span className="detail-value">{formatDate(membership.dateOfBirth)}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Age</span>
-                <span className="detail-value">{membership.age || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Occupation</span>
-                <span className="detail-value">{membership.occupation || 'N/A'}</span>
+              <h3>Member Information</h3>
+              <div className="member-info-grid">
+                <div className="info-row">
+                  <span className="info-label">Membership ID</span>
+                  <span className="info-value">{membership.userId || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Full Name</span>
+                  <span className="info-value">{membership.fullName || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Father's / Husband's Name</span>
+                  <span className="info-value">{membership.fatherOrHusbandName || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Date of Birth</span>
+                  <span className="info-value">{formatDateOnly(membership.dateOfBirth)}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Age</span>
+                  <span className="info-value">{membership.age || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Occupation</span>
+                  <span className="info-value">{membership.occupation || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">District</span>
+                  <span className="info-value">{membership.address?.district || 'N/A'}</span>
+                </div>
+                {membership.mobileNumber && (
+                  <div className="info-row">
+                    <span className="info-label">Mobile Number</span>
+                    <span className="info-value">{membership.mobileNumber}</span>
+                  </div>
+                )}
+                {membership.aadhar && (
+                  <div className="info-row">
+                    <span className="info-label">Aadhar Number</span>
+                    <span className="info-value">{membership.aadhar}</span>
+                  </div>
+                )}
+                {membership.pan && (
+                  <div className="info-row">
+                    <span className="info-label">PAN Number</span>
+                    <span className="info-value">{membership.pan}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="detail-section">
               <h3>Address Information</h3>
-              <div className="detail-row">
-                <span className="detail-label">Village</span>
-                <span className="detail-value">{membership.address?.village || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Post Office</span>
-                <span className="detail-value">{membership.address?.postOffice || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Police Station</span>
-                <span className="detail-value">{membership.address?.policeStation || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">District</span>
-                <span className="detail-value">{membership.address?.district || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">PIN Code</span>
-                <span className="detail-value">{membership.address?.pinCode || 'N/A'}</span>
-              </div>
-              {membership.address?.landmark && (
-                <div className="detail-row">
-                  <span className="detail-label">Landmark</span>
-                  <span className="detail-value">{membership.address.landmark}</span>
+              <div className="member-info-grid">
+                <div className="info-row">
+                  <span className="info-label">Village</span>
+                  <span className="info-value">{membership.address?.village || 'N/A'}</span>
                 </div>
-              )}
+                <div className="info-row">
+                  <span className="info-label">Post Office</span>
+                  <span className="info-value">{membership.address?.postOffice || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Police Station</span>
+                  <span className="info-value">{membership.address?.policeStation || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">District</span>
+                  <span className="info-value">{membership.address?.district || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">PIN Code</span>
+                  <span className="info-value">{membership.address?.pinCode || 'N/A'}</span>
+                </div>
+                {membership.address?.landmark && (
+                  <div className="info-row">
+                    <span className="info-label">Landmark</span>
+                    <span className="info-value">{membership.address.landmark}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="detail-section">
               <h3>Application Details</h3>
-              <div className="detail-row">
-                <span className="detail-label">Status</span>
-                <span className={`status-badge status-${membership.status}`}>
-                  {membership.status.charAt(0).toUpperCase() + membership.status.slice(1)}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Created At</span>
-                <span className="detail-value">{formatDate(membership.createdAt)}</span>
-              </div>
-              {membership.reviewedBy && (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Reviewed By</span>
-                    <span className="detail-value">
-                      {membership.reviewedBy?.fullName || membership.reviewedBy?.username || 'N/A'}
+              <div className="member-info-grid">
+                <div className="info-row">
+                  <span className="info-label">Status</span>
+                  <span className="info-value">
+                    <span className={`status-badge status-${membership.status}`}>
+                      {membership.status.charAt(0).toUpperCase() + membership.status.slice(1)}
                     </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Reviewed At</span>
-                    <span className="detail-value">{formatDate(membership.reviewedAt)}</span>
-                  </div>
-                </>
-              )}
-              {membership.rejectionReason && (
-                <div className="detail-row">
-                  <span className="detail-label">Rejection Reason</span>
-                  <span className="detail-value rejection-reason">{membership.rejectionReason}</span>
+                  </span>
                 </div>
-              )}
+                <div className="info-row">
+                  <span className="info-label">Created At</span>
+                  <span className="info-value">{formatDate(membership.createdAt)}</span>
+                </div>
+                {membership.reviewedBy && (
+                  <>
+                    <div className="info-row">
+                      <span className="info-label">Reviewed By</span>
+                      <span className="info-value">
+                        {membership.reviewedBy?.fullName || membership.reviewedBy?.username || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Reviewed At</span>
+                      <span className="info-value">{formatDate(membership.reviewedAt)}</span>
+                    </div>
+                  </>
+                )}
+                {membership.rejectionReason && (
+                  <div className="info-row">
+                    <span className="info-label">Rejection Reason</span>
+                    <span className="info-value rejection-reason">{membership.rejectionReason}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {(membership.aadharUpload || membership.aadharUploadBack || membership.panUpload || membership.passportPhoto) && (
+            <div className="documents-section">
+              <h3>Uploaded Documents</h3>
+              <div className="documents-grid">
+                  {membership.aadharUpload && (
+                    <div className="document-item">
+                      <span className="document-label">Aadhar Card (Front)</span>
+                      <div className="document-preview-container" onClick={() => handleImageClick(membership.aadharUpload)}>
+                        {isPdf(membership.aadharUpload) ? (
+                          <a
+                            href={getDocumentUrl(membership.aadharUpload)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="document-link"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="document-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span>View PDF</span>
+                            </div>
+                          </a>
+                        ) : (
+                          <img 
+                            src={getDocumentUrl(membership.aadharUpload)} 
+                            alt="Aadhar Card" 
+                            className="document-image"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {membership.aadharUploadBack && (
+                    <div className="document-item">
+                      <span className="document-label">Aadhar Card (Back)</span>
+                      <div className="document-preview-container" onClick={() => handleImageClick(membership.aadharUploadBack)}>
+                        {isPdf(membership.aadharUploadBack) ? (
+                          <a
+                            href={getDocumentUrl(membership.aadharUploadBack)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="document-link"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="document-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span>View PDF</span>
+                            </div>
+                          </a>
+                        ) : (
+                          <img 
+                            src={getDocumentUrl(membership.aadharUploadBack)} 
+                            alt="Aadhar Card (Back)" 
+                            className="document-image"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {membership.panUpload && (
+                    <div className="document-item">
+                      <span className="document-label">PAN Card</span>
+                      <div className="document-preview-container" onClick={() => handleImageClick(membership.panUpload)}>
+                        {isPdf(membership.panUpload) ? (
+                          <a
+                            href={getDocumentUrl(membership.panUpload)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="document-link"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="document-icon">
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              <span>View PDF</span>
+                            </div>
+                          </a>
+                        ) : (
+                          <img 
+                            src={getDocumentUrl(membership.panUpload)} 
+                            alt="PAN Card" 
+                            className="document-image"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {membership.passportPhoto && (
+                    <div className="document-item">
+                      <span className="document-label">Passport Photo</span>
+                      <div className="document-preview-container" onClick={() => handleImageClick(membership.passportPhoto)}>
+                        <img 
+                          src={getDocumentUrl(membership.passportPhoto)} 
+                          alt="Passport Photo" 
+                          className="document-image passport-photo"
+                          onError={(e) => {
+                            e.target.style.display = 'none'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {enlargedImage && (
+        <div className="image-modal" onClick={closeEnlargedImage}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="image-modal-close" onClick={closeEnlargedImage}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <img src={enlargedImage} alt="Enlarged view" className="enlarged-image" />
+          </div>
+        </div>
+      )}
 
       <ConfirmationModal
         open={approveConfirm.open}

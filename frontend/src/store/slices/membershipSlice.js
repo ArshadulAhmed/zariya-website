@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
-
-const DEFAULT_DISTRICT = import.meta.env.VITE_DEFAULT_DISTRICT || 'Barpeta'
+import { DEFAULT_DISTRICT } from '../../constants/assamDistricts'
 
 const initialState = {
   formData: {
@@ -13,6 +12,7 @@ const initialState = {
     aadhar: '',
     pan: '',
     aadharUpload: null,
+    aadharUploadBack: null,
     panUpload: null,
     passportPhoto: null,
     address: {
@@ -26,6 +26,7 @@ const initialState = {
   },
   isLoading: false,
   error: null,
+  validationErrors: {},
   success: false,
   membershipId: null,
 }
@@ -50,6 +51,7 @@ const membershipSlice = createSlice({
       state.isLoading = false
       state.success = true
       state.error = null
+      state.validationErrors = {}
       state.membershipId = action.payload?.userId || null
       // Reset form data after successful submission
       state.formData = initialState.formData
@@ -68,6 +70,17 @@ const membershipSlice = createSlice({
     clearMembershipError: (state) => {
       state.error = null
     },
+    setValidationErrors: (state, action) => {
+      state.validationErrors = action.payload
+    },
+    clearValidationError: (state, action) => {
+      const fieldName = action.payload
+      if (fieldName) {
+        delete state.validationErrors[fieldName]
+      } else {
+        state.validationErrors = {}
+      }
+    },
   },
 })
 
@@ -78,6 +91,8 @@ export const {
   submitMembershipFailure,
   resetMembershipForm,
   clearMembershipError,
+  setValidationErrors,
+  clearValidationError,
 } = membershipSlice.actions
 export default membershipSlice.reducer
 

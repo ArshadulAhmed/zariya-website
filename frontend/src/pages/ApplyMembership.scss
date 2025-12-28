@@ -13,25 +13,63 @@
 
   // When used in dashboard (no header), reduce top padding and change background
   &.dashboard-mode {
-    padding-top: 1rem;
-    background: #ffffff;
+    background: #f5f7fa;
+    padding-top: 0 !important;
   }
 }
 
 .apply-membership-container {
-  max-width: 900px;
+  max-width: 90%;
   margin: 0 auto;
   padding: 2rem 0rem;
 }
 
 // When used in dashboard, adjust container padding
 .apply-membership-page.dashboard-mode .apply-membership-container {
-  padding: 1rem 0rem;
+  padding: 32px;
+  max-width: 100% !important;
 }
 
 .page-header {
   padding: 1.5rem 0 1.25rem;
-  margin-bottom: 0;
+  margin-bottom: 2rem;
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s;
+    font-family: 'Poppins', sans-serif;
+
+    &:hover {
+      color: var(--primary-dark);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
 
   .breadcrumb {
     display: flex;
@@ -228,7 +266,7 @@
 
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
 
     @media (max-width: 768px) {
@@ -237,14 +275,14 @@
     }
 
     &.form-grid-three {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr) !important;
 
-      @media (max-width: 1024px) {
-        grid-template-columns: repeat(2, 1fr);
+      @media (max-width: 992px) {
+        grid-template-columns: repeat(2, 1fr) !important;
       }
 
       @media (max-width: 768px) {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
       }
     }
   }

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getNextSequence } from './Counter.model.js';
 
 const addressSchema = new mongoose.Schema({
   village: {
@@ -74,21 +75,31 @@ const membershipSchema = new mongoose.Schema({
   },
   mobileNumber: {
     type: String,
+    unique: true,
+    sparse: true, // Allow null/undefined values but enforce uniqueness when present
     trim: true,
     match: [/^\d{10}$/, 'Mobile number must be 10 digits']
   },
   aadhar: {
     type: String,
+    unique: true,
+    sparse: true, // Allow null/undefined values but enforce uniqueness when present
     trim: true,
     match: [/^\d{12}$/, 'Aadhar number must be 12 digits']
   },
   pan: {
     type: String,
+    unique: true,
+    sparse: true, // Allow null/undefined values but enforce uniqueness when present
     trim: true,
     match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'PAN must be in format: ABCDE1234F']
   },
   // Document uploads - store file paths/URLs
   aadharUpload: {
+    type: String,
+    trim: true
+  },
+  aadharUploadBack: {
     type: String,
     trim: true
   },
@@ -135,35 +146,21 @@ const membershipSchema = new mongoose.Schema({
 
 // Generate unique User ID before saving
 membershipSchema.pre('save', async function(next) {
-  // Always generate userId if it doesn't exist (for new documents)
-  if (!this.userId || this.isNew) {
-    // Generate format: ZAR-YYYYMMDD-XXXX (e.g., ZAR-20240115-0001)
-    const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-    
-    // Find the last membership created today
-    const todayStart = new Date(date);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(date);
-    todayEnd.setHours(23, 59, 59, 999);
-    
-    const MembershipModel = this.constructor;
-    const lastMembership = await MembershipModel
-      .findOne({
-        createdAt: { $gte: todayStart, $lte: todayEnd }
-      })
-      .sort({ userId: -1 });
-    
-    let sequence = 1;
-    if (lastMembership && lastMembership.userId) {
-      const parts = lastMembership.userId.split('-');
-      if (parts.length === 3) {
-        const lastSeq = parseInt(parts[2]) || 0;
-        sequence = lastSeq + 1;
-      }
+  // Generate userId only if it doesn't exist and this is a new document
+  if (!this.userId && this.isNew) {
+    try {
+      // Generate format: ZAR-YYYYMMDD-XXXX (e.g., ZAR-20240115-0001)
+      const date = new Date();
+      const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+      
+      // Use atomic counter to get next sequence number
+      // This ensures thread-safe sequence generation
+      const sequence = await getNextSequence(`membership-${dateStr}`);
+      
+      this.userId = `ZAR-${dateStr}-${String(sequence).padStart(4, '0')}`;
+    } catch (error) {
+      return next(error);
     }
-    
-    this.userId = `ZAR-${dateStr}-${String(sequence).padStart(4, '0')}`;
   }
   next();
 });

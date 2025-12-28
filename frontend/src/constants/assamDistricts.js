@@ -1,3 +1,6 @@
+// Default district
+export const DEFAULT_DISTRICT = import.meta.env.VITE_DEFAULT_DISTRICT || 'Barpeta'
+
 // All districts of Assam, India
 export const ASSAM_DISTRICTS = [
   'Barpeta',
@@ -35,5 +38,4 @@ export const ASSAM_DISTRICTS = [
 ]
 
 // Default district (configurable via environment variable)
-export const DEFAULT_DISTRICT = import.meta.env.VITE_DEFAULT_DISTRICT || 'Barpeta'
 

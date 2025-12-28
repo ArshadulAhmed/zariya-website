@@ -56,6 +56,7 @@ const uploadS3 = multer({
 // Middleware for handling multiple file fields with S3
 export const uploadMembershipFilesS3 = uploadS3.fields([
   { name: 'aadharUpload', maxCount: 1 },
+  { name: 'aadharUploadBack', maxCount: 1 },
   { name: 'panUpload', maxCount: 1 },
   { name: 'passportPhoto', maxCount: 1 }
 ]);

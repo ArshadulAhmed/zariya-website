@@ -248,6 +248,13 @@ const membershipsSlice = createSlice({
           age: Number(membership.age) || 0,
           dateOfBirth: dateOfBirthFormatted,
           occupation: String(membership.occupation || ''),
+          mobileNumber: String(membership.mobileNumber || ''),
+          aadhar: String(membership.aadhar || ''),
+          pan: String(membership.pan || ''),
+          aadharUpload: String(membership.aadharUpload || ''),
+          aadharUploadBack: String(membership.aadharUploadBack || ''),
+          panUpload: String(membership.panUpload || ''),
+          passportPhoto: String(membership.passportPhoto || ''),
           address: {
             village: String(membership.address?.village || ''),
             postOffice: String(membership.address?.postOffice || ''),
