@@ -51,37 +51,41 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
-    // Remove console and debugger in production
-    // Note: esbuild automatically removes console in production builds
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // CRITICAL: Never split React or React-related packages
-          // They must all be in the same chunk to share the same React instance
-          if (
-            id.includes('node_modules/react') || 
-            id.includes('node_modules/react-dom') || 
-            id.includes('node_modules/react-redux') ||
-            id.includes('node_modules/react-router') ||
-            id.includes('node_modules/@reduxjs/toolkit')
-          ) {
-            return 'react-vendor'
+          // CRITICAL: Bundle ALL React-dependent packages together
+          // This includes React, React-DOM, React-Redux, React-Router, 
+          // MUI, and Emotion since they all depend on React
+          const isReactPackage = (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-redux/') ||
+            id.includes('node_modules/react-router/') ||
+            id.includes('node_modules/react-router-dom/') ||
+            id.includes('node_modules/@reduxjs/toolkit/') ||
+            id.includes('react/jsx-runtime') ||
+            id.includes('react/jsx-dev-runtime')
+          )
+          
+          // Emotion and MUI MUST be bundled with React since they depend on it
+          const isMUIOrEmotion = (
+            id.includes('@mui') ||
+            id.includes('@emotion')
+          )
+          
+          if (isReactPackage || isMUIOrEmotion) {
+            // Keep all React-dependent packages in entry chunk
+            // This ensures React is available when Emotion/MUI try to use it
+            return undefined  // Keep in entry chunk
           }
           
+          // Other vendor packages that don't depend on React
           if (id.includes('node_modules')) {
-            if (id.includes('@mui')) {
-              return 'mui-vendor'
-            }
             if (id.includes('dayjs')) {
               return 'date-vendor'
             }
             return 'vendor'
-          }
-          
-          // Don't split lazy-loaded components from React Router
-          // This ensures they have access to Router context
-          if (id.includes('pages/dashboard')) {
-            return 'dashboard-pages'
           }
         },
         assetFileNames: 'assets/[name].[hash].[ext]',
@@ -91,7 +95,15 @@ export default defineConfig({
     },
     cssCodeSplit: true,
     sourcemap: false,
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true
+    },
+    target: 'esnext',
+    modulePreload: {
+      polyfill: true
+    }
   },
   server: {
     headers: {
