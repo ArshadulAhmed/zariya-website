@@ -6,10 +6,11 @@ import ApplyMembership from './pages/ApplyMembership'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import DashboardLayout from './components/dashboard/DashboardLayout'
+// Import DashboardHome directly (not lazy) since it's the index route
+import DashboardHome from './pages/dashboard/DashboardHome'
 import './styles/App.scss'
 
-// Lazy load dashboard pages
-const DashboardHome = lazy(() => import('./pages/dashboard/DashboardHome'))
+// Lazy load other dashboard pages
 const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
 const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
@@ -60,11 +61,7 @@ function App() {
       >
         <Route
           index
-          element={
-            <Suspense fallback={<PageLoader />}>
-              <DashboardHome />
-            </Suspense>
-          }
+          element={<DashboardHome />}
         />
         <Route
           path="memberships"

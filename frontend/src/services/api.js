@@ -24,7 +24,10 @@ const apiRequest = async (endpoint, options = {}) => {
     config.body = options.body
   }
 
-  console.log('API Request:', `${API_BASE_URL}${endpoint}`, config)
+  // Only log in development
+  if (import.meta.env.DEV) {
+    console.log('API Request:', `${API_BASE_URL}${endpoint}`, config)
+  }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
   
@@ -32,11 +35,16 @@ const apiRequest = async (endpoint, options = {}) => {
   try {
     data = await response.json()
   } catch (error) {
-    console.error('Failed to parse response:', error)
+    if (import.meta.env.DEV) {
+      console.error('Failed to parse response:', error)
+    }
     throw new Error('Invalid response from server')
   }
 
-  console.log('API Response:', response.status, data)
+  // Only log in development
+  if (import.meta.env.DEV) {
+    console.log('API Response:', response.status, data)
+  }
 
   if (!response.ok) {
     // Handle 401 Unauthorized - token expired or invalid

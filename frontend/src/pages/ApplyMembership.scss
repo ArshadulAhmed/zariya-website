@@ -1,9 +1,9 @@
 @use '../styles/main.scss' as *;
-@import '../components/DatePicker.scss';
-@import '../components/SearchableSelect.scss';
-@import '../components/TextField.scss';
-@import '../components/Select.scss';
-@import '../components/Snackbar.scss';
+@use '../components/DatePicker.scss' as *;
+@use '../components/SearchableSelect.scss' as *;
+@use '../components/TextField.scss' as *;
+@use '../components/Select.scss' as *;
+@use '../components/Snackbar.scss' as *;
 
 .apply-membership-page {
   min-height: 100vh;
