@@ -1,4 +1,4 @@
-@import '../../styles/main.scss';
+@use '../../styles/main.scss' as *;
 
 // Styles are shared with LoanDetails.scss
 // This file exists for potential component-specific overrides

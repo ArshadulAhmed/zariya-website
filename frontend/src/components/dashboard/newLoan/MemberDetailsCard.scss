@@ -1,4 +1,4 @@
-@import '../../../styles/main.scss';
+@use '../../../styles/main.scss' as *;
 
 .member-details-section {
   margin-bottom: 2rem;

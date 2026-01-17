@@ -50,9 +50,9 @@ export const getDashboardStats = async (req, res) => {
     });
     const pendingChange = totalPending - yesterdayPending;
 
-    // Total Disbursed (sum of all approved/active loan amounts)
+    // Total Disbursed (sum of all approved/active/closed loan amounts)
     const disbursedLoans = await Loan.find({
-      status: { $in: ['approved', 'active'] }
+      status: { $in: ['approved', 'active', 'closed'] }
     }).select('loanAmount');
     
     const totalDisbursed = disbursedLoans.reduce((sum, loan) => {
@@ -61,7 +61,7 @@ export const getDashboardStats = async (req, res) => {
 
     // Last month disbursed
     const lastMonthDisbursedLoans = await Loan.find({
-      status: { $in: ['approved', 'active'] },
+      status: { $in: ['approved', 'active', 'closed'] },
       createdAt: { $lt: lastMonth }
     }).select('loanAmount');
     

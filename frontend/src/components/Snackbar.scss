@@ -1,4 +1,4 @@
-@import '../styles/main.scss';
+@use '../styles/main.scss' as *;
 
 .custom-snackbar {
   z-index: 9999 !important;

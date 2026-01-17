@@ -1,4 +1,4 @@
-@import '../../styles/main.scss';
+@use '../../styles/main.scss' as *;
 
 .membership-details-page {
   padding: 2rem;

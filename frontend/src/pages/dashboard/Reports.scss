@@ -1,4 +1,4 @@
-@import '../../styles/main.scss';
+@use '../../styles/main.scss' as *;
 
 .reports-page {
   padding: 32px;

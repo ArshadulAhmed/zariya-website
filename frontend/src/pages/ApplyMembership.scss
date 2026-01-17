@@ -1,4 +1,4 @@
-@import '../styles/main.scss';
+@use '../styles/main.scss' as *;
 @import '../components/DatePicker.scss';
 @import '../components/SearchableSelect.scss';
 @import '../components/TextField.scss';

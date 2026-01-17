@@ -1,4 +1,4 @@
-@import '../../styles/main.scss';
+@use '../../styles/main.scss' as *;
 
 .loan-details-page {
   padding: 2rem;
@@ -39,7 +39,6 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 2rem;
     gap: 1rem;
 
     @media (max-width: 768px) {

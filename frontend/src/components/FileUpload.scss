@@ -1,4 +1,4 @@
-@import '../styles/main.scss';
+@use '../styles/main.scss' as *;
 
 .file-upload-group {
   display: flex;
