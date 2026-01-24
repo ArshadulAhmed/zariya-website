@@ -1,49 +1,51 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import User from '../models/User.model.js';
-import bcrypt from 'bcryptjs';
 
-// Load environment variables
 dotenv.config();
 
 const createAdmin = async () => {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/zariya');
-    console.log('✅ Connected to MongoDB');
+    if (!process.env.MONGODB_URI) {
+      process.exit(1);
+    }
 
-    // Check if admin already exists
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅');
+
     const existingAdmin = await User.findOne({ role: 'admin' });
     if (existingAdmin) {
-      console.log('⚠️  Admin user already exists');
-      console.log(`   Username: ${existingAdmin.username}`);
-      console.log(`   Email: ${existingAdmin.email}`);
+      await mongoose.connection.close();
       process.exit(0);
     }
 
-    // Default admin credentials (should be changed after first login)
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminFullName = process.env.ADMIN_FULL_NAME;
+
+    if (!adminPassword) {
+        await mongoose.connection.close();
+        process.exit(1);
+    }
+
     const adminData = {
-      username: 'admin',
-      email: 'admin@zariya.com',
-      password: 'Admin@123', // Change this after first login
+      username: adminUsername,
+      email: adminEmail,
+      password: adminPassword,
       role: 'admin',
-      fullName: 'System Administrator',
+      fullName: adminFullName,
       isActive: true
     };
 
-    // Create admin user (password will be hashed by User model's pre-save hook)
-    const admin = await User.create(adminData);
+    await User.create(adminData);
 
-    console.log('✅ Admin user created successfully!');
-    console.log('\n📋 Admin Credentials:');
-    console.log(`   Username: ${admin.username}`);
-    console.log(`   Email: ${admin.email}`);
-    console.log(`   Password: Admin@123`);
-    console.log('\n⚠️  IMPORTANT: Change the password after first login!');
-    
+    await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+    }
     process.exit(1);
   }
 };
