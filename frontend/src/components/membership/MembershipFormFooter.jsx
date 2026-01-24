@@ -50,14 +50,18 @@ const MembershipFormFooter = () => {
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: submitData,
+          body: JSON.stringify(submitData),
         })
       } else {
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
-          body: submitData,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submitData),
         })
       }
 

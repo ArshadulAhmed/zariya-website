@@ -251,10 +251,11 @@ const membershipsSlice = createSlice({
           mobileNumber: String(membership.mobileNumber || ''),
           aadhar: String(membership.aadhar || ''),
           pan: String(membership.pan || ''),
-          aadharUpload: String(membership.aadharUpload || ''),
-          aadharUploadBack: String(membership.aadharUploadBack || ''),
-          panUpload: String(membership.panUpload || ''),
-          passportPhoto: String(membership.passportPhoto || ''),
+          // Preserve Cloudinary metadata objects, or convert legacy strings
+          aadharUpload: typeof membership.aadharUpload === 'object' ? membership.aadharUpload : (membership.aadharUpload || null),
+          aadharUploadBack: typeof membership.aadharUploadBack === 'object' ? membership.aadharUploadBack : (membership.aadharUploadBack || null),
+          panUpload: typeof membership.panUpload === 'object' ? membership.panUpload : (membership.panUpload || null),
+          passportPhoto: typeof membership.passportPhoto === 'object' ? membership.passportPhoto : (membership.passportPhoto || null),
           address: {
             village: String(membership.address?.village || ''),
             postOffice: String(membership.address?.postOffice || ''),

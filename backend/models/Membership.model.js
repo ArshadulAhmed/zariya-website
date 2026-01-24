@@ -94,22 +94,58 @@ const membershipSchema = new mongoose.Schema({
     trim: true,
     match: [/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'PAN must be in format: ABCDE1234F']
   },
-  // Document uploads - store file paths/URLs
+  // Document uploads - store Cloudinary metadata
   aadharUpload: {
-    type: String,
-    trim: true
+    type: {
+      secure_url: { type: String, required: true },
+      public_id: { type: String, required: true },
+      format: String,
+      width: Number,
+      height: Number,
+      bytes: Number,
+      created_at: String,
+      resource_type: String,
+    },
+    default: null
   },
   aadharUploadBack: {
-    type: String,
-    trim: true
+    type: {
+      secure_url: { type: String, required: true },
+      public_id: { type: String, required: true },
+      format: String,
+      width: Number,
+      height: Number,
+      bytes: Number,
+      created_at: String,
+      resource_type: String,
+    },
+    default: null
   },
   panUpload: {
-    type: String,
-    trim: true
+    type: {
+      secure_url: { type: String, required: true },
+      public_id: { type: String, required: true },
+      format: String,
+      width: Number,
+      height: Number,
+      bytes: Number,
+      created_at: String,
+      resource_type: String,
+    },
+    default: null
   },
   passportPhoto: {
-    type: String,
-    trim: true
+    type: {
+      secure_url: { type: String, required: true },
+      public_id: { type: String, required: true },
+      format: String,
+      width: Number,
+      height: Number,
+      bytes: Number,
+      created_at: String,
+      resource_type: String,
+    },
+    default: null
   },
   // Address Details
   address: {

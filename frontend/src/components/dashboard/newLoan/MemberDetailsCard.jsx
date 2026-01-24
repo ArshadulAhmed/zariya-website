@@ -10,22 +10,45 @@ const MemberDetailsCard = () => {
     return null
   }
 
-  const getDocumentUrl = (url) => {
-    if (!url) return null
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url
+  // Handle both Cloudinary metadata objects and legacy URL strings
+  const getDocumentUrl = (urlOrMetadata) => {
+    if (!urlOrMetadata) return null
+    
+    // If it's a Cloudinary metadata object
+    if (typeof urlOrMetadata === 'object' && urlOrMetadata.secure_url) {
+      return urlOrMetadata.secure_url
     }
-    return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${url.startsWith('/') ? '' : '/'}${url}`
+    
+    // Legacy: if it's a string URL
+    if (typeof urlOrMetadata === 'string') {
+      if (urlOrMetadata.startsWith('http://') || urlOrMetadata.startsWith('https://')) {
+        return urlOrMetadata
+      }
+      return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${urlOrMetadata.startsWith('/') ? '' : '/'}${urlOrMetadata}`
+    }
+    
+    return null
   }
 
-  const isPdf = (url) => {
-    if (!url) return false
-    return url.toLowerCase().endsWith('.pdf')
+  const isPdf = (urlOrMetadata) => {
+    if (!urlOrMetadata) return false
+    
+    // If it's a Cloudinary metadata object
+    if (typeof urlOrMetadata === 'object' && urlOrMetadata.resource_type) {
+      return urlOrMetadata.resource_type === 'raw' || urlOrMetadata.format === 'pdf'
+    }
+    
+    // Legacy: if it's a string URL
+    if (typeof urlOrMetadata === 'string') {
+      return urlOrMetadata.toLowerCase().endsWith('.pdf')
+    }
+    
+    return false
   }
 
-  const handleImageClick = (url) => {
-    if (url && !isPdf(url)) {
-      setEnlargedImage(getDocumentUrl(url))
+  const handleImageClick = (urlOrMetadata) => {
+    if (urlOrMetadata && !isPdf(urlOrMetadata)) {
+      setEnlargedImage(getDocumentUrl(urlOrMetadata))
     }
   }
 

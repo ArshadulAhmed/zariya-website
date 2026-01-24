@@ -1,6 +1,5 @@
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
-import { getFileUrl } from '../config/fileUpload.config.js';
 
 // @desc    Create membership (Normal user registration)
 // @route   POST /api/memberships
@@ -8,7 +7,6 @@ import { getFileUrl } from '../config/fileUpload.config.js';
 export const createMembership = async (req, res) => {
   try {
     console.log('Creating membership - Body:', req.body);
-    console.log('Creating membership - Files:', req.files);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -19,14 +17,97 @@ export const createMembership = async (req, res) => {
       });
     }
 
-    // Extract file paths from uploaded files
-    const files = req.files || {};
-    const aadharFile = files.aadharUpload?.[0];
-    const aadharBackFile = files.aadharUploadBack?.[0];
-    const panFile = files.panUpload?.[0];
-    const passportFile = files.passportPhoto?.[0];
-    
-    console.log('Extracted files:', { aadharFile, aadharBackFile, panFile, passportFile });
+    // Extract Cloudinary metadata from request body
+    // Frontend sends Cloudinary upload results as JSON
+    let aadharUpload = null;
+    let aadharUploadBack = null;
+    let panUpload = null;
+    let passportPhoto = null;
+
+    // Parse Cloudinary metadata if provided as strings (JSON)
+    if (req.body.aadharUpload) {
+      try {
+        aadharUpload = typeof req.body.aadharUpload === 'string' 
+          ? JSON.parse(req.body.aadharUpload) 
+          : req.body.aadharUpload;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid aadharUpload metadata format'
+        });
+      }
+    }
+
+    if (req.body.aadharUploadBack) {
+      try {
+        aadharUploadBack = typeof req.body.aadharUploadBack === 'string'
+          ? JSON.parse(req.body.aadharUploadBack)
+          : req.body.aadharUploadBack;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid aadharUploadBack metadata format'
+        });
+      }
+    }
+
+    if (req.body.panUpload) {
+      try {
+        panUpload = typeof req.body.panUpload === 'string'
+          ? JSON.parse(req.body.panUpload)
+          : req.body.panUpload;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid panUpload metadata format'
+        });
+      }
+    }
+
+    if (req.body.passportPhoto) {
+      try {
+        passportPhoto = typeof req.body.passportPhoto === 'string'
+          ? JSON.parse(req.body.passportPhoto)
+          : req.body.passportPhoto;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid passportPhoto metadata format'
+        });
+      }
+    }
+
+    // Validate Cloudinary metadata structure
+    const validateCloudinaryMetadata = (metadata, fieldName) => {
+      if (!metadata) return null;
+      if (!metadata.secure_url || !metadata.public_id) {
+        throw new Error(`${fieldName} must include secure_url and public_id`);
+      }
+      return {
+        secure_url: metadata.secure_url,
+        public_id: metadata.public_id,
+        format: metadata.format,
+        width: metadata.width,
+        height: metadata.height,
+        bytes: metadata.bytes,
+        created_at: metadata.created_at,
+        resource_type: metadata.resource_type,
+      };
+    };
+
+    // Parse address if it comes as nested object or flat format
+    let address = req.body.address;
+    if (!address && (req.body['address[village]'] || req.body['address[postOffice]'])) {
+      // Handle FormData format (backward compatibility)
+      address = {
+        village: req.body['address[village]'],
+        postOffice: req.body['address[postOffice]'],
+        policeStation: req.body['address[policeStation]'],
+        district: req.body['address[district]'],
+        pinCode: req.body['address[pinCode]'],
+        landmark: req.body['address[landmark]'] || ''
+      };
+    }
 
     // Prepare membership data
     const membershipData = {
@@ -38,12 +119,12 @@ export const createMembership = async (req, res) => {
       mobileNumber: req.body.mobileNumber?.trim(), // Trim mobile number
       aadhar: req.body.aadhar?.trim(), // Trim aadhar
       pan: req.body.pan?.trim().toUpperCase(), // Trim and uppercase PAN
-      address: req.body.address, // Already parsed by parseFormDataAddress middleware
-      // Store file paths/URLs
-      aadharUpload: aadharFile ? getFileUrl(aadharFile) : null,
-      aadharUploadBack: aadharBackFile ? getFileUrl(aadharBackFile) : null,
-      panUpload: panFile ? getFileUrl(panFile) : null,
-      passportPhoto: passportFile ? getFileUrl(passportFile) : null,
+      address: address,
+      // Store Cloudinary metadata
+      aadharUpload: validateCloudinaryMetadata(aadharUpload, 'aadharUpload'),
+      aadharUploadBack: validateCloudinaryMetadata(aadharUploadBack, 'aadharUploadBack'),
+      panUpload: validateCloudinaryMetadata(panUpload, 'panUpload'),
+      passportPhoto: validateCloudinaryMetadata(passportPhoto, 'passportPhoto'),
       createdBy: req.user?.id || null
     };
 

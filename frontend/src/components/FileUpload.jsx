@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 import './FileUpload.scss'
+import { uploadToCloudinary, getUserDocumentFolder } from '../utils/cloudinary'
 
 const FileUpload = ({
   label,
   name,
-  value,
+  value, // Now expects Cloudinary metadata object or null
   onChange,
   accept = 'image/*',
   error,
@@ -13,12 +14,16 @@ const FileUpload = ({
   maxSizeMB = 0.05, // 50KB
   placeholderLabel, // Custom label to show inside the upload box
   onError, // Callback for error handling (for snackbar)
+  userId, // Optional user ID for folder organization
+  folder = 'zariya/documents', // Cloudinary folder path
 }) => {
   const fileInputRef = useRef(null)
-  const [preview, setPreview] = useState(value ? URL.createObjectURL(value) : null)
+  const [preview, setPreview] = useState(null)
   const [dragActive, setDragActive] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
-  const handleFileChange = (file) => {
+  const handleFileChange = async (file) => {
     if (!file) {
       onChange({ target: { name, value: null } })
       return
@@ -65,23 +70,64 @@ const FileUpload = ({
       return
     }
 
-    // Create preview for images
+    // Create local preview for images (before upload)
     if (file.type.startsWith('image/')) {
       // Clean up previous preview
-      if (preview) {
+      if (preview && preview.startsWith('blob:')) {
         URL.revokeObjectURL(preview)
       }
       const previewUrl = URL.createObjectURL(file)
       setPreview(previewUrl)
     } else {
       // For non-images (like PDF), clear preview
-      if (preview) {
+      if (preview && preview.startsWith('blob:')) {
         URL.revokeObjectURL(preview)
       }
       setPreview(null)
     }
 
-    onChange({ target: { name, value: file } })
+    // Upload to Cloudinary
+    setUploading(true)
+    setUploadProgress(0)
+
+    try {
+      // Determine folder path
+      const uploadFolder = userId 
+        ? getUserDocumentFolder(userId, 'memberships')
+        : folder;
+
+      // Upload file to Cloudinary
+      const cloudinaryMetadata = await uploadToCloudinary(
+        file,
+        uploadFolder,
+        (progress) => setUploadProgress(progress)
+      );
+
+      // Update preview to use Cloudinary URL
+      if (cloudinaryMetadata.resource_type === 'image') {
+        if (preview && preview.startsWith('blob:')) {
+          URL.revokeObjectURL(preview)
+        }
+        setPreview(cloudinaryMetadata.secure_url)
+      }
+
+      // Store Cloudinary metadata in form state
+      onChange({ target: { name, value: cloudinaryMetadata } })
+    } catch (uploadError) {
+      console.error('Cloudinary upload error:', uploadError)
+      const errorMsg = uploadError.message || 'Failed to upload file. Please try again.'
+      if (onError) {
+        onError(errorMsg)
+      }
+      // Clean up preview on error
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview)
+      }
+      setPreview(null)
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
   }
 
   const handleInputChange = (e) => {
@@ -114,7 +160,7 @@ const FileUpload = ({
 
   const handleRemove = (e) => {
     e?.stopPropagation()
-    if (preview) {
+    if (preview && preview.startsWith('blob:')) {
       URL.revokeObjectURL(preview)
     }
     setPreview(null)
@@ -124,28 +170,29 @@ const FileUpload = ({
     }
   }
 
-  // Cleanup preview URL on unmount or when value changes
+  // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
-      if (preview) {
+      if (preview && preview.startsWith('blob:')) {
         URL.revokeObjectURL(preview)
       }
     }
   }, [preview])
 
-  // Update preview when value changes externally
+  // Update preview when value changes externally (Cloudinary metadata)
   useEffect(() => {
-    if (value && value instanceof File) {
-      if (value.type.startsWith('image/')) {
-        const previewUrl = URL.createObjectURL(value)
-        setPreview(previewUrl)
-        return () => URL.revokeObjectURL(previewUrl)
-      }
-    } else if (!value) {
-      if (preview) {
-        URL.revokeObjectURL(preview)
+    if (value && typeof value === 'object' && value.secure_url) {
+      // Value is Cloudinary metadata
+      if (value.resource_type === 'image') {
+        setPreview(value.secure_url)
+      } else {
         setPreview(null)
       }
+    } else if (!value) {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview)
+      }
+      setPreview(null)
     }
   }, [value])
 
@@ -175,9 +222,19 @@ const FileUpload = ({
           className="file-input-hidden"
         />
         
-        {value ? (
+        {uploading ? (
+          <div className="file-upload-progress">
+            <svg className="spinner" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32">
+                <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+            <p className="upload-progress-text">Uploading... {uploadProgress}%</p>
+          </div>
+        ) : value ? (
           <div className="file-preview">
-            {preview && value?.type?.startsWith('image/') ? (
+            {preview && (value?.resource_type === 'image' || (typeof value === 'object' && value.secure_url)) ? (
               <>
                 <img src={preview} alt="Preview" className="preview-image" />
                 <button
@@ -238,7 +295,8 @@ const FileUpload = ({
       </div>
 
       {error && <div className="file-upload-error">{error}</div>}
-      {helperText && !error && <div className="file-upload-helper">{helperText}</div>}
+      {helperText && !error && !uploading && <div className="file-upload-helper">{helperText}</div>}
+      {uploading && <div className="file-upload-helper">Uploading to Cloudinary...</div>}
     </div>
   )
 }

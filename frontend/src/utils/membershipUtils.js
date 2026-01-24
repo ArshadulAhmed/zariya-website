@@ -61,19 +61,20 @@ export const validateMembershipForm = (formData) => {
     errors.pan = 'PAN number must be in format: ABCDE1234F'
   }
 
-  if (!formData.aadharUpload) {
+  // Validate Cloudinary metadata objects
+  if (!formData.aadharUpload || !formData.aadharUpload.secure_url) {
     errors.aadharUpload = 'Aadhar card (front) upload is required'
   }
 
-  if (!formData.aadharUploadBack) {
+  if (!formData.aadharUploadBack || !formData.aadharUploadBack.secure_url) {
     errors.aadharUploadBack = 'Aadhar card (back) upload is required'
   }
 
-  if (!formData.panUpload) {
+  if (!formData.panUpload || !formData.panUpload.secure_url) {
     errors.panUpload = 'PAN card upload is required'
   }
 
-  if (!formData.passportPhoto) {
+  if (!formData.passportPhoto || !formData.passportPhoto.secure_url) {
     errors.passportPhoto = 'Passport size photo is required'
   }
 
@@ -103,42 +104,43 @@ export const validateMembershipForm = (formData) => {
 }
 
 /**
- * Create FormData object from membership form data
- * @param {Object} formData - Form data object
- * @returns {FormData} - FormData object ready for submission
+ * Create JSON object from membership form data for API submission
+ * Files are uploaded to Cloudinary, so we send Cloudinary metadata
+ * @param {Object} formData - Form data object with Cloudinary metadata
+ * @returns {Object} - JSON object ready for submission
  */
 export const createMembershipFormData = (formData) => {
-  const submitData = new FormData()
-  
-  submitData.append('fullName', formData.fullName.trim())
-  submitData.append('fatherOrHusbandName', formData.fatherOrHusbandName.trim())
-  submitData.append('age', formData.age)
-  submitData.append('dateOfBirth', formData.dateOfBirth)
-  submitData.append('occupation', formData.occupation.trim())
-  submitData.append('mobileNumber', formData.mobileNumber.trim())
-  submitData.append('aadhar', formData.aadhar.trim())
-  submitData.append('pan', formData.pan.trim().toUpperCase())
-  
-  if (formData.aadharUpload) {
-    submitData.append('aadharUpload', formData.aadharUpload)
+  const submitData = {
+    fullName: formData.fullName.trim(),
+    fatherOrHusbandName: formData.fatherOrHusbandName.trim(),
+    age: formData.age,
+    dateOfBirth: formData.dateOfBirth,
+    occupation: formData.occupation.trim(),
+    mobileNumber: formData.mobileNumber.trim(),
+    aadhar: formData.aadhar.trim(),
+    pan: formData.pan.trim().toUpperCase(),
+    address: {
+      village: formData.address.village.trim(),
+      postOffice: formData.address.postOffice.trim(),
+      policeStation: formData.address.policeStation.trim(),
+      district: formData.address.district.trim(),
+      pinCode: formData.address.pinCode.trim(),
+      landmark: formData.address.landmark?.trim() || '',
+    },
   }
-  if (formData.aadharUploadBack) {
-    submitData.append('aadharUploadBack', formData.aadharUploadBack)
+
+  // Add Cloudinary metadata (already uploaded)
+  if (formData.aadharUpload && typeof formData.aadharUpload === 'object') {
+    submitData.aadharUpload = formData.aadharUpload
   }
-  if (formData.panUpload) {
-    submitData.append('panUpload', formData.panUpload)
+  if (formData.aadharUploadBack && typeof formData.aadharUploadBack === 'object') {
+    submitData.aadharUploadBack = formData.aadharUploadBack
   }
-  if (formData.passportPhoto) {
-    submitData.append('passportPhoto', formData.passportPhoto)
+  if (formData.panUpload && typeof formData.panUpload === 'object') {
+    submitData.panUpload = formData.panUpload
   }
-  
-  submitData.append('address[village]', formData.address.village.trim())
-  submitData.append('address[postOffice]', formData.address.postOffice.trim())
-  submitData.append('address[policeStation]', formData.address.policeStation.trim())
-  submitData.append('address[district]', formData.address.district.trim())
-  submitData.append('address[pinCode]', formData.address.pinCode.trim())
-  if (formData.address.landmark) {
-    submitData.append('address[landmark]', formData.address.landmark.trim())
+  if (formData.passportPhoto && typeof formData.passportPhoto === 'object') {
+    submitData.passportPhoto = formData.passportPhoto
   }
   
   return submitData

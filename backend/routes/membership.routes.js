@@ -1,6 +1,5 @@
 import express from 'express';
 import { body } from 'express-validator';
-import multer from 'multer';
 import {
   createMembership,
   getMemberships,
@@ -9,9 +8,7 @@ import {
   reviewMembership
 } from '../controllers/membership.controller.js';
 import { protect, isAdminOrEmployee } from '../middleware/auth.middleware.js';
-import { parseFormDataAddress } from '../middleware/parseFormData.middleware.js';
 import { APP_CONFIG } from '../config/app.config.js';
-import { uploadMembershipFiles } from '../config/fileUpload.config.js';
 
 const router = express.Router();
 
@@ -95,33 +92,10 @@ const reviewMembershipValidation = [
     .withMessage('Rejection reason cannot be empty if provided')
 ];
 
-// Error handler for multer errors
-const handleMulterError = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'File size too large. Maximum size is 50KB.'
-      });
-    }
-    return res.status(400).json({
-      success: false,
-      message: err.message || 'File upload error'
-    });
-  }
-  if (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message || 'File upload error'
-    });
-  }
-  next();
-};
-
 // Routes
 // Public route - anyone can create membership
-// Note: Order matters - uploadMembershipFiles -> parseFormDataAddress -> validation -> controller
-router.post('/', uploadMembershipFiles, handleMulterError, parseFormDataAddress, createMembershipValidation, createMembership);
+// Files are uploaded to Cloudinary on the frontend, so we only receive metadata
+router.post('/', createMembershipValidation, createMembership);
 
 // Protected routes - only admin and employee can access
 router.use(protect);
