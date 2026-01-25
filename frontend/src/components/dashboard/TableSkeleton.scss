@@ -1,0 +1,105 @@
+@use '../../styles/main.scss' as *;
+
+// Use the same wrapper and table styles from DataTable
+.data-table-wrapper {
+  .skeleton-row {
+    border-bottom: 1px solid #e5e7eb;
+    transition: none;
+    
+    &:hover {
+      background: transparent;
+    }
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .skeleton-cell {
+    padding: 12px 16px;
+    position: relative;
+    overflow: hidden;
+    vertical-align: middle;
+    
+    .skeleton-shimmer {
+      width: 100%;
+      height: 14px;
+      background: linear-gradient(
+        90deg,
+        #f0f0f0 0%,
+        #f8f8f8 20%,
+        #f0f0f0 40%,
+        #f8f8f8 100%
+      );
+      background-size: 200% 100%;
+      border-radius: 6px;
+      animation: shimmer 1.8s ease-in-out infinite;
+    }
+    
+    &.skeleton-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      
+      .skeleton-shimmer {
+        width: 55px;
+        height: 28px;
+        border-radius: 6px;
+      }
+    }
+  }
+
+  // Vary skeleton widths for more realistic appearance
+  .skeleton-row {
+    &:nth-child(1) td .skeleton-shimmer {
+      width: 85%;
+    }
+    
+    &:nth-child(2) td .skeleton-shimmer {
+      width: 92%;
+    }
+    
+    &:nth-child(3) td .skeleton-shimmer {
+      width: 78%;
+    }
+    
+    &:nth-child(4) td .skeleton-shimmer {
+      width: 88%;
+    }
+    
+    &:nth-child(5) td .skeleton-shimmer {
+      width: 82%;
+    }
+    
+    // Additional rows
+    &:nth-child(6) td .skeleton-shimmer {
+      width: 90%;
+    }
+    
+    &:nth-child(7) td .skeleton-shimmer {
+      width: 75%;
+    }
+    
+    &:nth-child(8) td .skeleton-shimmer {
+      width: 86%;
+    }
+    
+    &:nth-child(9) td .skeleton-shimmer {
+      width: 80%;
+    }
+    
+    &:nth-child(10) td .skeleton-shimmer {
+      width: 88%;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+

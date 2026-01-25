@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import TableSkeleton from './TableSkeleton'
 import './DataTable.scss'
 
 const DataTable = memo(({ 
@@ -7,14 +8,17 @@ const DataTable = memo(({
   loading = false, 
   onRowClick,
   actions,
-  emptyMessage = 'No data available'
+  emptyMessage = 'No data available',
+  skeletonRowCount = 5
 }) => {
+  // Show skeleton with table headers while loading
   if (loading) {
     return (
-      <div className="data-table-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading...</p>
-      </div>
+      <TableSkeleton 
+        columns={columns}
+        rowCount={skeletonRowCount}
+        showActions={!!actions}
+      />
     )
   }
 

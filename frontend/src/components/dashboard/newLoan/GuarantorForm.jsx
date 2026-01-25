@@ -78,11 +78,11 @@ const GuarantorForm = () => {
         />
 
         <TextField
-          label="Village"
+          label="Village/Ward"
           name="guarantor.address.village"
           value={formData.address.village}
           onChange={handleChange}
-          placeholder="Enter village"
+          placeholder="Enter village/ward"
           error={errors['guarantor.address.village']}
           helperText={errors['guarantor.address.village']}
           required

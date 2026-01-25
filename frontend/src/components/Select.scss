@@ -1,62 +1,6 @@
-@use '../styles/main.scss' as *;
+@use '../styles/formFields.scss' as *;
 
 .custom-select {
-  .MuiOutlinedInput-root {
-    font-family: 'Poppins', sans-serif;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      .MuiOutlinedInput-notchedOutline {
-        border-color: var(--primary-color);
-      }
-    }
-
-    &.Mui-focused {
-      .MuiOutlinedInput-notchedOutline {
-        border-color: var(--primary-color);
-        border-width: 2px;
-      }
-    }
-
-    &.Mui-error {
-      .MuiOutlinedInput-notchedOutline {
-        border-color: #dc2626;
-      }
-    }
-  }
-
-  .MuiInputLabel-root {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    color: var(--text-primary);
-
-    &.Mui-focused {
-      color: var(--primary-color);
-    }
-
-    &.Mui-error {
-      color: #dc2626;
-    }
-
-    &.MuiInputLabel-shrink {
-      font-weight: 500;
-    }
-  }
-
-  .MuiFormHelperText-root {
-    font-family: 'Poppins', sans-serif;
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-
-    &.Mui-error {
-      color: #dc2626;
-    }
-  }
-
-  .MuiSelect-select {
-    font-family: 'Poppins', sans-serif;
-    padding: 0.875rem 1rem;
-  }
+  @extend %common-select;
 }
 

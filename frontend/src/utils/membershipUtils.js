@@ -75,11 +75,11 @@ export const validateMembershipForm = (formData) => {
   }
 
   if (!formData.passportPhoto || !(formData.passportPhoto instanceof File)) {
-    errors.passportPhoto = 'Passport size photo is required'
+    errors.passportPhoto = 'Passport Size Photo is required'
   }
 
   if (!formData.address?.village?.trim()) {
-    errors['address.village'] = 'Village is required'
+    errors['address.village'] = 'Village/Ward is required'
   }
 
   if (!formData.address?.postOffice?.trim()) {

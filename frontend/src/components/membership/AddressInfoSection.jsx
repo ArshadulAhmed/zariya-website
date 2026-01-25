@@ -33,13 +33,13 @@ const AddressInfoSection = () => {
       <div className="form-grid">
         <div className="form-group">
           <TextField
-            label="Village"
+            label="Village/Ward"
             name="address.village"
             value={formData.address.village}
             onChange={handleChange}
-            placeholder="Enter village name"
+            placeholder="Enter village/ward name"
             error={validationErrors['address.village']}
-            helperText={validationErrors['address.village']}
+            helperText={validationErrors['address.village'] || ''}
             required
           />
         </div>

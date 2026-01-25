@@ -1,52 +1,52 @@
 @use '../../../styles/main.scss' as *;
 
 .member-details-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.6rem;
 
   .member-card {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #e5e7eb;
 
     h2 {
-      font-size: 1.25rem;
+      font-size: 1rem;
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
       border-bottom: 2px solid #f3f4f6;
     }
 
     .member-info-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem 2rem;
-      margin-bottom: 1.5rem;
+      gap: 0.8rem 1.6rem;
+      margin-bottom: 1.2rem;
 
       @media (max-width: 768px) {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0.8rem;
       }
 
       .info-row {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
-        gap: 1rem;
-        padding: 0.75rem 0;
+        gap: 0.8rem;
+        padding: 0.6rem 0;
 
         .info-label {
-          font-size: 0.875rem;
+          font-size: 0.7rem;
           font-weight: 600;
           color: var(--text-secondary);
-          min-width: 140px;
+          min-width: 112px;
           flex-shrink: 0;
         }
 
         .info-value {
-          font-size: 0.95rem;
+          font-size: 0.76rem;
           font-weight: 500;
           color: var(--text-primary);
           flex: 1;
@@ -55,21 +55,21 @@
     }
 
     .documents-section {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
+      margin-top: 1.2rem;
+      padding-top: 1.2rem;
       border-top: 2px solid #f3f4f6;
 
       .documents-title {
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
       }
 
       .documents-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
+        gap: 0.8rem;
         max-width: 900px;
 
         @media (max-width: 1024px) {
@@ -84,10 +84,10 @@
         .document-item {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.4rem;
 
           .document-label {
-            font-size: 0.75rem;
+            font-size: 0.6rem;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
@@ -97,7 +97,7 @@
 
           .document-preview-container {
             width: 100%;
-            height: 180px;
+            height: 144px;
             border-radius: 8px;
             border: 2px solid #e5e7eb;
             background: #f9fafb;
@@ -131,8 +131,8 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 0.5rem;
-                padding: 1rem;
+                gap: 0.4rem;
+                padding: 0.8rem;
                 transition: all 0.2s ease;
 
                 &:hover {
@@ -144,7 +144,7 @@
                 }
 
                 span {
-                  font-size: 0.875rem;
+                  font-size: 0.7rem;
                   font-weight: 500;
                 }
               }
@@ -166,7 +166,7 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    padding: 2rem;
+    padding: 1.6rem;
     cursor: pointer;
 
     .image-modal-content {
@@ -180,13 +180,13 @@
 
       .image-modal-close {
         position: absolute;
-        top: -2.5rem;
+        top: -2rem;
         right: 0;
         background: rgba(255, 255, 255, 0.9);
         border: none;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -201,8 +201,8 @@
         }
 
         svg {
-          width: 20px;
-          height: 20px;
+          width: 16px;
+          height: 16px;
         }
       }
 

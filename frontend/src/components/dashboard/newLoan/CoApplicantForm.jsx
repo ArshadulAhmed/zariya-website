@@ -80,11 +80,11 @@ const CoApplicantForm = () => {
           />
 
           <TextField
-            label="Village"
+            label="Village/Ward"
             name="coApplicant.address.village"
             value={formData.address.village}
             onChange={handleChange}
-            placeholder="Enter village"
+            placeholder="Enter village/ward"
             error={errors['coApplicant.address.village']}
             helperText={errors['coApplicant.address.village']}
             required={hasCoApplicant}

@@ -4,7 +4,41 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchMemberships, setFilters, closeSnackbar, setPagination } from '../../store/slices/membershipsSlice'
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
+import FilterSelect from '../../components/dashboard/FilterSelect'
 import './Memberships.scss'
+
+const columns = [
+  {
+    key: 'userId',
+    header: 'User ID',
+    width: '150px',
+  },
+  {
+    key: 'fullName',
+    header: 'Full Name',
+    width: '200px',
+  },
+  {
+    key: 'district',
+    header: 'District',
+    width: '150px',
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    width: '120px',
+    render: (value) => (
+      <span className={`status-badge status-${value}`}>
+        {value.charAt(0).toUpperCase() + value.slice(1)}
+      </span>
+    ),
+  },
+  {
+    key: 'createdAt',
+    header: 'Created Date',
+    width: '150px',
+  },
+]
 
 const Memberships = memo(() => {
   const navigate = useNavigate()
@@ -21,12 +55,12 @@ const Memberships = memo(() => {
   const [searchInput, setSearchInput] = useState('')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
+  
+  // Show skeleton if loading OR if data is empty and we haven't fetched yet (initial load)
+  const showSkeleton = isLoading || (!hasFetchedRef.current && memberships.length === 0)
 
   // Fetch memberships when filters change
   useEffect(() => {
-    // Skip if already loading to prevent duplicate calls
-    if (isLoading) return
-
     const params = {}
     if (filters.status) params.status = filters.status
     if (filters.search) params.search = filters.search
@@ -38,6 +72,7 @@ const Memberships = memo(() => {
     const paramsKey = JSON.stringify(params)
     
     // Only fetch if params have changed (prevents duplicate calls from StrictMode)
+    // Don't skip if loading - let Redux handle the loading state
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
       lastParamsRef.current = paramsKey
@@ -88,39 +123,6 @@ const Memberships = memo(() => {
     setSearchInput(e.target.value)
   }
 
-  const columns = [
-    {
-      key: 'userId',
-      header: 'User ID',
-      width: '150px',
-    },
-    {
-      key: 'fullName',
-      header: 'Full Name',
-      width: '200px',
-    },
-    {
-      key: 'district',
-      header: 'District',
-      width: '150px',
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      width: '120px',
-      render: (value) => (
-        <span className={`status-badge status-${value}`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      ),
-    },
-    {
-      key: 'createdAt',
-      header: 'Created Date',
-      width: '150px',
-    },
-  ]
-
   return (
     <div className="memberships-page">
       <div className="page-header">
@@ -145,37 +147,41 @@ const Memberships = memo(() => {
       </div>
 
       <div className="page-filters">
-        <input
+          <div className="search-input-group">
+          <input
           type="text"
           placeholder="Search by User ID or Name..."
           className="search-input"
           value={searchInput}
           onChange={handleSearchChange}
         />
-        <select 
-          className="filter-select"
-          value={filters.status}
-          onChange={(e) => handleFilterChange('status', e.target.value)}
-        >
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select 
-          className="filter-select"
-          value={filters.district}
-          onChange={(e) => handleFilterChange('district', e.target.value)}
-        >
-          <option value="">All Districts</option>
-          <option value="Barpeta">Barpeta</option>
-        </select>
+          </div>
+          <div className="filter-select-group">
+            <FilterSelect
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              placeholder="All Status"
+              options={[
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' }
+              ]}
+            />
+            <FilterSelect
+              value={filters.district}
+              onChange={(e) => handleFilterChange('district', e.target.value)}
+              placeholder="All Districts"
+              options={[
+                { value: 'Barpeta', label: 'Barpeta' }
+              ]}
+            />
+          </div>
       </div>
 
       <DataTable
         columns={columns}
         data={memberships}
-        loading={isLoading}
+        loading={showSkeleton}
         onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No memberships found"

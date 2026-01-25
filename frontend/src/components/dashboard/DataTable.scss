@@ -17,9 +17,9 @@
     border-bottom: 2px solid #e5e7eb;
 
     th {
-      padding: 16px;
+      padding: 13px;
       text-align: left;
-      font-size: 0.875rem;
+      font-size: 0.7rem;
       font-weight: 600;
       color: #374151;
       text-transform: uppercase;
@@ -51,8 +51,8 @@
     }
 
     td {
-      padding: 16px;
-      font-size: 0.9rem;
+      padding: 13px;
+      font-size: 0.72rem;
       color: #111827;
       font-family: 'Poppins', sans-serif;
     }
@@ -61,17 +61,17 @@
 
 .table-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   justify-content: flex-end;
 
   button {
-    padding: 6px 12px;
+    padding: 5px 10px;
     border: 1px solid #e5e7eb;
     background: white;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     font-weight: 500;
     transition: all 0.2s ease;
     font-family: 'Poppins', sans-serif;
@@ -109,32 +109,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 32px;
+  padding: 51px 26px;
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
 
   svg {
     color: #9ca3af;
-    margin-bottom: 16px;
+    margin-bottom: 13px;
   }
 
   p {
     color: #6b7280;
-    font-size: 0.95rem;
+    font-size: 0.76rem;
     font-family: 'Poppins', sans-serif;
   }
 }
 
 .data-table-loading {
   .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #f3f4f6;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #f3f4f6;
     border-top-color: var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 16px;
+    margin-bottom: 13px;
   }
 }
 

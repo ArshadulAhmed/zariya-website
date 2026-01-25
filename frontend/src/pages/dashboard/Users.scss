@@ -1,7 +1,7 @@
 @use '../../styles/main.scss' as *;
 
 .users-page {
-  padding: 32px;
+  padding: 26px;
   margin: 0 auto;
 
   .page-header {
@@ -11,7 +11,7 @@
     margin-bottom: 24px;
 
     .page-title {
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: #111827;
       margin: 0 0 8px 0;
@@ -19,7 +19,7 @@
     }
 
     .page-subtitle {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: #6b7280;
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -28,13 +28,13 @@
     .btn-primary {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
+      gap: 5px;
+      padding: 8px 15px;
       background: var(--primary-color);
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.76rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -50,52 +50,42 @@
 
   .page-filters {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 24px;
     flex-wrap: wrap;
 
-    .search-input {
-      flex: 1;
-      min-width: 250px;
-      padding: 12px 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-family: 'Poppins', sans-serif;
-      transition: all 0.2s ease;
+    .search-input-group {
+      min-width: 20%;
+      .search-input {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s ease;
+        line-height: 1.4375em;
 
-      &:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(26, 95, 63, 0.1);
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+        }
       }
     }
 
-    .filter-select {
-      padding: 12px 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-family: 'Poppins', sans-serif;
-      background: white;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      min-width: 150px;
-
-      &:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(26, 95, 63, 0.1);
-      }
+    .filter-select-group {
+      display: flex;
+      gap: 10px;
     }
   }
 }
 
 .role-badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   font-family: 'Poppins', sans-serif;
@@ -113,9 +103,9 @@
 
 .status-badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 0.6rem;
   font-weight: 600;
   text-transform: uppercase;
   font-family: 'Poppins', sans-serif;
@@ -149,8 +139,8 @@
     .page-filters {
       flex-direction: column;
 
-      .search-input,
-      .filter-select {
+      .search-input-group,
+      .filter-select-group {
         width: 100%;
       }
     }

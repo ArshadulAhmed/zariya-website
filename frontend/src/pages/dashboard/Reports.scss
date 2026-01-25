@@ -1,38 +1,69 @@
 @use '../../styles/main.scss' as *;
 
 .reports-page {
-  padding: 32px;
+  padding: 26px;
   margin: 0 auto;
 
   .page-header {
-    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 26px;
 
     .page-title {
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: #111827;
-      margin: 0 0 8px 0;
+      margin: 0 0 0.4rem 0;
       font-family: 'Poppins', sans-serif;
     }
 
     .page-subtitle {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: #6b7280;
       margin: 0;
       font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 15px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
+      white-space: nowrap;
+
+      &:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 95, 63, 0.3);
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
     }
   }
 
   .reports-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 19px;
   }
 
   .report-card {
     background: white;
     border-radius: 12px;
-    padding: 24px;
+    padding: 19px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #e5e7eb;
     transition: all 0.3s ease;
@@ -45,29 +76,34 @@
     }
 
     .report-icon {
-      width: 64px;
-      height: 64px;
+      width: 51px;
+      height: 51px;
       border-radius: 12px;
       background: rgba(26, 95, 63, 0.1);
       color: var(--primary-color);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 13px;
+
+      svg {
+        width: 26px;
+        height: 26px;
+      }
     }
 
     .report-title {
-      font-size: 1.25rem;
+      font-size: 1rem;
       font-weight: 600;
       color: #111827;
-      margin: 0 0 8px 0;
+      margin: 0 0 6px 0;
       font-family: 'Poppins', sans-serif;
     }
 
     .report-description {
-      font-size: 0.9rem;
+      font-size: 0.72rem;
       color: #6b7280;
-      margin: 0 0 20px 0;
+      margin: 0 0 16px 0;
       line-height: 1.6;
       flex: 1;
       font-family: 'Poppins', sans-serif;
@@ -75,12 +111,12 @@
 
     .report-btn {
       width: 100%;
-      padding: 12px 24px;
+      padding: 10px 19px;
       background: var(--primary-color);
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.76rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -98,7 +134,18 @@
 // Responsive
 @media (max-width: 768px) {
   .reports-page {
-    padding: 20px 16px;
+    padding: 16px 13px;
+
+    .page-header {
+      flex-direction: column;
+      gap: 13px;
+      align-items: stretch;
+
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+    }
 
     .reports-grid {
       grid-template-columns: 1fr;

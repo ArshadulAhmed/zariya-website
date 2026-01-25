@@ -1,7 +1,7 @@
 @use '../../styles/main.scss' as *;
 
 .loan-details-page {
-  padding: 2rem;
+  padding: 1.6rem;
   min-height: 100vh;
   background: #f9fafb;
 
@@ -12,18 +12,18 @@
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    gap: 1rem;
+    gap: 0.8rem;
 
     p {
       color: var(--text-secondary);
-      font-size: 1rem;
+      font-size: 0.8rem;
     }
   }
 
   .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid #f3f4f6;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #f3f4f6;
     border-top-color: var(--primary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -39,7 +39,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.8rem;
 
     @media (max-width: 768px) {
       flex-direction: column;
@@ -48,15 +48,15 @@
     .back-button {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       background: none;
       border: none;
       color: var(--primary-color);
-      font-size: 0.95rem;
+      font-size: 0.76rem;
       font-weight: 500;
       cursor: pointer;
-      padding: 0.5rem 0;
-      margin-bottom: 0.5rem;
+      padding: 0.4rem 0;
+      margin-bottom: 0.4rem;
       transition: color 0.2s;
 
       &:hover {
@@ -69,21 +69,21 @@
     }
 
     .page-title {
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: var(--text-primary);
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 0.4rem 0;
     }
 
     .page-subtitle {
-      font-size: 1rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
       margin: 0;
     }
 
     .action-buttons {
       display: flex;
-      gap: 1rem;
+      gap: 0.8rem;
 
       @media (max-width: 768px) {
         width: 100%;
@@ -93,11 +93,11 @@
       button {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
+        gap: 0.4rem;
+        padding: 0.6rem 1.2rem;
         border: none;
         border-radius: 8px;
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -141,7 +141,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.6rem;
   }
 
   .details-card {
@@ -155,22 +155,22 @@
   .card-header {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 2rem;
+    padding: 1.6rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 2rem;
+    gap: 1.6rem;
 
     @media (max-width: 768px) {
       flex-direction: column;
-      padding: 1.5rem;
+      padding: 1.2rem;
     }
 
     .status-badge {
       display: inline-block;
-      padding: 0.25rem 0.75rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 6px;
-      font-size: 0.875rem;
+      font-size: 0.7rem;
       font-weight: 600;
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
@@ -180,7 +180,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 0.25rem;
+      gap: 0.2rem;
 
       @media (max-width: 768px) {
         align-items: flex-start;
@@ -188,7 +188,7 @@
       }
 
       .id-label {
-        font-size: 0.875rem;
+        font-size: 0.7rem;
         opacity: 0.9;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -197,10 +197,10 @@
       .id-value-wrapper {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.6rem;
 
         .id-value {
-          font-size: 1.25rem;
+          font-size: 1rem;
           font-weight: 700;
           font-family: 'Courier New', monospace;
           letter-spacing: 0.1em;
@@ -209,14 +209,14 @@
         .copy-button {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
+          gap: 0.4rem;
+          padding: 0.4rem 0.6rem;
           background: rgba(255, 255, 255, 0.2);
           backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.3);
           border-radius: 6px;
           color: white;
-          font-size: 0.875rem;
+          font-size: 0.7rem;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
@@ -234,8 +234,8 @@
 
           svg {
             flex-shrink: 0;
-            width: 16px;
-            height: 16px;
+            width: 13px;
+            height: 13px;
           }
         }
       }
@@ -243,25 +243,25 @@
   }
 
   .details-grid {
-    padding: 2rem;
+    padding: 1.6rem;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    gap: 1.6rem;
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
-      padding: 1.5rem;
-      gap: 1.5rem;
+      padding: 1.2rem;
+      gap: 1.2rem;
     }
   }
 
   .detail-section {
     h3 {
-      font-size: 1.125rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-primary);
-      margin: 0 0 1rem 0;
-      padding-bottom: 0.75rem;
+      margin: 0 0 0.8rem 0;
+      padding-bottom: 0.6rem;
       border-bottom: 2px solid #e5e7eb;
     }
   }
@@ -270,8 +270,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 0.75rem 0;
-    gap: 1rem;
+    padding: 0.6rem 0;
+    gap: 0.8rem;
     border-bottom: 1px solid #f3f4f6;
 
     &:last-child {
@@ -280,15 +280,15 @@
 
     @media (max-width: 768px) {
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.2rem;
     }
 
     .detail-label {
-      font-size: 0.95rem;
+      font-size: 0.76rem;
       color: var(--text-secondary);
       font-weight: 500;
       flex-shrink: 0;
-      min-width: 150px;
+      min-width: 120px;
 
       @media (max-width: 768px) {
         min-width: auto;
@@ -296,7 +296,7 @@
     }
 
     .detail-value {
-      font-size: 0.95rem;
+      font-size: 0.76rem;
       color: var(--text-primary);
       font-weight: 400;
       text-align: right;
@@ -324,9 +324,9 @@
 
     .status-badge {
       display: inline-block;
-      padding: 0.25rem 0.75rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 6px;
-      font-size: 0.875rem;
+      font-size: 0.7rem;
       font-weight: 600;
 
       &.status-pending {
@@ -360,14 +360,14 @@
   .repayment-section {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.6rem;
   }
 
   .close-loan-card {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    padding: 2rem;
+    padding: 1.6rem;
     border: 1px solid #e5e7eb;
     border-left: 4px solid #10b981;
 
@@ -375,7 +375,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 2rem;
+      gap: 1.6rem;
 
       @media (max-width: 768px) {
         flex-direction: column;
@@ -383,26 +383,26 @@
       }
 
       h3 {
-        font-size: 1.25rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin: 0 0 0.5rem 0;
+        margin: 0 0 0.4rem 0;
       }
 
       p {
         color: var(--text-secondary);
-        font-size: 0.95rem;
+        font-size: 0.76rem;
         margin: 0;
       }
 
       .btn-success {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
+        gap: 0.4rem;
+        padding: 0.6rem 1.2rem;
         border: none;
         border-radius: 8px;
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -429,20 +429,20 @@
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    padding: 2rem;
+    padding: 1.6rem;
     border: 1px solid #e5e7eb;
 
     h2 {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: var(--text-primary);
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 0.4rem 0;
     }
 
     .section-description {
       color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin: 0 0 1.5rem 0;
+      font-size: 0.76rem;
+      margin: 0 0 1.2rem 0;
     }
   }
 
@@ -450,15 +450,15 @@
     .form-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
     }
 
     .form-error {
       color: #dc2626;
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
+      font-size: 0.7rem;
+      margin-bottom: 0.8rem;
+      padding: 0.6rem;
       background: #fef2f2;
       border-radius: 6px;
       border: 1px solid #fecaca;
@@ -467,13 +467,13 @@
     .form-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 1rem;
+      gap: 0.8rem;
 
       button {
-        padding: 0.75rem 2rem;
+        padding: 0.6rem 1.6rem;
         border: none;
         border-radius: 8px;
-        font-size: 1rem;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s;
@@ -502,13 +502,13 @@
     .loading-text,
     .empty-state {
       text-align: center;
-      padding: 2rem;
+      padding: 1.6rem;
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.76rem;
     }
 
     .repayment-list {
-      margin-top: 1rem;
+      margin-top: 0.8rem;
     }
 
     .repayment-table {
@@ -519,9 +519,9 @@
         background: #f9fafb;
         
         th {
-          padding: 0.75rem 1rem;
+          padding: 0.6rem 0.8rem;
           text-align: left;
-          font-size: 0.875rem;
+          font-size: 0.7rem;
           font-weight: 600;
           color: var(--text-secondary);
           text-transform: uppercase;
@@ -544,8 +544,8 @@
           }
 
           td {
-            padding: 1rem;
-            font-size: 0.95rem;
+            padding: 0.8rem;
+            font-size: 0.76rem;
             color: var(--text-primary);
             vertical-align: middle;
 
@@ -568,9 +568,9 @@
 
             .payment-method-badge {
               display: inline-block;
-              padding: 0.25rem 0.75rem;
+              padding: 0.2rem 0.6rem;
               border-radius: 6px;
-              font-size: 0.875rem;
+              font-size: 0.7rem;
               font-weight: 500;
               background: #e0e7ff;
               color: #3730a3;

@@ -11,7 +11,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 16px;
   animation: fadeIn 0.2s ease-in-out;
 }
 
@@ -28,7 +28,7 @@
   background: white;
   border-radius: 8px;
   width: 100%;
-  max-width: 500px;
+  max-width: 400px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -50,14 +50,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 19px;
   border-bottom: 1px solid #e5e7eb;
 
   h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: 1.28rem;
     font-weight: 600;
     color: #1f2937;
+    font-family: 'Poppins', sans-serif;
   }
 }
 
@@ -65,7 +66,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,37 +83,37 @@
   }
 
   svg {
-    width: 24px;
-    height: 24px;
+    width: 19px;
+    height: 19px;
   }
 }
 
 .new-user-form {
-  padding: 24px;
+  padding: 19px;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   &:last-of-type {
-    margin-bottom: 24px;
+    margin-bottom: 19px;
   }
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 32px;
-  padding-top: 24px;
+  gap: 10px;
+  margin-top: 26px;
+  padding-top: 19px;
   border-top: 1px solid #e5e7eb;
 
   button {
-    min-width: 100px;
-    padding: 12px 24px;
+    min-width: 80px;
+    padding: 10px 19px;
     border: none;
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -155,11 +156,11 @@
   }
 
   .modal-header {
-    padding: 20px;
+    padding: 16px;
   }
 
   .new-user-form {
-    padding: 20px;
+    padding: 16px;
   }
 }
 

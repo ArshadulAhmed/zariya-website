@@ -444,11 +444,11 @@ const AdditionalInfo = () => {
             )}
             {membership.passportPhoto && (
               <div className="document-item">
-                <span className="document-label">Passport Photo</span>
+                <span className="document-label">Passport Size Photo</span>
                 <div className="document-preview-container" onClick={() => handleImageClick(membership.passportPhoto)}>
                   <img 
                     src={getDocumentUrl(membership.passportPhoto)} 
-                    alt="Passport Photo" 
+                    alt="Passport Size Photo" 
                     className="document-image passport-photo"
                     style={{ cursor: 'pointer' }}
                     onError={(e) => {

@@ -6,6 +6,7 @@ import NewUserModal from '../../components/dashboard/NewUserModal'
 import EditUserModal from '../../components/dashboard/EditUserModal'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
+import FilterSelect from '../../components/dashboard/FilterSelect'
 import './Users.scss'
 
 const Users = memo(() => {
@@ -27,12 +28,12 @@ const Users = memo(() => {
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, userId: null, userName: '' })
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
+  
+  // Show skeleton if loading OR if data is empty and we haven't fetched yet (initial load)
+  const showSkeleton = isLoading || (!hasFetchedRef.current && users.length === 0)
 
   // Fetch users when filters change
   useEffect(() => {
-    // Skip if already loading to prevent duplicate calls
-    if (isLoading) return
-
     const params = {}
     if (filters.role) params.role = filters.role
     if (filters.isActive !== '') params.isActive = filters.isActive === 'active' ? 'true' : 'false'
@@ -43,6 +44,7 @@ const Users = memo(() => {
     const paramsKey = JSON.stringify(params)
     
     // Only fetch if params have changed (prevents duplicate calls from StrictMode)
+    // Don't skip if loading - let Redux handle the loading state
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
       lastParamsRef.current = paramsKey
@@ -203,37 +205,41 @@ const Users = memo(() => {
       </div>
 
       <div className="page-filters">
-        <input
-          type="text"
-          placeholder="Search by Username, Email, or Name..."
-          className="search-input"
-          value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
-        />
-        <select
-          className="filter-select"
-          value={filters.role}
-          onChange={(e) => handleFilterChange('role', e.target.value)}
-        >
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="employee">Employee</option>
-        </select>
-        <select
-          className="filter-select"
-          value={filters.isActive}
-          onChange={(e) => handleFilterChange('isActive', e.target.value)}
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <div className="search-input-group">
+          <input
+            type="text"
+            placeholder="Search by Username, Email, or Name..."
+            className="search-input"
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+          />
+        </div>
+        <div className="filter-select-group">
+          <FilterSelect
+            value={filters.role}
+            onChange={(e) => handleFilterChange('role', e.target.value)}
+            placeholder="All Roles"
+            options={[
+              { value: 'admin', label: 'Admin' },
+              { value: 'employee', label: 'Employee' }
+            ]}
+          />
+          <FilterSelect
+            value={filters.isActive}
+            onChange={(e) => handleFilterChange('isActive', e.target.value)}
+            placeholder="All Status"
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' }
+            ]}
+          />
+        </div>
       </div>
 
       <DataTable
         columns={columns}
         data={filteredUsers}
-        loading={isLoading}
+        loading={showSkeleton}
         onRowClick={isAdmin ? handleRowClick : undefined}
         actions={handleActions}
         emptyMessage="No users found"

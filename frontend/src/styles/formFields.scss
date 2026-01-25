@@ -1,0 +1,166 @@
+@use './main.scss' as *;
+
+// Common styles for all form fields (TextField, Select, etc.)
+%common-form-field {
+  .MuiOutlinedInput-root {
+    font-family: 'Poppins', sans-serif;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--primary-color);
+      }
+    }
+
+    &.Mui-focused {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: var(--primary-color);
+        border-width: 2px;
+      }
+    }
+
+    &.Mui-error {
+      .MuiOutlinedInput-notchedOutline {
+        border-color: #dc2626;
+      }
+    }
+  }
+
+  .MuiInputLabel-root {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    line-height: 1.4375em;
+    letter-spacing: 0.00938em;
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    transform-origin: top left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 24px);
+    transform: translate(14px, 19px) scale(1);
+    transition: color 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms, transform 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms, max-width 200ms cubic-bezier(0.0, 0, 0.2, 1) 0ms;
+
+    &.Mui-focused {
+      color: var(--primary-color);
+    }
+
+    &.Mui-error {
+      color: #dc2626;
+    }
+
+    &.MuiInputLabel-shrink {
+      font-weight: 500;
+      font-size: 0.76rem;
+      transform: translate(14px, -9px) scale(0.75);
+      max-width: calc(133% - 32px);
+    }
+  }
+
+  .MuiFormHelperText-root {
+    font-family: 'Poppins', sans-serif;
+    margin-top: 0.4rem;
+    font-size: 0.68rem;
+
+    &.Mui-error {
+      color: #dc2626;
+    }
+  }
+
+  .MuiOutlinedInput-input {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.8rem;
+  }
+}
+
+// Common input field styles
+%common-input {
+  @extend %common-form-field;
+
+  // Ensure TextField has consistent height and vertical centering
+  .MuiOutlinedInput-root {
+    height: 56px; // MUI default height for medium size OutlinedInput
+    display: flex;
+    align-items: center;
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: var(--text-primary) !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+
+    // For dark mode support (if needed in future)
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+    }
+  }
+
+  // Ensure input element is vertically centered
+  .MuiOutlinedInput-input {
+    display: flex;
+    align-items: center;
+    padding: 14px; // MUI default padding (14px left and right)
+    
+    input {
+      line-height: 1.4375em; // MUI default line-height for proper vertical centering
+      display: flex;
+      align-items: center;
+      padding-left: 0; // Remove extra left padding from input itself
+    }
+
+    // Ensure placeholder is vertically centered
+    input::placeholder {
+      line-height: 1.4375em;
+      opacity: 0.6;
+    }
+  }
+}
+
+// Common select field styles
+%common-select {
+  @extend %common-form-field;
+
+  // Ensure Select matches TextField height
+  .MuiOutlinedInput-root {
+    // Match the height of TextField by ensuring same structure
+    height: 56px; // MUI default height for medium size OutlinedInput
+    display: flex;
+    align-items: center;
+  }
+
+  .MuiSelect-select {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.8rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    line-height: 1.4375em; // Match TextField line-height for vertical centering
+    padding: 14px; // Match TextField padding (14px left and right)
+    
+    // Ensure placeholder text (italic) is vertically centered
+    em {
+      display: inline-block;
+      line-height: 1.4375em; // Match input line-height
+      vertical-align: middle;
+      font-style: italic;
+    }
+  }
+
+  // Ensure the input wrapper matches TextField
+  .MuiOutlinedInput-input {
+    padding: 14px; // Match TextField padding
+    display: flex;
+    align-items: center;
+  }
+}
+

@@ -19,7 +19,7 @@ import { parseFormDataAddress } from '../middleware/parseFormData.middleware.js'
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 200 * 1024, // 200KB max
+    fileSize: 100 * 1024, // 100KB max
     fieldSize: 10 * 1024 * 1024, // 10MB for text fields (default is 1MB)
   },
   fileFilter: (req, file, cb) => {

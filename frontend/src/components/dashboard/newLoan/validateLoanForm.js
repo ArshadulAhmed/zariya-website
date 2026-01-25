@@ -35,7 +35,7 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
     errors['nominee.relationship'] = 'Nominee relationship is required'
   }
   if (!formData.nominee.address.village.trim()) {
-    errors['nominee.address.village'] = 'Nominee village is required'
+    errors['nominee.address.village'] = 'Nominee village/ward is required'
   }
   if (!formData.nominee.address.postOffice.trim()) {
     errors['nominee.address.postOffice'] = 'Nominee post office is required'
@@ -64,7 +64,7 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
     errors['guarantor.mobileNumber'] = 'Guarantor valid 10-digit mobile number is required'
   }
   if (!formData.guarantor.address.village.trim()) {
-    errors['guarantor.address.village'] = 'Guarantor village is required'
+    errors['guarantor.address.village'] = 'Guarantor village/ward is required'
   }
   if (!formData.guarantor.address.postOffice.trim()) {
     errors['guarantor.address.postOffice'] = 'Guarantor post office is required'
@@ -94,7 +94,7 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
       errors['coApplicant.email'] = 'Co-applicant valid email is required'
     }
     if (!formData.coApplicant.address.village.trim()) {
-      errors['coApplicant.address.village'] = 'Co-applicant village is required'
+      errors['coApplicant.address.village'] = 'Co-applicant village/ward is required'
     }
     if (!formData.coApplicant.address.postOffice.trim()) {
       errors['coApplicant.address.postOffice'] = 'Co-applicant post office is required'

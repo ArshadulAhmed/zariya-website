@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchMembership, reviewMembership, closeSnackbar } from '../../store/slices/membershipsSlice'
+import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
+import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import './MembershipDetails.scss'
 
 const MembershipDetails = () => {
@@ -21,6 +22,8 @@ const MembershipDetails = () => {
 
   useEffect(() => {
     if (id) {
+      // Clear previous membership data when navigating to a new membership
+      dispatch(clearSelectedMembership())
       dispatch(fetchMembership(id))
     }
   }, [id, dispatch])
@@ -147,37 +150,15 @@ const MembershipDetails = () => {
     setEnlargedImage(null)
   }
 
-  if (isLoading && !selectedMembership) {
-    return (
-      <div className="membership-details-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading membership details...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!selectedMembership) {
-    return (
-      <div className="membership-details-page">
-        <div className="error-container">
-          <p>{error || 'Membership not found'}</p>
-          <button className="btn-primary" onClick={() => navigate('/dashboard/memberships')}>
-            Back to Memberships
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const membership = selectedMembership
-  const isPending = membership.status === 'pending'
-  const isApproved = membership.status === 'approved'
+  const isPending = membership?.status === 'pending'
+  const isApproved = membership?.status === 'approved'
   const canReview = isPending
+  const hasMembership = !!membership
 
   return (
     <div className="membership-details-page">
+      {/* Header - Always visible */}
       <div className="page-header">
         <div>
           <button className="back-button" onClick={() => navigate('/dashboard/memberships')}>
@@ -191,7 +172,7 @@ const MembershipDetails = () => {
           <p className="page-subtitle">View and manage membership application</p>
         </div>
         <div className="action-buttons">
-          {canReview && (
+          {!isLoading && canReview && (
             <>
               <button
                 className="btn-success"
@@ -217,7 +198,7 @@ const MembershipDetails = () => {
               </button>
             </>
           )}
-          {isApproved && (
+          {!isLoading && isApproved && (
             <button
               className="btn-primary"
               onClick={() => navigate(`/dashboard/loans/new?userId=${encodeURIComponent(membership.userId)}`)}
@@ -230,6 +211,25 @@ const MembershipDetails = () => {
           )}
         </div>
       </div>
+
+      {/* Error State */}
+      {!isLoading && !selectedMembership && error && (
+        <div className="error-container">
+          <p>{error || 'Membership not found'}</p>
+          <button className="btn-primary" onClick={() => navigate('/dashboard/memberships')}>
+            Back to Memberships
+          </button>
+        </div>
+      )}
+
+      {/* Loading State - Show skeleton for dynamic content */}
+      {isLoading && !selectedMembership ? (
+        <div className="details-container">
+          <div className="details-card">
+            <DetailsSkeleton />
+          </div>
+        </div>
+      ) : selectedMembership ? (
 
       <div className="details-container">
         <div className="details-card">
@@ -328,7 +328,7 @@ const MembershipDetails = () => {
               <h3>Address Information</h3>
               <div className="member-info-grid">
                 <div className="info-row">
-                  <span className="info-label">Village</span>
+                  <span className="info-label">Village/Ward</span>
                   <span className="info-value">{membership.address?.village || 'N/A'}</span>
                 </div>
                 <div className="info-row">
@@ -500,11 +500,11 @@ const MembershipDetails = () => {
                   )}
                   {membership.passportPhoto && (
                     <div className="document-item">
-                      <span className="document-label">Passport Photo</span>
+                      <span className="document-label">Passport Size Photo</span>
                       <div className="document-preview-container" onClick={() => handleImageClick(membership.passportPhoto)}>
                         <img 
                           src={getDocumentUrl(membership.passportPhoto)} 
-                          alt="Passport Photo" 
+                          alt="Passport Size Photo" 
                           className="document-image passport-photo"
                           onError={(e) => {
                             e.target.style.display = 'none'
@@ -518,6 +518,7 @@ const MembershipDetails = () => {
           )}
         </div>
       </div>
+      ) : null}
 
       {enlargedImage && (
         <div className="image-modal" onClick={closeEnlargedImage}>
@@ -533,59 +534,63 @@ const MembershipDetails = () => {
         </div>
       )}
 
-      <ConfirmationModal
-        open={approveConfirm.open}
-        onClose={() => !isLoading && setApproveConfirm({ open: false })}
-        onConfirm={handleApprove}
-        title="Approve Membership"
-        message={`Are you sure you want to approve the membership application for "${membership.fullName}"?`}
-        confirmText="Approve"
-        cancelText="Cancel"
-        variant="info"
-        isLoading={isLoading}
-      />
+      {hasMembership && (
+        <>
+          <ConfirmationModal
+            open={approveConfirm.open}
+            onClose={() => !isLoading && setApproveConfirm({ open: false })}
+            onConfirm={handleApprove}
+            title="Approve Membership"
+            message={`Are you sure you want to approve the membership application for "${membership.fullName || 'this member'}"?`}
+            confirmText="Approve"
+            cancelText="Cancel"
+            variant="info"
+            isLoading={isLoading}
+          />
 
-      <ConfirmationModal
-        open={rejectConfirm.open}
-        onClose={() => {
-          if (!isLoading) {
-            setRejectConfirm({ open: false })
-            setRejectionReason('')
-          }
-        }}
-        onConfirm={handleReject}
-        title="Reject Membership"
-        message={
-          <div>
-            <p>Are you sure you want to reject the membership application for "{membership.fullName}"?</p>
-            <div style={{ marginTop: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-                Rejection Reason (Optional)
-              </label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Enter reason for rejection..."
-                rows={3}
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '4px',
-                  fontFamily: 'inherit',
-                  fontSize: '0.95rem',
-                  ...(isLoading && { opacity: 0.6, cursor: 'not-allowed' })
-                }}
-              />
-            </div>
-          </div>
-        }
-        confirmText="Reject"
-        cancelText="Cancel"
-        variant="danger"
-        isLoading={isLoading}
-      />
+          <ConfirmationModal
+            open={rejectConfirm.open}
+            onClose={() => {
+              if (!isLoading) {
+                setRejectConfirm({ open: false })
+                setRejectionReason('')
+              }
+            }}
+            onConfirm={handleReject}
+            title="Reject Membership"
+            message={
+              <div>
+                <p>Are you sure you want to reject the membership application for "{membership.fullName || 'this member'}"?</p>
+                <div style={{ marginTop: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                    Rejection Reason (Optional)
+                  </label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Enter reason for rejection..."
+                    rows={3}
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      fontFamily: 'inherit',
+                      fontSize: '0.95rem',
+                      ...(isLoading && { opacity: 0.6, cursor: 'not-allowed' })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+            confirmText="Reject"
+            cancelText="Cancel"
+            variant="danger"
+            isLoading={isLoading}
+          />
+        </>
+      )}
 
       {snackbar && (
         <Snackbar

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchLoans, setFilters, closeSnackbar, setPagination } from '../../store/slices/loansSlice'
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
+import FilterSelect from '../../components/dashboard/FilterSelect'
 import './Loans.scss'
 
 const columns = [
@@ -66,12 +67,12 @@ const Loans = memo(() => {
   const [searchInput, setSearchInput] = useState('')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
+  
+  // Show skeleton if loading OR if data is empty and we haven't fetched yet (initial load)
+  const showSkeleton = isLoading || (!hasFetchedRef.current && loans.length === 0)
 
   // Fetch loans when filters change
   useEffect(() => {
-    // Skip if already loading to prevent duplicate calls
-    if (isLoading) return
-
     const params = {}
     if (filters.status) params.status = filters.status
     if (filters.search) params.search = filters.search
@@ -80,6 +81,7 @@ const Loans = memo(() => {
     const paramsKey = JSON.stringify(params)
     
     // Only fetch if params have changed (prevents duplicate calls from StrictMode)
+    // Don't skip if loading - let Redux handle the loading state
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
       lastParamsRef.current = paramsKey
@@ -153,31 +155,35 @@ const Loans = memo(() => {
       </div>
 
       <div className="page-filters">
-        <input
-          type="text"
-          placeholder="Search by Loan Account, Member Name..."
-          className="search-input"
-          value={searchInput}
-          onChange={handleSearchChange}
-        />
-        <select 
-          className="filter-select"
-          value={filters.status}
-          onChange={(e) => handleFilterChange('status', e.target.value)}
-        >
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="active">Active</option>
-          <option value="closed">Closed</option>
-          <option value="rejected">Rejected</option>
-        </select>
+        <div className="search-input-group">
+          <input
+            type="text"
+            placeholder="Search by Loan Account, Member Name..."
+            className="search-input"
+            value={searchInput}
+            onChange={handleSearchChange}
+          />
+        </div>
+        <div className="filter-select-group">
+          <FilterSelect
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            placeholder="All Status"
+            options={[
+              { value: 'pending', label: 'Pending' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'active', label: 'Active' },
+              { value: 'closed', label: 'Closed' },
+              { value: 'rejected', label: 'Rejected' }
+            ]}
+          />
+        </div>
       </div>
 
       <DataTable
         columns={columns}
         data={loans}
-        loading={isLoading}
+        loading={showSkeleton}
         onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No loans found"

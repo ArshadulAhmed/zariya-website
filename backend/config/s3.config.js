@@ -49,7 +49,7 @@ const uploadS3 = multer({
   }),
   fileFilter: fileFilter,
   limits: {
-    fileSize: 50 * 1024 // 50KB limit
+    fileSize: 100 * 1024 // 100KB limit
   }
 });
 

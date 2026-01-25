@@ -29,7 +29,7 @@ const DocumentUploadSection = () => {
         <div className="section-title-group">
           <h2>Document Uploads</h2>
           <p className="section-description">
-            Please upload clear, readable copies of your documents. Supported formats: Images (JPEG, PNG) or PDF. Maximum file size: 50KB per document.
+            Please upload clear, readable copies of your documents. Supported formats: Images (JPEG, PNG) or PDF. Maximum file size: 100KB per document.
           </p>
         </div>
       </div>
@@ -45,7 +45,7 @@ const DocumentUploadSection = () => {
             error={validationErrors.aadharUpload}
             helperText={validationErrors.aadharUpload || ''}
             required
-            maxSizeMB={0.05}
+            maxSizeMB={0.1}
             placeholderLabel="Aadhar (Front)"
             onError={handleFileError}
           />
@@ -61,7 +61,7 @@ const DocumentUploadSection = () => {
             error={validationErrors.aadharUploadBack}
             helperText={validationErrors.aadharUploadBack || ''}
             required
-            maxSizeMB={0.05}
+            maxSizeMB={0.1}
             placeholderLabel="Aadhar (Back)"
             onError={handleFileError}
           />
@@ -77,7 +77,7 @@ const DocumentUploadSection = () => {
             error={validationErrors.panUpload}
             helperText={validationErrors.panUpload || ''}
             required
-            maxSizeMB={0.05}
+            maxSizeMB={0.1}
             placeholderLabel="PAN"
             onError={handleFileError}
           />
@@ -93,8 +93,8 @@ const DocumentUploadSection = () => {
             error={validationErrors.passportPhoto}
             helperText={validationErrors.passportPhoto || ''}
             required
-            maxSizeMB={0.05}
-            placeholderLabel="Passport Photo"
+            maxSizeMB={0.1}
+            placeholderLabel="Passport Size Photo"
             onError={handleFileError}
           />
         </div>

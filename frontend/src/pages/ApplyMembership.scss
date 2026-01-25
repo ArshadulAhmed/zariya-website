@@ -23,10 +23,72 @@
   margin: 0 auto;
 }
 
-// When used in dashboard, adjust container padding
-.apply-membership-page.dashboard-mode .apply-membership-container {
-  padding: 32px;
-  max-width: 100% !important;
+// When used in dashboard, adjust container padding and sizing
+.apply-membership-page.dashboard-mode {
+  .apply-membership-container {
+    padding: 26px;
+    max-width: 100% !important;
+  }
+
+  .membership-form {
+    padding: 2.4rem 2rem;
+
+    @media (max-width: 768px) {
+      padding: 1.6rem 1.2rem;
+    }
+
+    .form-section {
+      margin-bottom: 2.4rem;
+    }
+
+    .section-header-inline {
+      gap: 1.2rem;
+      margin-bottom: 1.6rem;
+
+      .section-number {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+      }
+
+      .section-title-group {
+        padding-top: 0.2rem;
+
+        h2 {
+          font-size: 1.2rem;
+          margin-bottom: 0.2rem;
+        }
+
+        .section-description {
+          font-size: 0.76rem;
+        }
+      }
+    }
+
+    .form-grid {
+      gap: 1.2rem;
+
+      @media (max-width: 768px) {
+        gap: 1rem;
+      }
+    }
+
+    .form-footer {
+      .form-note {
+        gap: 0.6rem;
+        padding: 0.8rem 1rem;
+        margin-bottom: 2.4rem;
+        font-size: 0.72rem;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        padding: 0.8rem 2rem;
+        font-size: 0.8rem;
+        gap: 0.4rem;
+      }
+    }
+  }
 }
 
 .page-header {
@@ -35,15 +97,15 @@
   .back-button {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     background: none;
     border: none;
     color: var(--primary-color);
-    font-size: 0.95rem;
+    font-size: 0.76rem;
     font-weight: 500;
     cursor: pointer;
-    padding: 0.5rem 0;
-    margin-bottom: 0.5rem;
+    padding: 0.4rem 0;
+    margin-bottom: 0.4rem;
     transition: color 0.2s;
     font-family: 'Poppins', sans-serif;
 
@@ -57,14 +119,14 @@
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.4rem 0;
   }
 
   .page-subtitle {
-    font-size: 1rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     margin: 0;
   }

@@ -1,7 +1,13 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
+import { useAppSelector } from '../../store/hooks'
+import NewUserModal from '../../components/dashboard/NewUserModal'
 import './Reports.scss'
 
 const Reports = memo(() => {
+  const { user: currentUser } = useAppSelector((state) => state.auth)
+  const isAdmin = currentUser?.role === 'admin'
+  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false)
+
   return (
     <div className="reports-page">
       <div className="page-header">
@@ -9,6 +15,18 @@ const Reports = memo(() => {
           <h1 className="page-title">Reports</h1>
           <p className="page-subtitle">Generate and view system reports</p>
         </div>
+        {isAdmin && (
+          <button
+            className="btn-primary"
+            onClick={() => setIsNewUserModalOpen(true)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            New User
+          </button>
+        )}
       </div>
 
       <div className="reports-grid">
@@ -64,6 +82,14 @@ const Reports = memo(() => {
           <button className="report-btn">Generate Report</button>
         </div>
       </div>
+
+      <NewUserModal
+        open={isNewUserModalOpen}
+        onClose={() => setIsNewUserModalOpen(false)}
+        onSuccess={() => {
+          // Modal will close automatically on success
+        }}
+      />
     </div>
   )
 })

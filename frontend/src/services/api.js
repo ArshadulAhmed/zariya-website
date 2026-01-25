@@ -6,6 +6,23 @@ const getToken = () => {
   return localStorage.getItem('token')
 }
 
+// Handle 401 Unauthorized - redirect to login
+// Note: We don't import store here to avoid circular dependency
+// The page reload will reset Redux state automatically
+const handleUnauthorized = () => {
+  // Only redirect if we're NOT already on the login page
+  if (window.location.pathname.includes('/login')) {
+    return
+  }
+
+  // Clear localStorage (this will be picked up by Redux on next load)
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  
+  // Redirect to login page (full page reload resets Redux state)
+  window.location.href = '/login'
+}
+
 // API request helper
 const apiRequest = async (endpoint, options = {}) => {
   const token = getToken()
@@ -48,12 +65,14 @@ const apiRequest = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     // Handle 401 Unauthorized - token expired or invalid
-    // Only redirect if we're NOT already on the login page
-    if (response.status === 401 && !window.location.pathname.includes('/login')) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      // Use React Router navigate instead of window.location for SPA navigation
-      // window.location.href = '/login'
+    if (response.status === 401) {
+      // For login endpoint, don't treat as session expired - it's invalid credentials
+      if (endpoint.includes('/auth/login')) {
+        throw new Error(data.message || 'Either email or password is incorrect')
+      }
+      // For other endpoints, it's a session expiration
+      handleUnauthorized()
+      throw new Error('Session expired. Please login again.')
     }
     throw new Error(data.message || 'Request failed')
   }

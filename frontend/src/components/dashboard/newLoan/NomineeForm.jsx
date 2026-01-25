@@ -53,11 +53,11 @@ const NomineeForm = () => {
         />
 
         <TextField
-          label="Village"
+          label="Village/Ward"
           name="nominee.address.village"
           value={formData.address.village}
           onChange={handleChange}
-          placeholder="Enter village"
+          placeholder="Enter village/ward"
           error={errors['nominee.address.village']}
           helperText={errors['nominee.address.village']}
           required

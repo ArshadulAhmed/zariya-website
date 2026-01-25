@@ -7,6 +7,7 @@ import {
   setSearchError,
   setSelectedMembership,
 } from '../../../store/slices/newLoanSlice'
+import { setSnackbar } from '../../../store/slices/loansSlice'
 import { membershipsAPI } from '../../../services/api'
 import TextField from '../../TextField'
 import './MemberSearch.scss'
@@ -41,16 +42,32 @@ const MemberSearch = () => {
           if (response.success && response.data.membership) {
             const mem = response.data.membership
             if (mem.status !== 'approved') {
-              dispatch(setSearchError('Membership must be approved before applying for a loan'))
+              dispatch(setSnackbar({
+                message: 'Membership must be approved before applying for a loan',
+                severity: 'error'
+              }))
+              dispatch(setSearchError(''))
               return
             }
             dispatch(setSelectedMembership(mem))
             dispatch(setSearchError(''))
+            dispatch(setSnackbar({
+              message: 'Member found successfully',
+              severity: 'success'
+            }))
           } else {
-            dispatch(setSearchError('Membership not found'))
+            dispatch(setSnackbar({
+              message: 'Membership not found',
+              severity: 'error'
+            }))
+            dispatch(setSearchError(''))
           }
         } catch (error) {
-          dispatch(setSearchError(error.message || 'Failed to search membership'))
+          dispatch(setSnackbar({
+            message: error.message || 'Failed to search membership',
+            severity: 'error'
+          }))
+          dispatch(setSearchError(''))
         } finally {
           dispatch(setSearching(false))
         }
@@ -65,7 +82,10 @@ const MemberSearch = () => {
     const userId = typeof searchUserId === 'string' ? searchUserId.trim() : String(searchUserId || '').trim()
     
     if (!userId) {
-      dispatch(setNewLoanSearchError('Please enter a Membership ID'))
+      dispatch(setSnackbar({
+        message: 'Please enter a Membership ID',
+        severity: 'error'
+      }))
       return
     }
 
@@ -78,16 +98,32 @@ const MemberSearch = () => {
       if (response.success && response.data.membership) {
         const mem = response.data.membership
         if (mem.status !== 'approved') {
-          dispatch(setSearchError('Membership must be approved before applying for a loan'))
+          dispatch(setSnackbar({
+            message: 'Membership must be approved before applying for a loan',
+            severity: 'error'
+          }))
+          dispatch(setSearchError(''))
           return
         }
         dispatch(setSelectedMembership(mem))
-        dispatch(setSearchError(''))
+        // dispatch(setSearchError(''))
+        // dispatch(setSnackbar({
+        //   message: 'Member found successfully',
+        //   severity: 'success'
+        // }))
       } else {
-        dispatch(setSearchError('Membership not found'))
+        dispatch(setSnackbar({
+          message: 'Membership not found',
+          severity: 'error'
+        }))
+        dispatch(setSearchError(''))
       }
     } catch (error) {
-      dispatch(setSearchError(error.message || 'Failed to search membership'))
+      dispatch(setSnackbar({
+        message: error.message || 'Failed to search membership',
+        severity: 'error'
+      }))
+      dispatch(setSearchError(''))
     } finally {
       dispatch(setSearching(false))
     }
@@ -126,8 +162,6 @@ const MemberSearch = () => {
               }
             }}
             placeholder="e.g., ZAR-20251227-0011"
-            error={searchError}
-            helperText={searchError}
             disabled={!!selectedMembership}
           />
           <div className="search-buttons">

@@ -1,0 +1,173 @@
+@use '../../styles/main.scss' as *;
+
+.details-skeleton {
+  .details-skeleton-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+
+    .skeleton-badge {
+      width: 80px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-id-section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+
+      .skeleton-label {
+        width: 120px;
+        height: 14px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        animation: shimmer 1.5s ease-in-out infinite;
+      }
+
+      .skeleton-id-value {
+        width: 200px;
+        height: 24px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        animation: shimmer 1.5s ease-in-out infinite;
+      }
+    }
+  }
+
+  .details-skeleton-grid {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .details-skeleton-section {
+    .skeleton-section-title {
+      width: 200px;
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+
+    .skeleton-info-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem 2rem;
+
+      @media (max-width: 1400px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      @media (max-width: 1024px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .skeleton-info-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+
+        .skeleton-label {
+          width: 140px;
+          height: 14px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        .skeleton-value {
+          width: 100%;
+          height: 18px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s ease-in-out infinite;
+        }
+      }
+    }
+  }
+
+  .details-skeleton-documents {
+    padding: 2rem;
+    border-top: 1px solid #e5e7eb;
+
+    .skeleton-section-title {
+      width: 200px;
+      height: 24px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+
+    .skeleton-documents-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 900px;
+
+      @media (max-width: 1024px) {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 100%;
+      }
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+
+      .skeleton-document-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .skeleton-document-label {
+          width: 120px;
+          height: 12px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s ease-in-out infinite;
+          margin: 0 auto;
+        }
+
+        .skeleton-document-preview {
+          width: 100%;
+          height: 180px;
+          border-radius: 8px;
+          border: 2px solid #e5e7eb;
+          background: linear-gradient(90deg, #f9fafb 25%, #f3f4f6 50%, #f9fafb 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s ease-in-out infinite;
+        }
+      }
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
