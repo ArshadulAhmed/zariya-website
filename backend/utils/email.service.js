@@ -18,6 +18,18 @@ const createTransporter = () => {
       user: process.env.SMTP_USER || process.env.ADMIN_EMAIL,
       pass: process.env.SMTP_PASSWORD,
     },
+    // Connection timeout settings
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000, // 10 seconds
+    socketTimeout: 10000, // 10 seconds
+    // Retry options
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 3,
+    // Additional options for better reliability
+    tls: {
+      rejectUnauthorized: false, // Accept self-signed certificates if needed
+    },
   });
 
   return transporter;
@@ -52,7 +64,14 @@ export const sendEmail = async (options) => {
       html: options.html,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    // Set a timeout for the entire send operation
+    const sendPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000);
+    });
+
+    const info = await Promise.race([sendPromise, timeoutPromise]);
+    
     return {
       success: true,
       message: 'Email sent successfully',
@@ -60,7 +79,12 @@ export const sendEmail = async (options) => {
     };
   } catch (error) {
     console.error('Email send error:', error);
-    throw new Error(`Failed to send email: ${error.message}`);
+    // Don't throw - return error result instead
+    return {
+      success: false,
+      message: error.message || 'Failed to send email',
+      error: error.code || 'UNKNOWN_ERROR',
+    };
   }
 };
 

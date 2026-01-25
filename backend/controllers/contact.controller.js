@@ -22,26 +22,33 @@ export const submitContact = async (req, res) => {
 
     const { name, email, phone, message } = req.body;
 
-    // Send email to admin
-    const emailResult = await sendContactEmail({
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone?.trim() || '',
-      message: message.trim(),
+    // Send email to admin (non-blocking - don't fail request if email fails)
+    // Use setImmediate to make it truly async and not block the response
+    setImmediate(async () => {
+      try {
+        const emailResult = await sendContactEmail({
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone?.trim() || '',
+          message: message.trim(),
+        });
+
+        if (!emailResult.success) {
+          console.error('Failed to send contact email:', emailResult.message);
+          console.error('Contact form data was still saved. Details:', {
+            name: name.trim(),
+            email: email.trim(),
+            phone: phone?.trim() || '',
+          });
+        } else {
+          console.log('Contact form email sent successfully');
+        }
+      } catch (error) {
+        console.error('Error in async email sending:', error);
+      }
     });
 
-    if (!emailResult.success) {
-      // Log error but don't fail the request
-      console.error('Failed to send contact email:', emailResult.message);
-      
-      // Still return success to user (email might be logged in dev mode)
-      return res.status(200).json({
-        success: true,
-        message: 'Thank you for contacting us! We will get back to you soon.',
-        note: process.env.NODE_ENV === 'development' ? 'Email logged (SMTP not configured)' : undefined
-      });
-    }
-
+    // Always return success immediately (email is sent asynchronously)
     res.status(200).json({
       success: true,
       message: 'Thank you for contacting us! We will get back to you soon.',
