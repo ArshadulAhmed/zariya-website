@@ -12,6 +12,7 @@ const LoanActions = () => {
   const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
   const memberName = useAppSelector((state) => state.loans.selectedLoan?.membership?.fullName)
   const user = useAppSelector((state) => state.auth.user)
+  const isLoading = useAppSelector((state) => state.loans.isLoading)
 
   const isAdmin = user?.role === 'admin'
   const isPending = loanStatus === 'pending'
@@ -82,20 +83,23 @@ const LoanActions = () => {
 
       <ConfirmationModal
         open={approveConfirm.open}
-        onClose={() => setApproveConfirm({ open: false })}
+        onClose={() => !isLoading && setApproveConfirm({ open: false })}
         onConfirm={handleApprove}
         title="Approve Loan"
         message={`Are you sure you want to approve the loan application for "${memberName || 'this member'}"?`}
         confirmText="Approve"
         cancelText="Cancel"
         variant="info"
+        isLoading={isLoading}
       />
 
       <ConfirmationModal
         open={rejectConfirm.open}
         onClose={() => {
-          setRejectConfirm({ open: false })
-          setRejectionReason('')
+          if (!isLoading) {
+            setRejectConfirm({ open: false })
+            setRejectionReason('')
+          }
         }}
         onConfirm={handleReject}
         title="Reject Loan"
@@ -111,6 +115,7 @@ const LoanActions = () => {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Enter reason for rejection..."
                 rows={3}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -118,6 +123,7 @@ const LoanActions = () => {
                   borderRadius: '4px',
                   fontFamily: 'inherit',
                   fontSize: '0.95rem',
+                  ...(isLoading && { opacity: 0.6, cursor: 'not-allowed' })
                 }}
               />
             </div>
@@ -126,6 +132,7 @@ const LoanActions = () => {
         confirmText="Reject"
         cancelText="Cancel"
         variant="danger"
+        isLoading={isLoading}
       />
     </>
   )

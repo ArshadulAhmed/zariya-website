@@ -535,20 +535,23 @@ const MembershipDetails = () => {
 
       <ConfirmationModal
         open={approveConfirm.open}
-        onClose={() => setApproveConfirm({ open: false })}
+        onClose={() => !isLoading && setApproveConfirm({ open: false })}
         onConfirm={handleApprove}
         title="Approve Membership"
         message={`Are you sure you want to approve the membership application for "${membership.fullName}"?`}
         confirmText="Approve"
         cancelText="Cancel"
         variant="info"
+        isLoading={isLoading}
       />
 
       <ConfirmationModal
         open={rejectConfirm.open}
         onClose={() => {
-          setRejectConfirm({ open: false })
-          setRejectionReason('')
+          if (!isLoading) {
+            setRejectConfirm({ open: false })
+            setRejectionReason('')
+          }
         }}
         onConfirm={handleReject}
         title="Reject Membership"
@@ -564,6 +567,7 @@ const MembershipDetails = () => {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Enter reason for rejection..."
                 rows={3}
+                disabled={isLoading}
                 style={{
                   width: '100%',
                   padding: '8px',
@@ -571,6 +575,7 @@ const MembershipDetails = () => {
                   borderRadius: '4px',
                   fontFamily: 'inherit',
                   fontSize: '0.95rem',
+                  ...(isLoading && { opacity: 0.6, cursor: 'not-allowed' })
                 }}
               />
             </div>
@@ -579,6 +584,7 @@ const MembershipDetails = () => {
         confirmText="Reject"
         cancelText="Cancel"
         variant="danger"
+        isLoading={isLoading}
       />
 
       {snackbar && (
