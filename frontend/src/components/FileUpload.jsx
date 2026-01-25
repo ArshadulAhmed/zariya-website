@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
 import './FileUpload.scss'
-import { uploadToCloudinary, getUserDocumentFolder } from '../utils/cloudinary'
 
 const FileUpload = ({
   label,
@@ -14,14 +13,11 @@ const FileUpload = ({
   maxSizeMB = 0.05, // 50KB
   placeholderLabel, // Custom label to show inside the upload box
   onError, // Callback for error handling (for snackbar)
-  userId, // Optional user ID for folder organization
-  folder = 'zariya/documents', // Cloudinary folder path
+  userId, // Optional member ID for file naming (e.g., 'ZAR-20240115-0001')
 }) => {
   const fileInputRef = useRef(null)
   const [preview, setPreview] = useState(null)
   const [dragActive, setDragActive] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
 
   const handleFileChange = async (file) => {
     if (!file) {
@@ -86,48 +82,10 @@ const FileUpload = ({
       setPreview(null)
     }
 
-    // Upload to Cloudinary
-    setUploading(true)
-    setUploadProgress(0)
-
-    try {
-      // Determine folder path
-      const uploadFolder = userId 
-        ? getUserDocumentFolder(userId, 'memberships')
-        : folder;
-
-      // Upload file to Cloudinary
-      const cloudinaryMetadata = await uploadToCloudinary(
-        file,
-        uploadFolder,
-        (progress) => setUploadProgress(progress)
-      );
-
-      // Update preview to use Cloudinary URL
-      if (cloudinaryMetadata.resource_type === 'image') {
-        if (preview && preview.startsWith('blob:')) {
-          URL.revokeObjectURL(preview)
-        }
-        setPreview(cloudinaryMetadata.secure_url)
-      }
-
-      // Store Cloudinary metadata in form state
-      onChange({ target: { name, value: cloudinaryMetadata } })
-    } catch (uploadError) {
-      console.error('Cloudinary upload error:', uploadError)
-      const errorMsg = uploadError.message || 'Failed to upload file. Please try again.'
-      if (onError) {
-        onError(errorMsg)
-      }
-      // Clean up preview on error
-      if (preview && preview.startsWith('blob:')) {
-        URL.revokeObjectURL(preview)
-      }
-      setPreview(null)
-    } finally {
-      setUploading(false)
-      setUploadProgress(0)
-    }
+    // Store file locally (will be uploaded after membership creation)
+    // Don't upload immediately - wait for membership userId
+    onChange({ target: { name, value: file } })
+    // Files are stored locally and will be uploaded after membership creation
   }
 
   const handleInputChange = (e) => {
@@ -179,14 +137,26 @@ const FileUpload = ({
     }
   }, [preview])
 
-  // Update preview when value changes externally (Cloudinary metadata)
+  // Update preview when value changes externally
   useEffect(() => {
-    if (value && typeof value === 'object' && value.secure_url) {
-      // Value is Cloudinary metadata
-      if (value.resource_type === 'image') {
-        setPreview(value.secure_url)
-      } else {
-        setPreview(null)
+    if (value) {
+      // If value is a File object (local file, not yet uploaded)
+      if (value instanceof File) {
+        if (value.type.startsWith('image/')) {
+          const previewUrl = URL.createObjectURL(value)
+          setPreview(previewUrl)
+          return () => URL.revokeObjectURL(previewUrl)
+        } else {
+          setPreview(null)
+        }
+      } 
+      // If value is Cloudinary metadata (after upload - for backward compatibility)
+      else if (typeof value === 'object' && value.secure_url) {
+        if (value.resource_type === 'image') {
+          setPreview(value.secure_url)
+        } else {
+          setPreview(null)
+        }
       }
     } else if (!value) {
       if (preview && preview.startsWith('blob:')) {
@@ -222,19 +192,9 @@ const FileUpload = ({
           className="file-input-hidden"
         />
         
-        {uploading ? (
-          <div className="file-upload-progress">
-            <svg className="spinner" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32">
-                <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
-                <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
-              </circle>
-            </svg>
-            <p className="upload-progress-text">Uploading... {uploadProgress}%</p>
-          </div>
-        ) : value ? (
+        {value ? (
           <div className="file-preview">
-            {preview && (value?.resource_type === 'image' || (typeof value === 'object' && value.secure_url)) ? (
+            {preview && (value instanceof File ? value.type.startsWith('image/') : (value?.resource_type === 'image' || (typeof value === 'object' && value.secure_url))) ? (
               <>
                 <img src={preview} alt="Preview" className="preview-image" />
                 <button
@@ -295,8 +255,7 @@ const FileUpload = ({
       </div>
 
       {error && <div className="file-upload-error">{error}</div>}
-      {helperText && !error && !uploading && <div className="file-upload-helper">{helperText}</div>}
-      {uploading && <div className="file-upload-helper">Uploading to Cloudinary...</div>}
+      {helperText && !error && <div className="file-upload-helper">{helperText}</div>}
     </div>
   )
 }

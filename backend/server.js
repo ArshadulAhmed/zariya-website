@@ -15,6 +15,7 @@ import membershipRoutes from './routes/membership.routes.js';
 import loanRoutes from './routes/loan.routes.js';
 import repaymentRoutes from './routes/repayment.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 const app = express();
 
@@ -71,6 +72,8 @@ app.options('*', cors());
 
 
 // Body parsing middleware
+// Note: express.json() and express.urlencoded() automatically skip multipart/form-data
+// Multer handles multipart/form-data in specific routes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -90,6 +93,7 @@ app.use('/api/memberships', membershipRoutes);
 app.use('/api/loans', loanRoutes);
 app.use('/api/repayments', repaymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

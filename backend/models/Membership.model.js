@@ -158,6 +158,24 @@ const membershipSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
+  // Image upload status tracking
+  imageUploadStatus: {
+    type: String,
+    enum: ['pending', 'partial', 'complete', 'failed'],
+    default: 'pending'
+  },
+  imageUploadErrors: {
+    type: Map,
+    of: String, // Store error messages for each failed image type
+    default: {}
+  },
+  imageUploadAttempts: {
+    type: Number,
+    default: 0
+  },
+  lastImageUploadAttempt: {
+    type: Date
+  },
   // Metadata
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

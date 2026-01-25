@@ -50,18 +50,16 @@ const MembershipFormFooter = () => {
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            // Don't set Content-Type - browser will set it with boundary for FormData
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify(submitData),
+          body: submitData, // FormData, not JSON
         })
       } else {
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(submitData),
+          // Don't set Content-Type - browser will set it with boundary for FormData
+          body: submitData, // FormData, not JSON
         })
       }
 

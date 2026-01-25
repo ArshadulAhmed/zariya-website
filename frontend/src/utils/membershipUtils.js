@@ -61,20 +61,20 @@ export const validateMembershipForm = (formData) => {
     errors.pan = 'PAN number must be in format: ABCDE1234F'
   }
 
-  // Validate Cloudinary metadata objects
-  if (!formData.aadharUpload || !formData.aadharUpload.secure_url) {
+  // Validate file objects (files are stored locally, will be uploaded after membership creation)
+  if (!formData.aadharUpload || !(formData.aadharUpload instanceof File)) {
     errors.aadharUpload = 'Aadhar card (front) upload is required'
   }
 
-  if (!formData.aadharUploadBack || !formData.aadharUploadBack.secure_url) {
+  if (!formData.aadharUploadBack || !(formData.aadharUploadBack instanceof File)) {
     errors.aadharUploadBack = 'Aadhar card (back) upload is required'
   }
 
-  if (!formData.panUpload || !formData.panUpload.secure_url) {
+  if (!formData.panUpload || !(formData.panUpload instanceof File)) {
     errors.panUpload = 'PAN card upload is required'
   }
 
-  if (!formData.passportPhoto || !formData.passportPhoto.secure_url) {
+  if (!formData.passportPhoto || !(formData.passportPhoto instanceof File)) {
     errors.passportPhoto = 'Passport size photo is required'
   }
 
@@ -104,43 +104,46 @@ export const validateMembershipForm = (formData) => {
 }
 
 /**
- * Create JSON object from membership form data for API submission
- * Files are uploaded to Cloudinary, so we send Cloudinary metadata
- * @param {Object} formData - Form data object with Cloudinary metadata
- * @returns {Object} - JSON object ready for submission
+ * Create FormData object from membership form data for API submission
+ * Files are stored locally and will be uploaded after membership creation
+ * @param {Object} formData - Form data object with File objects
+ * @returns {FormData} - FormData object ready for submission
  */
 export const createMembershipFormData = (formData) => {
-  const submitData = {
-    fullName: formData.fullName.trim(),
-    fatherOrHusbandName: formData.fatherOrHusbandName.trim(),
-    age: formData.age,
-    dateOfBirth: formData.dateOfBirth,
-    occupation: formData.occupation.trim(),
-    mobileNumber: formData.mobileNumber.trim(),
-    aadhar: formData.aadhar.trim(),
-    pan: formData.pan.trim().toUpperCase(),
-    address: {
-      village: formData.address.village.trim(),
-      postOffice: formData.address.postOffice.trim(),
-      policeStation: formData.address.policeStation.trim(),
-      district: formData.address.district.trim(),
-      pinCode: formData.address.pinCode.trim(),
-      landmark: formData.address.landmark?.trim() || '',
-    },
+  const submitData = new FormData()
+  
+  // Add text fields
+  submitData.append('fullName', formData.fullName.trim())
+  submitData.append('fatherOrHusbandName', formData.fatherOrHusbandName.trim())
+  submitData.append('age', formData.age)
+  submitData.append('dateOfBirth', formData.dateOfBirth)
+  submitData.append('occupation', formData.occupation.trim())
+  submitData.append('mobileNumber', formData.mobileNumber.trim())
+  submitData.append('aadhar', formData.aadhar.trim())
+  submitData.append('pan', formData.pan.trim().toUpperCase())
+  
+  // Add address fields
+  submitData.append('address[village]', formData.address.village.trim())
+  submitData.append('address[postOffice]', formData.address.postOffice.trim())
+  submitData.append('address[policeStation]', formData.address.policeStation.trim())
+  submitData.append('address[district]', formData.address.district.trim())
+  submitData.append('address[pinCode]', formData.address.pinCode.trim())
+  if (formData.address.landmark) {
+    submitData.append('address[landmark]', formData.address.landmark.trim())
   }
-
-  // Add Cloudinary metadata (already uploaded)
-  if (formData.aadharUpload && typeof formData.aadharUpload === 'object') {
-    submitData.aadharUpload = formData.aadharUpload
+  
+  // Add files (will be uploaded after membership creation)
+  if (formData.aadharUpload && formData.aadharUpload instanceof File) {
+    submitData.append('aadharUploadFile', formData.aadharUpload)
   }
-  if (formData.aadharUploadBack && typeof formData.aadharUploadBack === 'object') {
-    submitData.aadharUploadBack = formData.aadharUploadBack
+  if (formData.aadharUploadBack && formData.aadharUploadBack instanceof File) {
+    submitData.append('aadharUploadBackFile', formData.aadharUploadBack)
   }
-  if (formData.panUpload && typeof formData.panUpload === 'object') {
-    submitData.panUpload = formData.panUpload
+  if (formData.panUpload && formData.panUpload instanceof File) {
+    submitData.append('panUploadFile', formData.panUpload)
   }
-  if (formData.passportPhoto && typeof formData.passportPhoto === 'object') {
-    submitData.passportPhoto = formData.passportPhoto
+  if (formData.passportPhoto && formData.passportPhoto instanceof File) {
+    submitData.append('passportPhotoFile', formData.passportPhoto)
   }
   
   return submitData

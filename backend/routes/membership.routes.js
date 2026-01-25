@@ -1,14 +1,49 @@
 import express from 'express';
 import { body } from 'express-validator';
+import multer from 'multer';
 import {
   createMembership,
   getMemberships,
   getMembership,
   getMembershipByUserId,
-  reviewMembership
+  reviewMembership,
+  retryImageUploads,
+  updateMembershipImages
 } from '../controllers/membership.controller.js';
 import { protect, isAdminOrEmployee } from '../middleware/auth.middleware.js';
 import { APP_CONFIG } from '../config/app.config.js';
+import { parseFormDataAddress } from '../middleware/parseFormData.middleware.js';
+
+// Configure multer for memory storage (no disk writes)
+// Note: multer automatically parses text fields from FormData into req.body
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 200 * 1024, // 200KB max
+    fieldSize: 10 * 1024 * 1024, // 10MB for text fields (default is 1MB)
+  },
+  fileFilter: (req, file, cb) => {
+    // Only apply file filter to actual files, not text fields
+    if (!file) {
+      return cb(null, true);
+    }
+    
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF, WEBP) and PDF files are allowed.'), false);
+    }
+  }
+});
 
 const router = express.Router();
 
@@ -94,8 +129,36 @@ const reviewMembershipValidation = [
 
 // Routes
 // Public route - anyone can create membership
-// Files are uploaded to Cloudinary on the frontend, so we only receive metadata
-router.post('/', createMembershipValidation, createMembership);
+// Files are sent with form, backend will create membership first, then upload images
+router.post('/', 
+  // Debug: Log request before multer
+  (req, res, next) => {
+    console.log('Before multer - Content-Type:', req.headers['content-type']);
+    console.log('Before multer - req.body:', req.body);
+    next();
+  },
+  upload.fields([
+    { name: 'aadharUploadFile', maxCount: 1 },
+    { name: 'aadharUploadBackFile', maxCount: 1 },
+    { name: 'panUploadFile', maxCount: 1 },
+    { name: 'passportPhotoFile', maxCount: 1 }
+  ]),
+  // Debug middleware to check what multer parsed
+  (req, res, next) => {
+    console.log('After multer - Content-Type:', req.headers['content-type']);
+    console.log('After multer - req.body keys:', Object.keys(req.body || {}));
+    console.log('After multer - req.body:', JSON.stringify(req.body, null, 2));
+    console.log('After multer - req.files keys:', Object.keys(req.files || {}));
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error('⚠️  WARNING: req.body is empty after multer!');
+      console.error('   This might indicate multer failed to parse FormData');
+    }
+    next();
+  },
+  parseFormDataAddress,
+  createMembershipValidation, 
+  createMembership
+);
 
 // Protected routes - only admin and employee can access
 router.use(protect);
@@ -105,6 +168,16 @@ router.get('/', getMemberships);
 router.get('/:id', getMembership);
 router.get('/user/:userId', getMembershipByUserId);
 router.put('/:id/review', reviewMembershipValidation, reviewMembership);
+router.post('/:id/retry-uploads', 
+  upload.fields([
+    { name: 'aadharUploadFile', maxCount: 1 },
+    { name: 'aadharUploadBackFile', maxCount: 1 },
+    { name: 'panUploadFile', maxCount: 1 },
+    { name: 'passportPhotoFile', maxCount: 1 }
+  ]),
+  retryImageUploads
+);
+router.put('/:id/images', updateMembershipImages);
 
 export default router;
 

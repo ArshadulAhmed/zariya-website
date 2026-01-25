@@ -1,5 +1,6 @@
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
+import { uploadImagesWithRollback, uploadImagesIndividually, calculateImageUploadStatus } from '../utils/imageUpload.utils.js';
 
 // @desc    Create membership (Normal user registration)
 // @route   POST /api/memberships
@@ -7,6 +8,7 @@ import { validationResult } from 'express-validator';
 export const createMembership = async (req, res) => {
   try {
     console.log('Creating membership - Body:', req.body);
+    console.log('Creating membership - Files:', req.files);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -17,99 +19,14 @@ export const createMembership = async (req, res) => {
       });
     }
 
-    // Extract Cloudinary metadata from request body
-    // Frontend sends Cloudinary upload results as JSON
-    let aadharUpload = null;
-    let aadharUploadBack = null;
-    let panUpload = null;
-    let passportPhoto = null;
+    // Extract files from multer (files are stored in memory)
+    const files = req.files || {};
 
-    // Parse Cloudinary metadata if provided as strings (JSON)
-    if (req.body.aadharUpload) {
-      try {
-        aadharUpload = typeof req.body.aadharUpload === 'string' 
-          ? JSON.parse(req.body.aadharUpload) 
-          : req.body.aadharUpload;
-      } catch (e) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid aadharUpload metadata format'
-        });
-      }
-    }
+    // Parse address (already parsed by parseFormDataAddress middleware)
+    const address = req.body.address;
 
-    if (req.body.aadharUploadBack) {
-      try {
-        aadharUploadBack = typeof req.body.aadharUploadBack === 'string'
-          ? JSON.parse(req.body.aadharUploadBack)
-          : req.body.aadharUploadBack;
-      } catch (e) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid aadharUploadBack metadata format'
-        });
-      }
-    }
-
-    if (req.body.panUpload) {
-      try {
-        panUpload = typeof req.body.panUpload === 'string'
-          ? JSON.parse(req.body.panUpload)
-          : req.body.panUpload;
-      } catch (e) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid panUpload metadata format'
-        });
-      }
-    }
-
-    if (req.body.passportPhoto) {
-      try {
-        passportPhoto = typeof req.body.passportPhoto === 'string'
-          ? JSON.parse(req.body.passportPhoto)
-          : req.body.passportPhoto;
-      } catch (e) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid passportPhoto metadata format'
-        });
-      }
-    }
-
-    // Validate Cloudinary metadata structure
-    const validateCloudinaryMetadata = (metadata, fieldName) => {
-      if (!metadata) return null;
-      if (!metadata.secure_url || !metadata.public_id) {
-        throw new Error(`${fieldName} must include secure_url and public_id`);
-      }
-      return {
-        secure_url: metadata.secure_url,
-        public_id: metadata.public_id,
-        format: metadata.format,
-        width: metadata.width,
-        height: metadata.height,
-        bytes: metadata.bytes,
-        created_at: metadata.created_at,
-        resource_type: metadata.resource_type,
-      };
-    };
-
-    // Parse address if it comes as nested object or flat format
-    let address = req.body.address;
-    if (!address && (req.body['address[village]'] || req.body['address[postOffice]'])) {
-      // Handle FormData format (backward compatibility)
-      address = {
-        village: req.body['address[village]'],
-        postOffice: req.body['address[postOffice]'],
-        policeStation: req.body['address[policeStation]'],
-        district: req.body['address[district]'],
-        pinCode: req.body['address[pinCode]'],
-        landmark: req.body['address[landmark]'] || ''
-      };
-    }
-
-    // Prepare membership data
+    // Prepare membership data WITHOUT images first
+    // Images will be uploaded after we get the userId
     const membershipData = {
       fullName: req.body.fullName,
       fatherOrHusbandName: req.body.fatherOrHusbandName,
@@ -120,11 +37,11 @@ export const createMembership = async (req, res) => {
       aadhar: req.body.aadhar?.trim(), // Trim aadhar
       pan: req.body.pan?.trim().toUpperCase(), // Trim and uppercase PAN
       address: address,
-      // Store Cloudinary metadata
-      aadharUpload: validateCloudinaryMetadata(aadharUpload, 'aadharUpload'),
-      aadharUploadBack: validateCloudinaryMetadata(aadharUploadBack, 'aadharUploadBack'),
-      panUpload: validateCloudinaryMetadata(panUpload, 'panUpload'),
-      passportPhoto: validateCloudinaryMetadata(passportPhoto, 'passportPhoto'),
+      // Images will be set after upload
+      aadharUpload: null,
+      aadharUploadBack: null,
+      panUpload: null,
+      passportPhoto: null,
       createdBy: req.user?.id || null
     };
 
@@ -181,10 +98,65 @@ export const createMembership = async (req, res) => {
     
     console.log('All duplicate checks passed, creating membership...');
     
-    // Create membership - userId will be generated atomically in pre-save hook
+    // Create membership FIRST - userId will be generated atomically in pre-save hook
     const membership = await Membership.create(membershipData);
     
-    console.log('Membership created successfully:', membership.userId);
+    console.log('Membership created successfully with userId:', membership.userId);
+
+    // Prepare image uploads with transaction-like behavior
+    const imageFields = [
+      { key: 'aadharUpload', file: files.aadharUploadFile?.[0] },
+      { key: 'aadharUploadBack', file: files.aadharUploadBackFile?.[0] },
+      { key: 'panUpload', file: files.panUploadFile?.[0] },
+      { key: 'passportPhoto', file: files.passportPhotoFile?.[0] }
+    ];
+
+    // Filter to only include files that were provided
+    const imageUploads = imageFields
+      .filter(({ file }) => file && file.buffer)
+      .map(({ key, file }) => ({ key, file, memberId: membership.userId }));
+
+    let uploadStatus = 'pending';
+    let uploadErrors = new Map();
+
+    // Upload all images with rollback capability
+    if (imageUploads.length > 0) {
+      console.log(`Uploading ${imageUploads.length} images for member ${membership.userId}...`);
+      
+      const uploadResult = await uploadImagesWithRollback(imageUploads);
+      
+      if (uploadResult.success) {
+        // All uploads succeeded - update membership
+        Object.assign(membership, uploadResult.uploaded);
+        uploadStatus = 'complete';
+        console.log('All images uploaded successfully');
+      } else {
+        // Some uploads failed - rollback was attempted
+        uploadStatus = uploadResult.rolledBack ? 'failed' : 'partial';
+        
+        // Store errors in Map format for MongoDB
+        Object.entries(uploadResult.errors).forEach(([key, error]) => {
+          uploadErrors.set(key, error);
+        });
+        
+        // If rollback succeeded, no images were saved
+        if (uploadResult.rolledBack) {
+          console.log('All uploaded images were rolled back due to failures');
+        } else {
+          // Partial success - save what we have
+          Object.assign(membership, uploadResult.uploaded);
+          console.log('Partial image upload - some images saved, some failed');
+        }
+      }
+
+      // Update membership with upload status
+      membership.imageUploadStatus = uploadStatus;
+      membership.imageUploadErrors = uploadErrors;
+      membership.imageUploadAttempts = 1;
+      membership.lastImageUploadAttempt = new Date();
+      
+      await membership.save();
+    }
 
     res.status(201).json({
       success: true,
@@ -400,6 +372,154 @@ export const getMembershipByUserId = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching membership'
+    });
+  }
+};
+
+// @desc    Retry failed image uploads for a membership
+// @route   POST /api/memberships/:id/retry-uploads
+// @access  Private/Admin or Employee
+export const retryImageUploads = async (req, res) => {
+  try {
+    const membership = await Membership.findById(req.params.id);
+
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+
+    // Get files from request
+    const files = req.files || {};
+    const imageFields = [
+      { key: 'aadharUpload', file: files.aadharUploadFile?.[0] },
+      { key: 'aadharUploadBack', file: files.aadharUploadBackFile?.[0] },
+      { key: 'panUpload', file: files.panUploadFile?.[0] },
+      { key: 'passportPhoto', file: files.passportPhotoFile?.[0] }
+    ];
+
+    // Filter to only include files that were provided and are missing
+    const imageUploads = imageFields
+      .filter(({ key, file }) => {
+        // Only upload if file is provided AND membership doesn't have this image
+        return file && file.buffer && (!membership[key] || !membership[key].secure_url);
+      })
+      .map(({ key, file }) => ({ key, file, memberId: membership.userId }));
+
+    if (imageUploads.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No images to upload. All required images are already uploaded or no files provided.'
+      });
+    }
+
+    console.log(`Retrying upload of ${imageUploads.length} images for member ${membership.userId}...`);
+
+    // Upload images individually (allows partial success for retries)
+    const uploadResult = await uploadImagesIndividually(imageUploads);
+
+    // Update membership with successfully uploaded images
+    Object.assign(membership, uploadResult.uploaded);
+
+    // Update upload status
+    const statusInfo = calculateImageUploadStatus(membership);
+    membership.imageUploadStatus = statusInfo.status;
+    membership.imageUploadAttempts = (membership.imageUploadAttempts || 0) + 1;
+    membership.lastImageUploadAttempt = new Date();
+
+    // Update errors map
+    if (!membership.imageUploadErrors) {
+      membership.imageUploadErrors = new Map();
+    }
+    
+    // Remove errors for successfully uploaded images
+    Object.keys(uploadResult.uploaded).forEach(key => {
+      membership.imageUploadErrors.delete(key);
+    });
+
+    // Add new errors
+    Object.entries(uploadResult.errors).forEach(([key, error]) => {
+      membership.imageUploadErrors.set(key, error);
+    });
+
+    await membership.save();
+
+    const response = {
+      success: Object.keys(uploadResult.errors).length === 0,
+      message: Object.keys(uploadResult.errors).length === 0
+        ? 'All images uploaded successfully'
+        : 'Some images uploaded successfully, some failed',
+      data: {
+        uploaded: Object.keys(uploadResult.uploaded),
+        failed: Object.keys(uploadResult.errors),
+        errors: uploadResult.errors,
+        status: statusInfo
+      }
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error retrying image uploads:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error retrying image uploads'
+    });
+  }
+};
+
+// @desc    Update membership with image metadata (for separate upload flow)
+// @route   PUT /api/memberships/:id/images
+// @access  Private/Admin or Employee
+export const updateMembershipImages = async (req, res) => {
+  try {
+    const membership = await Membership.findById(req.params.id);
+
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+
+    const { aadharUpload, aadharUploadBack, panUpload, passportPhoto } = req.body;
+
+    // Update only provided image metadata
+    const updates = {};
+    if (aadharUpload) updates.aadharUpload = aadharUpload;
+    if (aadharUploadBack) updates.aadharUploadBack = aadharUploadBack;
+    if (panUpload) updates.panUpload = panUpload;
+    if (passportPhoto) updates.passportPhoto = passportPhoto;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image metadata provided'
+      });
+    }
+
+    // Apply updates
+    Object.assign(membership, updates);
+
+    // Recalculate upload status
+    const statusInfo = calculateImageUploadStatus(membership);
+    membership.imageUploadStatus = statusInfo.status;
+
+    await membership.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Membership images updated successfully',
+      data: {
+        membership,
+        status: statusInfo
+      }
+    });
+  } catch (error) {
+    console.error('Error updating membership images:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating membership images'
     });
   }
 };

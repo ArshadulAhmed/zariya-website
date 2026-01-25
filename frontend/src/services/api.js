@@ -418,5 +418,168 @@ export const dashboardAPI = {
   },
 }
 
+// Upload API
+export const uploadAPI = {
+  /**
+   * Upload document via backend
+   * @param {File} file - File to upload
+   * @param {string} memberId - Member ID (e.g., 'ZAR-20240115-0001')
+   * @param {string} imageType - Image type ('aadharUpload', 'aadharUploadBack', 'panUpload', 'passportPhoto')
+   * @param {Function} onProgress - Progress callback (0-100)
+   * @returns {Promise<Object>} - Cloudinary metadata
+   */
+  uploadDocument: async (file, memberId, imageType, onProgress = null) => {
+    try {
+      const token = getToken()
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      // Create XMLHttpRequest for progress tracking
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // Track upload progress
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percentComplete = Math.round((e.loaded / e.total) * 100)
+              onProgress(percentComplete)
+            }
+          })
+        }
+
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText)
+              if (response.success) {
+                resolve(response.data.metadata)
+              } else {
+                reject(new Error(response.message || 'Upload failed'))
+              }
+            } catch (error) {
+              reject(new Error('Failed to parse response'))
+            }
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText)
+              reject(new Error(error.message || 'Upload failed'))
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`))
+            }
+          }
+        })
+
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'))
+        })
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload was aborted'))
+        })
+
+        // Start upload
+        const queryParams = new URLSearchParams({
+          memberId,
+          imageType,
+        })
+        xhr.open('POST', `${API_BASE_URL}/upload/document?${queryParams}`)
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.send(formData)
+      })
+    } catch (error) {
+      console.error('Upload API uploadDocument error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Retry failed image uploads for a membership
+   * @param {string} membershipId - Membership MongoDB _id
+   * @param {Object} files - Object with file fields { aadharUploadFile, aadharUploadBackFile, panUploadFile, passportPhotoFile }
+   * @param {Function} onProgress - Progress callback
+   * @returns {Promise<Object>} - Upload results
+   */
+  retryUploads: async (membershipId, files, onProgress = null) => {
+    try {
+      const token = getToken()
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const formData = new FormData()
+      
+      // Append only files that are provided
+      if (files.aadharUploadFile) formData.append('aadharUploadFile', files.aadharUploadFile)
+      if (files.aadharUploadBackFile) formData.append('aadharUploadBackFile', files.aadharUploadBackFile)
+      if (files.panUploadFile) formData.append('panUploadFile', files.panUploadFile)
+      if (files.passportPhotoFile) formData.append('passportPhotoFile', files.passportPhotoFile)
+
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        if (onProgress) {
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              onProgress(Math.round((e.loaded / e.total) * 100))
+            }
+          })
+        }
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText)
+              if (response.success) {
+                resolve(response.data)
+              } else {
+                reject(new Error(response.message || 'Retry failed'))
+              }
+            } catch (error) {
+              reject(new Error('Failed to parse response'))
+            }
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText)
+              reject(new Error(error.message || 'Retry failed'))
+            } catch {
+              reject(new Error(`Retry failed with status ${xhr.status}`))
+            }
+          }
+        })
+
+        xhr.addEventListener('error', () => reject(new Error('Network error during retry')))
+        xhr.addEventListener('abort', () => reject(new Error('Retry was aborted')))
+
+        xhr.open('POST', `${API_BASE_URL}/memberships/${membershipId}/retry-uploads`)
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.send(formData)
+      })
+    } catch (error) {
+      console.error('Upload API retryUploads error:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update membership with image metadata
+   * @param {string} membershipId - Membership MongoDB _id
+   * @param {Object} imageMetadata - Object with Cloudinary metadata
+   * @returns {Promise<Object>} - Updated membership
+   */
+  updateMembershipImages: async (membershipId, imageMetadata) => {
+    return apiRequest(`/memberships/${membershipId}/images`, {
+      method: 'PUT',
+      body: JSON.stringify(imageMetadata)
+    })
+  },
+}
+
 export default apiRequest
 

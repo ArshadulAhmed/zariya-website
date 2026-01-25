@@ -8,6 +8,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "create-admin": "node scripts/createAdmin.js",
+    "cleanup-images": "node scripts/cleanupOrphanedImages.js",
+    "cleanup-images:dry-run": "node scripts/cleanupOrphanedImages.js --dry-run",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -28,6 +30,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
     "pdfkit": "^0.15.0"
   },
   "devDependencies": {

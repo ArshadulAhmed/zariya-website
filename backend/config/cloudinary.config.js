@@ -86,5 +86,63 @@ export const extractCloudinaryMetadata = (uploadResult) => {
   };
 };
 
+/**
+ * Delete multiple files from Cloudinary
+ * @param {string[]} publicIds - Array of Cloudinary public_ids
+ * @returns {Promise<Object>} - Deletion results
+ */
+export const deleteMultipleFromCloudinary = async (publicIds) => {
+  if (!publicIds || publicIds.length === 0) {
+    return { deleted: {} };
+  }
+
+  try {
+    const results = await cloudinary.api.delete_resources(publicIds, {
+      resource_type: 'image',
+      type: 'upload'
+    });
+    return results;
+  } catch (error) {
+    console.error('Cloudinary batch delete error:', error);
+    throw new Error(`Failed to delete files from Cloudinary: ${error.message}`);
+  }
+};
+
+/**
+ * Find all images in a folder
+ * @param {string} folder - Folder path (e.g., 'zariya/members/{userId}')
+ * @param {number} maxResults - Maximum number of results (default: 500)
+ * @returns {Promise<Array>} - Array of image resources
+ */
+export const listImagesInFolder = async (folder, maxResults = 500) => {
+  try {
+    const results = await cloudinary.search
+      .expression(`folder:${folder}`)
+      .max_results(maxResults)
+      .execute();
+    return results.resources || [];
+  } catch (error) {
+    console.error('Cloudinary list folder error:', error);
+    throw new Error(`Failed to list images in folder: ${error.message}`);
+  }
+};
+
+/**
+ * Check if a resource exists
+ * @param {string} publicId - Cloudinary public_id
+ * @returns {Promise<boolean>} - True if resource exists
+ */
+export const checkResourceExists = async (publicId) => {
+  try {
+    const result = await cloudinary.api.resource(publicId);
+    return !!result;
+  } catch (error) {
+    if (error.http_code === 404) {
+      return false;
+    }
+    throw error;
+  }
+};
+
 export default cloudinary;
 
