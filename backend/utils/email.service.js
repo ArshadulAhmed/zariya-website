@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { getContactFormTemplate } from './email.templates.js';
 
 dotenv.config();
 
@@ -52,24 +53,13 @@ const sendContactWithResend = async (contactData, name, userEmail, phone, notifi
 
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  const subject = `New Contact Form Submission from ${name}`;
-  const message = contactData.message || '';
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 8px; padding: 20px;">
-      <h2 style="color: #1a5f3f;">New Contact Form Submission</h2>
-      <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> <a href="mailto:${userEmail}">${userEmail}</a></p>
-        ${phone ? `<p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>` : ''}
-        <p><strong>Message:</strong></p>
-        <div style="background-color: white; padding: 10px; border-radius: 3px; margin-top: 10px; white-space: pre-wrap;">
-          ${message.replace(/\n/g, '<br>')}
-        </div>
-      </div>
-      <p style="font-size: 12px; color: #aaa;">Received at: ${new Date().toISOString()}</p>
-    </div>
-  `;
+  // Get email template
+  const template = getContactFormTemplate({
+    name,
+    email: userEmail,
+    phone,
+    message: contactData.message || '',
+  });
 
   try {
     const fromEmail = process.env.SMTP_FROM || process.env.RESEND_FROM || 'onboarding@resend.dev';
@@ -78,8 +68,8 @@ const sendContactWithResend = async (contactData, name, userEmail, phone, notifi
     const { data, error } = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [notificationEmail],
-      subject,
-      html,
+      subject: template.subject,
+      html: template.html,
     });
 
     if (error) {
@@ -137,30 +127,19 @@ const sendContactWithSMTP = async (contactData, name, userEmail, phone, notifica
     maxMessages: 1,
   });
 
-  const subject = `New Contact Form Submission from ${name}`;
-  const message = contactData.message || '';
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 8px; padding: 20px;">
-      <h2 style="color: #1a5f3f;">New Contact Form Submission</h2>
-      <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> <a href="mailto:${userEmail}">${userEmail}</a></p>
-        ${phone ? `<p><strong>Phone:</strong> <a href="tel:${phone}">${phone}</a></p>` : ''}
-        <p><strong>Message:</strong></p>
-        <div style="background-color: white; padding: 10px; border-radius: 3px; margin-top: 10px; white-space: pre-wrap;">
-          ${message.replace(/\n/g, '<br>')}
-        </div>
-      </div>
-      <p style="font-size: 12px; color: #aaa;">Received at: ${new Date().toISOString()}</p>
-    </div>
-  `;
+  // Get email template
+  const template = getContactFormTemplate({
+    name,
+    email: userEmail,
+    phone,
+    message: contactData.message || '',
+  });
 
   const mailOptions = {
     from: `"Zariya Contact Form" <${emailUser}>`,
     to: notificationEmail,
-    subject,
-    html,
+    subject: template.subject,
+    html: template.html,
   };
 
   try {
