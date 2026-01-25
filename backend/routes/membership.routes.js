@@ -131,30 +131,12 @@ const reviewMembershipValidation = [
 // Public route - anyone can create membership
 // Files are sent with form, backend will create membership first, then upload images
 router.post('/', 
-  // Debug: Log request before multer
-  (req, res, next) => {
-    console.log('Before multer - Content-Type:', req.headers['content-type']);
-    console.log('Before multer - req.body:', req.body);
-    next();
-  },
   upload.fields([
     { name: 'aadharUploadFile', maxCount: 1 },
     { name: 'aadharUploadBackFile', maxCount: 1 },
     { name: 'panUploadFile', maxCount: 1 },
     { name: 'passportPhotoFile', maxCount: 1 }
   ]),
-  // Debug middleware to check what multer parsed
-  (req, res, next) => {
-    console.log('After multer - Content-Type:', req.headers['content-type']);
-    console.log('After multer - req.body keys:', Object.keys(req.body || {}));
-    console.log('After multer - req.body:', JSON.stringify(req.body, null, 2));
-    console.log('After multer - req.files keys:', Object.keys(req.files || {}));
-    if (!req.body || Object.keys(req.body).length === 0) {
-      console.error('⚠️  WARNING: req.body is empty after multer!');
-      console.error('   This might indicate multer failed to parse FormData');
-    }
-    next();
-  },
   parseFormDataAddress,
   createMembershipValidation, 
   createMembership

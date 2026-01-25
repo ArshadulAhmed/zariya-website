@@ -30,26 +30,9 @@ const allowedOrigins = process.env.FRONTEND_ORIGIN
   ? process.env.FRONTEND_ORIGIN.split(',').map(origin => origin.trim())
   : ['http://localhost:5173', 'http://localhost:3000'];
 
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     // Allow requests with no origin (mobile apps, Postman, etc.) in development
-//     if (!origin && process.env.NODE_ENV === 'development') {
-//       return callback(null, true);
-//     }
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-// }));
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow server-to-server, Postman, health checks
     if (!origin) {
       return callback(null, true);
     }
@@ -57,8 +40,6 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
-    // IMPORTANT: deny silently — DO NOT throw error
     return callback(null, false);
   },
   credentials: true,
@@ -69,15 +50,9 @@ app.use(cors({
 app.options('*', cors());
 
 
-
-
-// Body parsing middleware
-// Note: express.json() and express.urlencoded() automatically skip multipart/form-data
-// Multer handles multipart/form-data in specific routes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -113,10 +88,9 @@ app.use((req, res) => {
   });
 });
 
-// Connect to MongoDB
+
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI environment variable is required');
   process.exit(1);
 }
 
@@ -124,14 +98,12 @@ const PORT = process.env.PORT || 5000;
 
 mongoose.connect(MONGODB_URI)
   .then(() => {
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to DB');
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Server running on port`);
     });
   })
   .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
     process.exit(1);
   });
 
