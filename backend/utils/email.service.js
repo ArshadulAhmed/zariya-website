@@ -4,31 +4,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Create email transporter
+ * Create email transporter using Brevo (formerly Sendinblue) SMTP
  * Uses SMTP configuration from environment variables
  */
 const createTransporter = () => {
-  // For production, use SMTP settings
-  // For development/testing, you can use Gmail, SendGrid, or other services
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
     port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587 (TLS)
     auth: {
-      user: process.env.SMTP_USER || process.env.ADMIN_EMAIL,
+      user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD,
     },
-    // Connection timeout settings
+    // Connection timeout settings (optimized for Brevo)
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 10000, // 10 seconds
     socketTimeout: 10000, // 10 seconds
-    // Retry options
+    // Connection pooling for better performance
     pool: true,
     maxConnections: 1,
     maxMessages: 3,
-    // Additional options for better reliability
+    // TLS options for secure connection
     tls: {
-      rejectUnauthorized: false, // Accept self-signed certificates if needed
+      rejectUnauthorized: true, // Brevo uses valid certificates
     },
   });
 
@@ -43,21 +41,22 @@ const createTransporter = () => {
 export const sendEmail = async (options) => {
   try {
     // If SMTP is not configured, log the email instead (for development)
-    if (!process.env.SMTP_USER && !process.env.SMTP_PASSWORD) {
-      console.log('📧 Email would be sent (SMTP not configured):');
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+      console.log('📧 Email would be sent (Brevo SMTP not configured):');
       console.log('   To:', options.to);
       console.log('   Subject:', options.subject);
       console.log('   Body:', options.text || options.html);
       return {
         success: true,
-        message: 'Email logged (SMTP not configured)',
+        message: 'Email logged (Brevo SMTP not configured)',
         messageId: 'dev-log-' + Date.now(),
       };
     }
 
     const transporter = createTransporter();
+    // Brevo requires the 'from' address to match your verified sender
     const mailOptions = {
-      from: process.env.SMTP_FROM || process.env.ADMIN_EMAIL || 'noreply@zariya.com',
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'noreply@zariya.com',
       to: options.to,
       subject: options.subject,
       text: options.text,
