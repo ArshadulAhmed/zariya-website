@@ -251,11 +251,19 @@ const membershipsSlice = createSlice({
           mobileNumber: String(membership.mobileNumber || ''),
           aadhar: String(membership.aadhar || ''),
           pan: String(membership.pan || ''),
-          // Preserve Cloudinary metadata objects, or convert legacy strings
-          aadharUpload: typeof membership.aadharUpload === 'object' ? membership.aadharUpload : (membership.aadharUpload || null),
-          aadharUploadBack: typeof membership.aadharUploadBack === 'object' ? membership.aadharUploadBack : (membership.aadharUploadBack || null),
-          panUpload: typeof membership.panUpload === 'object' ? membership.panUpload : (membership.panUpload || null),
-          passportPhoto: typeof membership.passportPhoto === 'object' ? membership.passportPhoto : (membership.passportPhoto || null),
+          // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)
+          aadharUpload: (membership.aadharUpload && typeof membership.aadharUpload === 'object' && membership.aadharUpload.secure_url) 
+            ? membership.aadharUpload 
+            : (typeof membership.aadharUpload === 'string' ? membership.aadharUpload : null),
+          aadharUploadBack: (membership.aadharUploadBack && typeof membership.aadharUploadBack === 'object' && membership.aadharUploadBack.secure_url) 
+            ? membership.aadharUploadBack 
+            : (typeof membership.aadharUploadBack === 'string' ? membership.aadharUploadBack : null),
+          panUpload: (membership.panUpload && typeof membership.panUpload === 'object' && membership.panUpload.secure_url) 
+            ? membership.panUpload 
+            : (typeof membership.panUpload === 'string' ? membership.panUpload : null),
+          passportPhoto: (membership.passportPhoto && typeof membership.passportPhoto === 'object' && membership.passportPhoto.secure_url) 
+            ? membership.passportPhoto 
+            : (typeof membership.passportPhoto === 'string' ? membership.passportPhoto : null),
           address: {
             village: String(membership.address?.village || ''),
             postOffice: String(membership.address?.postOffice || ''),

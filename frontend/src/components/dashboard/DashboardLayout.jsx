@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { logout } from '../../store/slices/authSlice'
+import { closeSnackbar } from '../../store/slices/loansSlice'
+import { closeSnackbar as closeMembershipsSnackbar } from '../../store/slices/membershipsSlice'
 import logoImage from '../../assets/logo.jpeg'
 import './DashboardLayout.scss'
 
@@ -11,6 +13,12 @@ const DashboardLayout = () => {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  // Clear snackbars when navigating to a different page
+  useEffect(() => {
+    dispatch(closeSnackbar())
+    dispatch(closeMembershipsSnackbar())
+  }, [location.pathname, dispatch])
 
   const isAdmin = user?.role === 'admin'
   const isEmployee = user?.role === 'employee'

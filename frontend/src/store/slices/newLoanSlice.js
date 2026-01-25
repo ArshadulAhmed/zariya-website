@@ -74,7 +74,27 @@ const newLoanSlice = createSlice({
       state.searchError = action.payload
     },
     setSelectedMembership: (state, action) => {
-      state.selectedMembership = action.payload
+      const membership = action.payload
+      if (membership) {
+        // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)
+        state.selectedMembership = {
+          ...membership,
+          aadharUpload: (membership.aadharUpload && typeof membership.aadharUpload === 'object' && membership.aadharUpload.secure_url) 
+            ? membership.aadharUpload 
+            : (typeof membership.aadharUpload === 'string' ? membership.aadharUpload : null),
+          aadharUploadBack: (membership.aadharUploadBack && typeof membership.aadharUploadBack === 'object' && membership.aadharUploadBack.secure_url) 
+            ? membership.aadharUploadBack 
+            : (typeof membership.aadharUploadBack === 'string' ? membership.aadharUploadBack : null),
+          panUpload: (membership.panUpload && typeof membership.panUpload === 'object' && membership.panUpload.secure_url) 
+            ? membership.panUpload 
+            : (typeof membership.panUpload === 'string' ? membership.panUpload : null),
+          passportPhoto: (membership.passportPhoto && typeof membership.passportPhoto === 'object' && membership.passportPhoto.secure_url) 
+            ? membership.passportPhoto 
+            : (typeof membership.passportPhoto === 'string' ? membership.passportPhoto : null),
+        }
+      } else {
+        state.selectedMembership = null
+      }
     },
     updateFormData: (state, action) => {
       const { path, value } = action.payload

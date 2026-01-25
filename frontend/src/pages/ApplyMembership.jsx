@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppSelector } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { closeSnackbar } from '../store/slices/loansSlice'
+import { closeSnackbar as closeMembershipsSnackbar } from '../store/slices/membershipsSlice'
 import MembershipFormContainer from '../components/membership/MembershipFormContainer'
 import MembershipSuccessPage from '../components/membership/MembershipSuccessPage'
 import Logo from '../components/Logo'
@@ -7,7 +10,14 @@ import './ApplyMembership.scss'
 
 const ApplyMembership = ({ hideHeader = false, successRedirectPath = '/' }) => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const success = useAppSelector((state) => state.membership?.success) || false
+
+  // Clear snackbars when component mounts (navigating to this page)
+  useEffect(() => {
+    dispatch(closeSnackbar())
+    dispatch(closeMembershipsSnackbar())
+  }, [dispatch])
 
   // Don't show success page in dashboard mode - redirect happens in MembershipFormContainer
   if (success && !hideHeader) {
