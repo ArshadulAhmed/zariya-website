@@ -68,8 +68,8 @@ const Loans = memo(() => {
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   
-  // Show skeleton if loading OR if data is empty and we haven't fetched yet (initial load)
-  const showSkeleton = isLoading || (!hasFetchedRef.current && loans.length === 0)
+  // Show skeleton if loading OR if we haven't fetched yet (initial load) - always show skeleton on first render
+  const showSkeleton = isLoading || !hasFetchedRef.current
 
   // Fetch loans when filters change
   useEffect(() => {

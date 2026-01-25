@@ -29,8 +29,8 @@ const Users = memo(() => {
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   
-  // Show skeleton if loading OR if data is empty and we haven't fetched yet (initial load)
-  const showSkeleton = isLoading || (!hasFetchedRef.current && users.length === 0)
+  // Show skeleton if loading OR if we haven't fetched yet (initial load) - always show skeleton on first render
+  const showSkeleton = isLoading || !hasFetchedRef.current
 
   // Fetch users when filters change
   useEffect(() => {
