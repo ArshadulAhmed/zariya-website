@@ -46,15 +46,15 @@ const Footer = () => {
             <ul className="footer-contact">
               <li>
                 <LocationIcon className="footer-icon" />
-                <span>123 Financial District, Your City</span>
+                <span>Colony Bazar, Barpeta, Assam</span>
               </li>
               <li>
                 <PhoneIcon className="footer-icon" />
-                <span>+1 (555) 123-4567</span>
+                <span>+91 9957487109</span>
               </li>
               <li>
                 <EmailIcon className="footer-icon" />
-                <span>info@zariya.coop</span>
+                <span>zariyatcs@gmail.com</span>
               </li>
             </ul>
           </div>

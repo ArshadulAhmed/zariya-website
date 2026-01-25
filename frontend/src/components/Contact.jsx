@@ -1,18 +1,24 @@
 import React, { useState } from 'react'
+import { useAppDispatch } from '../store/hooks'
+import { setSnackbar } from '../store/slices/loansSlice'
 import Icon from './Icon'
 import LocationIcon from '../assets/icons/LocationIcon.svg'
 import PhoneIcon from '../assets/icons/PhoneIcon.svg'
 import EmailIcon from '../assets/icons/EmailIcon.svg'
 import ClockIcon from '../assets/icons/ClockIcon.svg'
+import Snackbar from './Snackbar'
+import { contactAPI } from '../services/api'
 import './Contact.scss'
 
 const Contact = () => {
+  const dispatch = useAppDispatch()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     message: ''
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleChange = (e) => {
     setFormData({
@@ -21,11 +27,44 @@ const Contact = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Form submission logic would go here
-    alert('Thank you for your interest! We will contact you soon.')
-    setFormData({ name: '', email: '', phone: '', message: '' })
+    setIsSubmitting(true)
+
+    try {
+      const response = await contactAPI.submitContact(formData)
+      
+      if (response.success) {
+        dispatch(setSnackbar({
+          message: response.message || 'Thank you for contacting us! We will get back to you soon.',
+          severity: 'success'
+        }))
+        setFormData({ name: '', email: '', phone: '', message: '' })
+      } else {
+        // Handle validation errors
+        let errorMessage = response.message || 'Failed to send message. Please try again.'
+        if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          errorMessage = response.errors.map(err => err.message || err.msg).join(', ')
+        }
+        dispatch(setSnackbar({
+          message: errorMessage,
+          severity: 'error'
+        }))
+      }
+    } catch (error) {
+      console.error('Contact form submission error:', error)
+      // Try to extract error message from response
+      let errorMessage = error.message || 'Failed to send message. Please try again later.'
+      if (error.response && error.response.errors) {
+        errorMessage = error.response.errors.map(err => err.message || err.msg).join(', ')
+      }
+      dispatch(setSnackbar({
+        message: errorMessage,
+        severity: 'error'
+      }))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -45,21 +84,21 @@ const Contact = () => {
                   <Icon src={LocationIcon} className="info-icon" alt="Location" />
                 </div>
                 <h3>Address</h3>
-                <p>123 Financial District<br />Your City, State 12345</p>
+                <p>Colony Bazar, Barpeta<br />Assam 781314</p>
               </div>
               <div className="info-card">
                 <div className="info-icon-wrapper">
                   <Icon src={PhoneIcon} className="info-icon" alt="Phone" />
                 </div>
                 <h3>Phone</h3>
-                <p>+1 (555) 123-4567</p>
+                <p>+91 9957487109</p>
               </div>
               <div className="info-card">
                 <div className="info-icon-wrapper">
                   <Icon src={EmailIcon} className="info-icon" alt="Email" />
                 </div>
                 <h3>Email</h3>
-                <p>info@zariya.coop</p>
+                <p>zariyatcs@gmail.com</p>
               </div>
               <div className="info-card">
                 <div className="info-icon-wrapper">
@@ -113,12 +152,29 @@ const Contact = () => {
                 required
               ></textarea>
             </div>
-            <button type="submit" className="btn btn-primary btn-full">
-              Send Message
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '8px', display: 'inline-block' }}>
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32">
+                      <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                      <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                    </circle>
+                  </svg>
+                  Sending...
+                </>
+              ) : (
+                'Send Message'
+              )}
             </button>
           </form>
         </div>
       </div>
+      <Snackbar />
     </section>
   )
 }

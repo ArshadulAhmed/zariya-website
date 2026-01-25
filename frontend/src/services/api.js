@@ -581,5 +581,26 @@ export const uploadAPI = {
   },
 }
 
+// Contact API
+export const contactAPI = {
+  /**
+   * Submit contact form
+   * @param {Object} contactData - Contact form data { name, email, phone, message }
+   * @returns {Promise<Object>} - API response
+   */
+  submitContact: async (contactData) => {
+    try {
+      const data = await apiRequest('/contact', {
+        method: 'POST',
+        body: JSON.stringify(contactData),
+      })
+      return data
+    } catch (error) {
+      console.error('Contact API submitContact error:', error)
+      throw error
+    }
+  },
+}
+
 export default apiRequest
 

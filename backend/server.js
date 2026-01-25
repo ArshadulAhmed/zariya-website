@@ -16,6 +16,7 @@ import loanRoutes from './routes/loan.routes.js';
 import repaymentRoutes from './routes/repayment.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import contactRoutes from './routes/contact.routes.js';
 
 const app = express();
 
@@ -28,7 +29,7 @@ app.use(compression());
 // CORS configuration - restrict to frontend origin
 const allowedOrigins = process.env.FRONTEND_ORIGIN
   ? process.env.FRONTEND_ORIGIN.split(',').map(origin => origin.trim())
-  : ['http://localhost:5173', 'http://localhost:3000'];
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'];
 
 
 app.use(cors({
@@ -69,6 +70,7 @@ app.use('/api/loans', loanRoutes);
 app.use('/api/repayments', repaymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
