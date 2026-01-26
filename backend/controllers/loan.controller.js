@@ -398,12 +398,12 @@ export const downloadLoanContract = async (req, res) => {
     let loan;
     if (id.startsWith('LOAN-')) {
       loan = await Loan.findOne({ loanAccountNumber: id })
-        .populate('membership')
+        .populate('membership') // Populate all membership fields including passportPhoto
         .populate('createdBy', 'username fullName')
         .populate('reviewedBy', 'username fullName');
     } else {
       loan = await Loan.findById(id)
-        .populate('membership')
+        .populate('membership') // Populate all membership fields including passportPhoto
         .populate('createdBy', 'username fullName')
         .populate('reviewedBy', 'username fullName');
     }
@@ -413,6 +413,12 @@ export const downloadLoanContract = async (req, res) => {
         success: false,
         message: 'Loan not found'
       });
+    }
+    
+    // Debug: Log membership passportPhoto
+    if (loan.membership) {
+      console.log('Membership passportPhoto:', loan.membership.passportPhoto);
+      console.log('Membership passportPhoto secure_url:', loan.membership.passportPhoto?.secure_url);
     }
 
     // Only allow contract download for approved loans
@@ -444,8 +450,8 @@ export const downloadLoanContract = async (req, res) => {
     const __dirname = path.dirname(__filename);
     const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
 
-    // Generate PDF using template
-    generateLoanContractPDF(doc, loan, logoPath);
+    // Generate PDF using template (includes page numbers)
+    await generateLoanContractPDF(doc, loan, logoPath);
 
     // Finalize PDF
     doc.end();
