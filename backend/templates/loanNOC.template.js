@@ -26,7 +26,7 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   const PAGE_WIDTH = 515;
   const START_X = 40;
   const BORDER_COLOR = '#333333';
-  const CELL_PADDING = 8; // ⬅ increased
+  const CELL_PADDING = 8;
   const FONT_SIZE = 9;
 
   let y = 30;
@@ -67,17 +67,15 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     const usableWidth = w - CELL_PADDING * 2;
 
     doc.fontSize(FONT_SIZE)
-       .font('Helvetica-Bold')
-       .text(label, startX, startY, {
-         width: usableWidth,
-       });
+      .font('Helvetica-Bold')
+      .text(label, startX, startY, { width: usableWidth });
 
     const labelWidth = doc.widthOfString(label);
 
     doc.font('Helvetica')
-       .text(value || 'N/A', startX + labelWidth, startY, {
-         width: usableWidth - labelWidth,
-       });
+      .text(value || 'N/A', startX + labelWidth, startY, {
+        width: usableWidth - labelWidth,
+      });
   };
 
   /* -------------------- Draw Row -------------------- */
@@ -114,24 +112,24 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   }
 
   doc.fontSize(13)
-     .font('Helvetica-Bold')
-     .text(
-       'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
-       START_X,
-       y,
-       { width: PAGE_WIDTH, align: 'center' }
-     );
+    .font('Helvetica-Bold')
+    .text(
+      'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
+      START_X,
+      y,
+      { width: PAGE_WIDTH, align: 'center' }
+    );
 
   y += 18;
 
   doc.fontSize(9)
-     .font('Helvetica')
-     .text(
-       'Registered Under The Assam Co-operative Societies Act, 2007 (Act IV of 2012)',
-       START_X,
-       y,
-       { width: PAGE_WIDTH, align: 'center' }
-     );
+    .font('Helvetica')
+    .text(
+      'Registered Under The Assam Co-operative Societies Act, 2007 (Act IV of 2012)',
+      START_X,
+      y,
+      { width: PAGE_WIDTH, align: 'center' }
+    );
 
   y += 12;
 
@@ -142,16 +140,34 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     { width: PAGE_WIDTH, align: 'center' }
   );
 
-  y += 28; // ⬅ more spacing before table
+  y += 26;
 
-  doc.fontSize(14)
-     .font('Helvetica-Bold')
-     .text('NO OBJECTION CERTIFICATE', START_X, y, {
-       width: PAGE_WIDTH,
-       align: 'center',
-     });
+  /* -------------------- HEADING WITH LINES -------------------- */
 
-  y += 40; // ⬅ increased gap before table
+  const headingText = 'NO OBJECTION CERTIFICATE';
+  const headingWidth = doc.fontSize(14).font('Helvetica-Bold').widthOfString(headingText);
+  const centerX = START_X + PAGE_WIDTH / 2;
+  const lineY = y + 5;
+
+  // Left line
+  doc.moveTo(START_X, lineY)
+     .lineTo(centerX - headingWidth / 2 - 12, lineY)
+     .lineWidth(1)
+     .stroke('#000000');
+
+  // Right line
+  doc.moveTo(centerX + headingWidth / 2 + 12, lineY)
+     .lineTo(START_X + PAGE_WIDTH, lineY)
+     .lineWidth(1)
+     .stroke('#000000');
+
+  // Heading text
+  doc.text(headingText, START_X, y, {
+    width: PAGE_WIDTH,
+    align: 'center',
+  });
+
+  y += 42;
 
   /* -------------------- MEMBER INFORMATION -------------------- */
 
@@ -211,26 +227,26 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   const footerY = doc.page.height - doc.page.margins.bottom - 90;
 
   doc.fontSize(9)
-     .font('Helvetica-Bold')
-     .text("Chairman's Signature", START_X, footerY + 25);
+    .font('Helvetica-Bold')
+    .text("Chairman's Signature", START_X, footerY + 25);
 
   const sealX = START_X + PAGE_WIDTH - 200;
 
   doc.fontSize(9)
-     .font('Helvetica-Bold')
-     .text('OFFICIAL SEAL', sealX + 10, footerY, {
-       width: 180,
-       align: 'center',
-     });
+    .font('Helvetica-Bold')
+    .text('OFFICIAL SEAL', sealX + 10, footerY, {
+      width: 180,
+      align: 'center',
+    });
 
   doc.fontSize(8)
-     .font('Helvetica')
-     .text(
-       'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
-       sealX,
-       footerY + 14,
-       { width: 200, align: 'center' }
-     );
+    .font('Helvetica')
+    .text(
+      'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
+      sealX,
+      footerY + 14,
+      { width: 200, align: 'center' }
+    );
 
   /* -------------------- SINGLE PAGE GUARANTEE -------------------- */
 
