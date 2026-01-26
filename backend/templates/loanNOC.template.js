@@ -140,7 +140,7 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     { width: PAGE_WIDTH, align: 'center' }
   );
 
-  y += 26;
+  y += 46;
 
   /* -------------------- HEADING WITH LINES -------------------- */
 
@@ -167,7 +167,7 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     align: 'center',
   });
 
-  y += 42;
+  y += 82;
 
   /* -------------------- MEMBER INFORMATION -------------------- */
 
