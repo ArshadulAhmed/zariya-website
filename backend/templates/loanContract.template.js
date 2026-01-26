@@ -114,9 +114,17 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
 
   /* ---------------- TABLE HELPERS ---------------- */
   const cellHeight = (label, value, width) => {
-    const labelH = doc.heightOfString(label, { width });
-    const valueH = doc.heightOfString(value || '', { width });
-    return labelH + valueH + PAD_Y * 2 + 2;
+    doc.fontSize(FONT);
+  
+    const labelHeight = doc
+      .font('Helvetica-Bold')
+      .heightOfString(label, { width });
+  
+    const valueHeight = doc
+      .font('Helvetica')
+      .heightOfString(value || '', { width });
+  
+    return labelHeight + valueHeight + PAD_Y * 2;
   };
 
   const drawRow = (cells) => {
