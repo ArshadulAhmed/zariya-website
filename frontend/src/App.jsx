@@ -66,7 +66,7 @@ function App() {
         <Route
           path="memberships"
           element={
-            <Suspense fallback={<></>}>
+            <Suspense fallback={<PageLoader />}>
               <Memberships />
             </Suspense>
           }
@@ -90,7 +90,7 @@ function App() {
         <Route
           path="loans"
           element={
-            <Suspense fallback={<></>}>
+            <Suspense fallback={<PageLoader />}>
               <Loans />
             </Suspense>
           }
@@ -114,7 +114,7 @@ function App() {
         <Route
           path="users"
           element={
-            <Suspense fallback={<></>}>
+            <Suspense fallback={<PageLoader />}>
               <Users />
             </Suspense>
           }
