@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { drawPDFHeader } from './pdfHeader.template.js';
 
 /**
  * Loan NOC PDF – Boxed Table Layout with Auto-Wrapping Cells
@@ -103,44 +104,16 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   };
 
   /* -------------------- HEADER -------------------- */
-
-  if (logoPath) {
-    try {
-      doc.image(logoPath, START_X, y, { width: 40 });
-      doc.image(logoPath, START_X + PAGE_WIDTH - 40, y, { width: 40 });
-    } catch {}
-  }
-
-  doc.fontSize(13)
-    .font('Helvetica-Bold')
-    .text(
-      'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
-      START_X,
-      y,
-      { width: PAGE_WIDTH, align: 'center' }
-    );
-
-  y += 18;
-
-  doc.fontSize(9)
-    .font('Helvetica')
-    .text(
-      'Registered Under The Assam Co-operative Societies Act, 2007 (Act IV of 2012)',
-      START_X,
-      y,
-      { width: PAGE_WIDTH, align: 'center' }
-    );
-
-  y += 12;
-
-  doc.text(
-    'DEWRIKUCHI (SONKUCHI COLONY BAZAR), DIST. BARPETA (ASSAM), PIN-781314',
-    START_X,
-    y,
-    { width: PAGE_WIDTH, align: 'center' }
-  );
-
-  y += 46;
+  y = drawPDFHeader(doc, {
+    logoPath,
+    logoWidth: 40,
+    startX: START_X,
+    pageWidth: PAGE_WIDTH,
+    startY: y,
+    registrationText: 'Registered Under The Assam Co-operative Societies Act, 2007 (Act IV of 2012)',
+    addressText: 'DEWRIKUCHI (SONKUCHI COLONY BAZAR), DIST. BARPETA (ASSAM), PIN-781314',
+    spacingAfter: 46
+  });
 
   /* -------------------- HEADING WITH LINES -------------------- */
 

@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import https from 'https';
 import http from 'http';
+import { drawPDFHeader } from './pdfHeader.template.js';
 
 const formatDate = (d) => {
   try {
@@ -75,41 +76,17 @@ export const generateLoanContractPDF = async (doc, loan, logoPath) => {
     return false;
   };
 
-  /* ---------------- LOGOS ---------------- */
-  if (logoPath) {
-    try {
-      doc.image(logoPath, START_X, y, { width: 45 });
-      doc.image(logoPath, START_X + PAGE_WIDTH - 45, y, { width: 45 });
-    } catch {}
-  }
-
   /* ---------------- HEADER ---------------- */
-  doc.font('Helvetica-Bold').fontSize(13).text(
-    'ZARIYA THE THRIFT AND CREDIT CO-OPERATIVE SOCIETY LIMITED',
-    START_X,
-    y,
-    { width: PAGE_WIDTH, align: 'center' }
-  );
-
-  y += 18;
-
-  doc.font('Helvetica').fontSize(9).text(
-    'Registered Under The Assam Co-operative Societies Act, 2007',
-    START_X,
-    y,
-    { width: PAGE_WIDTH, align: 'center' }
-  );
-
-  y += 12;
-
-  doc.text(
-    'DEWRIKUCHI (SONKUCHI COLONY BAZAR), DIST. BARPETA, ASSAM, PIN-781314',
-    START_X,
-    y,
-    { width: PAGE_WIDTH, align: 'center' }
-  );
-
-  y += 50;
+  y = drawPDFHeader(doc, {
+    logoPath,
+    logoWidth: 45,
+    startX: START_X,
+    pageWidth: PAGE_WIDTH,
+    startY: y,
+    registrationText: 'Registered Under The Assam Co-operative Societies Act, 2007',
+    addressText: 'DEWRIKUCHI (SONKUCHI COLONY BAZAR), DIST. BARPETA, ASSAM, PIN-781314',
+    spacingAfter: 50
+  });
 
   /* ---------------- HEADING WITH LINES ---------------- */
   const heading = 'LOAN APPLICATION FORM';
@@ -376,8 +353,8 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   
   doc.rect(START_X + gridCellWidth, leftY, gridCellWidth, gridRow2Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const accountLabelHeight = doc.heightOfString('Account Number', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Account Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
+  const accountLabelHeight = doc.heightOfString('Bank Account Number', { width: gridCellWidth - PAD_X * 2 });
+  doc.text('Bank Account Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
   doc.font('Helvetica').text(loan.bankAccountNumber || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + accountLabelHeight, { width: gridCellWidth - PAD_X * 2 });
   leftY += gridRow2Height;
   
@@ -480,7 +457,7 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   );
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Bank Account No', value: loan.guarantor?.bankAccountNumber || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: 'Bank Account Number', value: loan.guarantor?.bankAccountNumber || 'N/A' },
     { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.guarantor?.mobileNumber || 'N/A' },
   ]);
 
