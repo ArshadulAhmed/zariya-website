@@ -81,17 +81,6 @@ const LoanDetailsForm = () => {
         />
 
         <TextField
-          label="Email (Optional)"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="email@example.com"
-          error={errors.email}
-          helperText={errors.email}
-        />
-
-        <TextField
           label="Bank Account Number (Optional)"
           name="bankAccountNumber"
           value={formData.bankAccountNumber}

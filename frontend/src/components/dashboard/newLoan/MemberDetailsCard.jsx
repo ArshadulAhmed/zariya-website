@@ -111,6 +111,10 @@ const MemberDetailsCard = () => {
               <span className="info-value">{membership.mobileNumber}</span>
             </div>
           )}
+          <div className="info-row">
+            <span className="info-label">Email</span>
+            <span className="info-value">{membership.email || 'N/A'}</span>
+          </div>
           {membership.aadhar && (
             <div className="info-row">
               <span className="info-label">Aadhar Number</span>

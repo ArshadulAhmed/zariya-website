@@ -46,6 +46,12 @@ const nomineeSchema = new mongoose.Schema({
     required: [true, 'Relationship is required'],
     trim: true
   },
+  mobileNumber: {
+    type: String,
+    required: [true, 'Nominee mobile number is required'],
+    trim: true,
+    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
+  },
   bankAccountNumber: {
     type: String,
     trim: true,

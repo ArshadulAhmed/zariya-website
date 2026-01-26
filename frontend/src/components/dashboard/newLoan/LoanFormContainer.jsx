@@ -33,7 +33,7 @@ const LoanFormContainer = () => {
     const loanData = {
       membership: selectedMembership._id || selectedMembership.id,
       mobileNumber: selectedMembership.mobileNumber || formData.mobileNumber?.trim() || '',
-      email: formData.email.trim() || undefined,
+      email: selectedMembership.email?.trim() || undefined,
       loanAmount: parseFloat(formData.loanAmount),
       loanTenure: parseInt(formData.loanTenure),
       purpose: formData.purpose.trim(),
@@ -42,6 +42,7 @@ const LoanFormContainer = () => {
       nominee: {
         name: formData.nominee.name.trim(),
         relationship: formData.nominee.relationship.trim(),
+        mobileNumber: formData.nominee.mobileNumber.trim(),
         bankAccountNumber: formData.nominee.bankAccountNumber.trim() || undefined,
         address: {
           village: formData.nominee.address.village.trim(),

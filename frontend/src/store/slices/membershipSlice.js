@@ -9,6 +9,7 @@ const initialState = {
     dateOfBirth: '',
     occupation: '',
     mobileNumber: '',
+    email: '',
     aadhar: '',
     pan: '',
     aadharUpload: null,

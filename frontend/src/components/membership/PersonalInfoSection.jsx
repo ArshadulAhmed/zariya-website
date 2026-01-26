@@ -100,6 +100,19 @@ const PersonalInfoSection = () => {
 
         <div className="form-group">
           <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email || ''}
+            onChange={handleChange}
+            placeholder="Enter your email address"
+            error={validationErrors.email}
+            helperText={validationErrors.email}
+          />
+        </div>
+
+        <div className="form-group">
+          <TextField
             label="Aadhar Number"
             name="aadhar"
             type="text"

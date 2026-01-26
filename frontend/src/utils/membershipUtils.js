@@ -49,6 +49,11 @@ export const validateMembershipForm = (formData) => {
     errors.mobileNumber = 'Mobile number must be 10 digits'
   }
 
+  // Email is optional, but if provided, validate format
+  if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    errors.email = 'Please enter a valid email address'
+  }
+
   if (!formData.aadhar?.trim()) {
     errors.aadhar = 'Aadhar number is required'
   } else if (!/^\d{12}$/.test(formData.aadhar.trim())) {
@@ -119,6 +124,9 @@ export const createMembershipFormData = (formData) => {
   submitData.append('dateOfBirth', formData.dateOfBirth)
   submitData.append('occupation', formData.occupation.trim())
   submitData.append('mobileNumber', formData.mobileNumber.trim())
+  if (formData.email?.trim()) {
+    submitData.append('email', formData.email.trim())
+  }
   submitData.append('aadhar', formData.aadhar.trim())
   submitData.append('pan', formData.pan.trim().toUpperCase())
   

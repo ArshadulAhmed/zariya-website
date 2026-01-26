@@ -168,6 +168,10 @@ const LoanInfo = memo(() => {
             <span className="detail-label">Installment Amount</span>
             <span className="detail-value">{formatCurrency(loan.installmentAmount)}</span>
           </div>
+          <div className="detail-row">
+            <span className="detail-label">Bank Account Number</span>
+            <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
+          </div>
           {isActive && (
             <>
               <div className="detail-row">

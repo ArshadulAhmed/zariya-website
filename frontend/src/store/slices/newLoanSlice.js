@@ -16,6 +16,7 @@ const initialState = {
     nominee: {
       name: '',
       relationship: '',
+      mobileNumber: '',
       bankAccountNumber: '',
       address: {
         village: '',

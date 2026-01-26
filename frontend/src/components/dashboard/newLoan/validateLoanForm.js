@@ -7,10 +7,6 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
     errors.mobileNumber = 'Member mobile number is invalid or missing'
   }
 
-  if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
-    errors.email = 'Please provide a valid email'
-  }
-
   if (!formData.loanAmount || parseFloat(formData.loanAmount) <= 0) {
     errors.loanAmount = 'Loan amount must be greater than 0'
   }
@@ -33,6 +29,9 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
   }
   if (!formData.nominee.relationship.trim()) {
     errors['nominee.relationship'] = 'Nominee relationship is required'
+  }
+  if (!formData.nominee.mobileNumber.trim() || !/^\d{10}$/.test(formData.nominee.mobileNumber)) {
+    errors['nominee.mobileNumber'] = 'Nominee valid 10-digit mobile number is required'
   }
   if (!formData.nominee.address.village.trim()) {
     errors['nominee.address.village'] = 'Nominee village/ward is required'

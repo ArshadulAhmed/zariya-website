@@ -105,7 +105,7 @@ const Contact = () => {
                   <Icon src={ClockIcon} className="info-icon" alt="Hours" />
                 </div>
                 <h3>Hours</h3>
-                <p>Monday - Friday: 9:00 AM - 5:00 PM<br />Saturday: 10:00 AM - 2:00 PM</p>
+                <p>Monday - Saturday: 11:00 AM - 8:00 PM<br />Sunday: 02:00 PM - 7:00 PM</p>
               </div>
             </div>
           </div>

@@ -80,6 +80,14 @@ const membershipSchema = new mongoose.Schema({
     trim: true,
     match: [/^\d{10}$/, 'Mobile number must be 10 digits']
   },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    sparse: true, // Allow null/undefined values but enforce uniqueness when present
+    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+    default: null
+  },
   aadhar: {
     type: String,
     unique: true,

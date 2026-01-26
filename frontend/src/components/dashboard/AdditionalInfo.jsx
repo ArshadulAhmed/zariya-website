@@ -17,6 +17,7 @@ const formatDate = (dateString) => {
   }
 
 const AdditionalInfo = () => {
+  const loan = useAppSelector((state) => state.loans.selectedLoan)
   const nominee = useAppSelector((state) => state.loans.selectedLoan?.nominee)
   const guarantor = useAppSelector((state) => state.loans.selectedLoan?.guarantor)
   const coApplicant = useAppSelector((state) => state.loans.selectedLoan?.coApplicant)
@@ -115,43 +116,35 @@ const AdditionalInfo = () => {
           {membership && (
             <div className="detail-section">
               <h3>Additional Membership Details</h3>
-              {membership.fatherOrHusbandName && (
-                <div className="detail-row">
-                  <span className="detail-label">Father/Husband Name</span>
-                  <span className="detail-value">{membership.fatherOrHusbandName}</span>
-                </div>
-              )}
-              {membership.age && (
-                <div className="detail-row">
-                  <span className="detail-label">Age</span>
-                  <span className="detail-value">{membership.age} years</span>
-                </div>
-              )}
-              {membership.dateOfBirth && (
-                <div className="detail-row">
-                  <span className="detail-label">Date of Birth</span>
-                  <span className="detail-value">{formatDate(membership.dateOfBirth)}</span>
-                </div>
-              )}
-              {membership.occupation && (
-                <div className="detail-row">
-                  <span className="detail-label">Occupation</span>
-                  <span className="detail-value">{membership.occupation}</span>
-                </div>
-              )}
-              {membership.aadhar && (
-                <div className="detail-row">
-                  <span className="detail-label">Aadhar Number</span>
-                  <span className="detail-value">{membership.aadhar}</span>
-                </div>
-              )}
-              {membership.pan && (
-                <div className="detail-row">
-                  <span className="detail-label">PAN Number</span>
-                  <span className="detail-value">{membership.pan}</span>
-                </div>
-              )}
-              {membership.address && (
+              <div className="detail-row">
+                <span className="detail-label">Father/Husband Name</span>
+                <span className="detail-value">{membership.fatherOrHusbandName || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Age</span>
+                <span className="detail-value">{membership.age ? `${membership.age} years` : 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Date of Birth</span>
+                <span className="detail-value">{formatDate(membership.dateOfBirth)}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Occupation</span>
+                <span className="detail-value">{membership.occupation || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Aadhar Number</span>
+                <span className="detail-value">{membership.aadhar || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">PAN Number</span>
+                <span className="detail-value">{membership.pan || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Bank Account Number</span>
+                <span className="detail-value">{loan?.bankAccountNumber || 'N/A'}</span>
+              </div>
+              {membership.address ? (
                 <>
                   <div className="detail-row">
                     <span className="detail-label">Address</span>
@@ -164,15 +157,24 @@ const AdditionalInfo = () => {
                         membership.address.pinCode,
                       ]
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'N/A'}
                     </span>
                   </div>
-                  {membership.address.landmark && (
-                    <div className="detail-row">
-                      <span className="detail-label">Landmark</span>
-                      <span className="detail-value">{membership.address.landmark}</span>
-                    </div>
-                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">{membership.address.landmark || 'N/A'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Address</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
                 </>
               )}
             </div>
@@ -190,13 +192,15 @@ const AdditionalInfo = () => {
                 <span className="detail-label">Relationship</span>
                 <span className="detail-value">{nominee.relationship || 'N/A'}</span>
               </div>
-              {nominee.bankAccountNumber && (
-                <div className="detail-row">
-                  <span className="detail-label">Bank Account Number</span>
-                  <span className="detail-value">{nominee.bankAccountNumber}</span>
-                </div>
-              )}
-              {nominee.address && (
+              <div className="detail-row">
+                <span className="detail-label">Mobile Number</span>
+                <span className="detail-value">{nominee.mobileNumber || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Bank Account Number</span>
+                <span className="detail-value">{nominee.bankAccountNumber || 'N/A'}</span>
+              </div>
+              {nominee.address ? (
                 <>
                   <div className="detail-row">
                     <span className="detail-label">Address</span>
@@ -209,15 +213,24 @@ const AdditionalInfo = () => {
                         nominee.address.pinCode,
                       ]
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'N/A'}
                     </span>
                   </div>
-                  {nominee.address.landmark && (
-                    <div className="detail-row">
-                      <span className="detail-label">Landmark</span>
-                      <span className="detail-value">{nominee.address.landmark}</span>
-                    </div>
-                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">{nominee.address.landmark || 'N/A'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Address</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
                 </>
               )}
             </div>
@@ -241,19 +254,15 @@ const AdditionalInfo = () => {
                 <span className="detail-label">Relationship</span>
                 <span className="detail-value">{guarantor.relationship || 'N/A'}</span>
               </div>
-              {guarantor.mobileNumber && (
-                <div className="detail-row">
-                  <span className="detail-label">Mobile Number</span>
-                  <span className="detail-value">{guarantor.mobileNumber}</span>
-                </div>
-              )}
-              {guarantor.bankAccountNumber && (
-                <div className="detail-row">
-                  <span className="detail-label">Bank Account Number</span>
-                  <span className="detail-value">{guarantor.bankAccountNumber}</span>
-                </div>
-              )}
-              {guarantor.address && (
+              <div className="detail-row">
+                <span className="detail-label">Mobile Number</span>
+                <span className="detail-value">{guarantor.mobileNumber || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Bank Account Number</span>
+                <span className="detail-value">{guarantor.bankAccountNumber || 'N/A'}</span>
+              </div>
+              {guarantor.address ? (
                 <>
                   <div className="detail-row">
                     <span className="detail-label">Address</span>
@@ -266,15 +275,24 @@ const AdditionalInfo = () => {
                         guarantor.address.pinCode,
                       ]
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'N/A'}
                     </span>
                   </div>
-                  {guarantor.address.landmark && (
-                    <div className="detail-row">
-                      <span className="detail-label">Landmark</span>
-                      <span className="detail-value">{guarantor.address.landmark}</span>
-                    </div>
-                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">{guarantor.address.landmark || 'N/A'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Address</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
                 </>
               )}
             </div>
@@ -288,25 +306,19 @@ const AdditionalInfo = () => {
                 <span className="detail-label">Full Name</span>
                 <span className="detail-value">{coApplicant.fullName || 'N/A'}</span>
               </div>
-              {coApplicant.fatherOrHusbandName && (
-                <div className="detail-row">
-                  <span className="detail-label">Father/Husband Name</span>
-                  <span className="detail-value">{coApplicant.fatherOrHusbandName}</span>
-                </div>
-              )}
-              {coApplicant.mobileNumber && (
-                <div className="detail-row">
-                  <span className="detail-label">Mobile Number</span>
-                  <span className="detail-value">{coApplicant.mobileNumber}</span>
-                </div>
-              )}
-              {coApplicant.email && (
-                <div className="detail-row">
-                  <span className="detail-label">Email</span>
-                    <span className="detail-value">{coApplicant.email}</span>
-                </div>
-              )}
-              {coApplicant.address && (
+              <div className="detail-row">
+                <span className="detail-label">Father/Husband Name</span>
+                <span className="detail-value">{coApplicant.fatherOrHusbandName || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Mobile Number</span>
+                <span className="detail-value">{coApplicant.mobileNumber || 'N/A'}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Email</span>
+                <span className="detail-value">{coApplicant.email || 'N/A'}</span>
+              </div>
+              {coApplicant.address ? (
                 <>
                   <div className="detail-row">
                     <span className="detail-label">Address</span>
@@ -319,15 +331,24 @@ const AdditionalInfo = () => {
                         coApplicant.address.pinCode,
                       ]
                         .filter(Boolean)
-                        .join(', ')}
+                        .join(', ') || 'N/A'}
                     </span>
                   </div>
-                  {coApplicant.address.landmark && (
-                    <div className="detail-row">
-                      <span className="detail-label">Landmark</span>
-                      <span className="detail-value">{coApplicant.address.landmark}</span>
-                    </div>
-                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">{coApplicant.address.landmark || 'N/A'}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="detail-row">
+                    <span className="detail-label">Address</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Landmark</span>
+                    <span className="detail-value">N/A</span>
+                  </div>
                 </>
               )}
             </div>

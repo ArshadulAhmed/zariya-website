@@ -34,6 +34,7 @@ export const createMembership = async (req, res) => {
       dateOfBirth: req.body.dateOfBirth,
       occupation: req.body.occupation,
       mobileNumber: req.body.mobileNumber?.trim(), // Trim mobile number
+      email: req.body.email?.trim().toLowerCase() || null, // Trim and lowercase email, default to null if not provided
       aadhar: req.body.aadhar?.trim(), // Trim aadhar
       pan: req.body.pan?.trim().toUpperCase(), // Trim and uppercase PAN
       address: address,

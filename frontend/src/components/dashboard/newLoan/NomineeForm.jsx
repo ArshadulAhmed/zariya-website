@@ -45,6 +45,23 @@ const NomineeForm = () => {
         />
 
         <TextField
+          label="Mobile Number"
+          name="nominee.mobileNumber"
+          type="text"
+          value={formData.mobileNumber}
+          onChange={handleChange}
+          placeholder="10 digit mobile number"
+          error={errors['nominee.mobileNumber']}
+          helperText={errors['nominee.mobileNumber']}
+          required
+          maxLength={10}
+          inputProps={{
+            maxLength: 10,
+            pattern: '[0-9]*'
+          }}
+        />
+
+        <TextField
           label="Bank Account Number (Optional)"
           name="nominee.bankAccountNumber"
           value={formData.bankAccountNumber}
