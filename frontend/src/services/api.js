@@ -260,6 +260,18 @@ export const loansAPI = {
     }
   },
 
+  getLoanByAccountNumber: async (loanAccountNumber) => {
+    try {
+      const data = await apiRequest(`/loans/account/${loanAccountNumber}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API getLoanByAccountNumber error:', error)
+      throw error
+    }
+  },
+
   createLoan: async (loanData) => {
     try {
       const data = await apiRequest('/loans', {
@@ -338,6 +350,49 @@ export const loansAPI = {
       return { success: true, message: 'Contract downloaded successfully' }
     } catch (error) {
       console.error('Loans API downloadContract error:', error)
+      throw error
+    }
+  },
+
+  downloadNOC: async (id) => {
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loans/${id}/noc`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download NOC')
+      }
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `Loan_NOC_${id}.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      return { success: true, message: 'NOC downloaded successfully' }
+    } catch (error) {
+      console.error('Loans API downloadNOC error:', error)
       throw error
     }
   },

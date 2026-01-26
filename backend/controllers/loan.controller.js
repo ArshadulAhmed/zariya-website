@@ -3,6 +3,7 @@ import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
 import PDFDocument from 'pdfkit';
 import { generateLoanContractPDF } from '../templates/loanContract.template.js';
+import { generateLoanNOCPDF } from '../templates/loanNOC.template.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -453,6 +454,85 @@ export const downloadLoanContract = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error generating contract PDF'
+    });
+  }
+};
+
+// @desc    Download loan NOC (No Objection Certificate) PDF
+// @route   GET /api/loans/:id/noc
+// @access  Private/Admin or Employee
+export const downloadLoanNOC = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    let loan;
+    if (id.startsWith('LOAN-')) {
+      loan = await Loan.findOne({ loanAccountNumber: id })
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    } else {
+      loan = await Loan.findById(id)
+        .populate('membership')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    }
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    // Only allow NOC download for closed loans
+    if (loan.status !== 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: 'NOC can only be generated for closed loans'
+      });
+    }
+
+    // Get total repayments to verify loan is fully paid
+    const Repayment = (await import('../models/Repayment.model.js')).default;
+    const totalPaidResult = await Repayment.aggregate([
+      { $match: { loan: loan._id } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="Loan_NOC_${loan.loanAccountNumber}.pdf"`
+    );
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Get logo path
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
+
+    // Generate NOC PDF
+    generateLoanNOCPDF(doc, loan, totalPaid, logoPath);
+
+    // Finalize PDF
+    doc.end();
+  } catch (error) {
+    console.error('Error generating NOC PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error generating NOC PDF'
     });
   }
 };

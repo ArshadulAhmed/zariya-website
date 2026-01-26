@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchLoan, clearSelectedLoan } from '../../store/slices/loansSlice'
+import { fetchLoan, clearSelectedLoan, clearRepayments } from '../../store/slices/loansSlice'
 import Snackbar from '../../components/Snackbar'
 import LoanInfo from '../../components/dashboard/LoanInfo'
 import LoanActions from '../../components/dashboard/LoanActions'
@@ -32,11 +32,20 @@ const LoanDetails = () => {
         lastLoanIdRef.current = id
         // Clear previous loan data when navigating to a new loan
         dispatch(clearSelectedLoan())
+        dispatch(clearRepayments())
         dispatch(fetchLoan(id))
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, dispatch])
+
+  // Cleanup on unmount to prevent stale data
+  useEffect(() => {
+    return () => {
+      dispatch(clearSelectedLoan())
+      dispatch(clearRepayments())
+    }
+  }, [dispatch])
 
   const loan = selectedLoan
   const canShowRepayments = loan ? ['approved', 'active', 'closed'].includes(loan.status) : false

@@ -7,7 +7,8 @@ import {
   getLoanByAccountNumber,
   reviewLoan,
   updateLoan,
-  downloadLoanContract
+  downloadLoanContract,
+  downloadLoanNOC
 } from '../controllers/loan.controller.js';
 import { protect, isAdminOrEmployee, isAdmin } from '../middleware/auth.middleware.js';
 
@@ -289,6 +290,16 @@ router.post('/', isAdminOrEmployee, createLoanValidation, createLoan);
 // Get loans - Admin or Employee
 router.get('/', isAdminOrEmployee, getLoans);
 router.get('/account/:loanAccountNumber', isAdminOrEmployee, getLoanByAccountNumber);
+
+// Download loan contract - Admin or Employee (only for approved loans)
+// Must be before /:id route to avoid route conflicts
+router.get('/:id/contract', isAdminOrEmployee, downloadLoanContract);
+
+// Download loan NOC - Admin or Employee (only for closed loans)
+// Must be before /:id route to avoid route conflicts
+router.get('/:id/noc', isAdminOrEmployee, downloadLoanNOC);
+
+// Get single loan - Must be after specific routes
 router.get('/:id', isAdminOrEmployee, getLoan);
 
 // Update loan - Admin only for approved loans, Admin/Employee for pending/rejected
@@ -296,9 +307,6 @@ router.put('/:id', isAdminOrEmployee, updateLoanValidation, updateLoan);
 
 // Review loan - Admin only
 router.put('/:id/review', isAdmin, reviewLoanValidation, reviewLoan);
-
-// Download loan contract - Admin or Employee (only for approved loans)
-router.get('/:id/contract', isAdminOrEmployee, downloadLoanContract);
 
 export default router;
 

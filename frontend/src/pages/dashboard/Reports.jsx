@@ -1,9 +1,11 @@
 import { memo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppSelector } from '../../store/hooks'
 import NewUserModal from '../../components/dashboard/NewUserModal'
 import './Reports.scss'
 
 const Reports = memo(() => {
+  const navigate = useNavigate()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const isAdmin = currentUser?.role === 'admin'
   const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false)
@@ -53,7 +55,12 @@ const Reports = memo(() => {
           </div>
           <h3 className="report-title">Loan Report</h3>
           <p className="report-description">View loan statistics, disbursements, and repayment information</p>
-          <button className="report-btn">Generate Report</button>
+          <button 
+            className="report-btn"
+            onClick={() => navigate('/dashboard/reports/loan')}
+          >
+            Generate Report
+          </button>
         </div>
 
         <div className="report-card">

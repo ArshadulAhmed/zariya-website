@@ -7,6 +7,7 @@ import membershipReducer from './slices/membershipSlice'
 import membershipsReducer from './slices/membershipsSlice'
 import usersReducer from './slices/usersSlice'
 import dashboardReducer from './slices/dashboardSlice'
+import loanReportReducer from './slices/loanReportSlice'
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     memberships: membershipsReducer,
     users: usersReducer,
     dashboard: dashboardReducer,
+    loanReport: loanReportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

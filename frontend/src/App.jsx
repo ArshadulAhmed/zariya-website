@@ -18,6 +18,7 @@ const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
 const NewLoan = lazy(() => import('./pages/dashboard/NewLoan'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
+const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
 
 // Loading component
 const PageLoader = () => (
@@ -124,6 +125,14 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <Reports />
+            </Suspense>
+          }
+        />
+        <Route
+          path="reports/loan"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <LoanReport />
             </Suspense>
           }
         />
