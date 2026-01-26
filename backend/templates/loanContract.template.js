@@ -365,7 +365,7 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   
   // Row 2: Mobile Number, Account Number
   const mobileCellHeight = cellHeight('Mobile Number', loan.mobileNumber || 'N/A', gridCellWidth - PAD_X * 2);
-  const accountCellHeight = cellHeight('Bank Account Number', loan.membership?.bankAccountNumber || 'N/A', gridCellWidth - PAD_X * 2);
+  const accountCellHeight = cellHeight('Bank Account Number', loan.bankAccountNumber || 'N/A', gridCellWidth - PAD_X * 2);
   const gridRow2Height = Math.max(mobileCellHeight, accountCellHeight);
   
   doc.rect(START_X, leftY, gridCellWidth, gridRow2Height).stroke(BORDER);
@@ -378,8 +378,35 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   doc.fontSize(FONT).font('Helvetica-Bold');
   const accountLabelHeight = doc.heightOfString('Account Number', { width: gridCellWidth - PAD_X * 2 });
   doc.text('Account Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.bankAccountNumber || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + accountLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.bankAccountNumber || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + accountLabelHeight, { width: gridCellWidth - PAD_X * 2 });
   leftY += gridRow2Height;
+  
+  // Row 3: Aadhar, PAN
+  const aadharCellHeight = cellHeight('Aadhar Number', loan.membership?.aadhar || 'N/A', gridCellWidth - PAD_X * 2);
+  const panCellHeight = cellHeight('PAN Number', loan.membership?.pan || 'N/A', gridCellWidth - PAD_X * 2);
+  const gridRow3Height = Math.max(aadharCellHeight, panCellHeight);
+  
+  doc.rect(START_X, leftY, gridCellWidth, gridRow3Height).stroke(BORDER);
+  doc.fontSize(FONT).font('Helvetica-Bold');
+  const aadharLabelHeight = doc.heightOfString('Aadhar Number', { width: gridCellWidth - PAD_X * 2 });
+  doc.text('Aadhar Number', START_X + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.aadhar || 'N/A', START_X + PAD_X, leftY + PAD_Y + aadharLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  
+  doc.rect(START_X + gridCellWidth, leftY, gridCellWidth, gridRow3Height).stroke(BORDER);
+  doc.fontSize(FONT).font('Helvetica-Bold');
+  const panLabelHeight = doc.heightOfString('PAN Number', { width: gridCellWidth - PAD_X * 2 });
+  doc.text('PAN Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.pan || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + panLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  leftY += gridRow3Height;
+  
+  // Row 4: Email (full width)
+  const emailCellHeight = cellHeight('Email', loan.email || loan.membership?.email || 'N/A', LEFT_SECTION_WIDTH - PAD_X * 2);
+  doc.rect(START_X, leftY, LEFT_SECTION_WIDTH, emailCellHeight).stroke(BORDER);
+  doc.fontSize(FONT).font('Helvetica-Bold');
+  const emailLabelHeight = doc.heightOfString('Email', { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
+  doc.text('Email', START_X + PAD_X, leftY + PAD_Y, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.email || loan.membership?.email || 'N/A', START_X + PAD_X, leftY + PAD_Y + emailLabelHeight, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
+  leftY += emailCellHeight;
   
   // Calculate total left section height
   const leftSectionHeight = leftY - applicantBaseY;
@@ -433,7 +460,8 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   );
 
   drawRow([
-    { w: PAGE_WIDTH, label: 'Mobile No', value: loan.nominee?.mobileNumber || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: 'Mobile No', value: loan.nominee?.mobileNumber || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: 'Bank Account Number', value: loan.nominee?.bankAccountNumber || 'N/A' },
   ]);
 
   y += 12;
@@ -452,8 +480,8 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
   );
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Account No', value: loan.guarantor?.bankAccountNumber },
-    { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.guarantor?.mobileNumber },
+    { w: PAGE_WIDTH / 2, label: 'Bank Account No', value: loan.guarantor?.bankAccountNumber || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.guarantor?.mobileNumber || 'N/A' },
   ]);
 
   y += 12;
