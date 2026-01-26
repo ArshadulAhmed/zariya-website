@@ -31,24 +31,41 @@ const allowedOrigins = process.env.FRONTEND_ORIGIN
   ? process.env.FRONTEND_ORIGIN.split(',').map(origin => origin.trim())
   : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'];
 
+// Log allowed origins in development
+if (process.env.NODE_ENV === 'development') {
+  console.log('Allowed CORS origins:', allowedOrigins);
+}
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
     if (!origin) {
       return callback(null, true);
     }
 
+    // In development, allow all localhost origins for easier debugging
+    if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+
+    // Check if origin is in allowed list
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(null, false);
+
+    // Log rejected origin in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
+    }
+
+    // Reject the request
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-app.options('*', cors());
 
 
 app.use(express.json({ limit: '10mb' }));

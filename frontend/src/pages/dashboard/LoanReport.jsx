@@ -86,8 +86,8 @@ const LoanReport = () => {
     if (fetchLoanByAccountNumber.fulfilled.match(result)) {
       const fetchedLoan = result.payload
       
-      // Fetch repayments if loan is approved, active, or closed
-      if (fetchedLoan && ['approved', 'active', 'closed'].includes(fetchedLoan.status)) {
+      // Fetch repayments for all loans (to calculate total paid and remaining amount)
+      if (fetchedLoan) {
         const loanId = fetchedLoan._id || fetchedLoan.id
         dispatch(fetchLoanRepayments(loanId))
       }
@@ -286,20 +286,16 @@ const LoanReport = () => {
                     <span className="detail-label">Bank Account Number</span>
                     <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
                   </div>
-                  {['approved', 'active', 'closed'].includes(loan.status) && (
-                    <>
-                      <div className="detail-row">
-                        <span className="detail-label">Total Paid</span>
-                        <span className="detail-value">{formatCurrency(totalPaid)}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Remaining Amount</span>
-                        <span className={`detail-value ${(loan.loanAmount - totalPaid) > 0 ? 'remaining-amount' : 'paid-full'}`}>
-                          {formatCurrency(Math.max(0, loan.loanAmount - totalPaid))}
-                        </span>
-                      </div>
-                    </>
-                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Total Paid</span>
+                    <span className="detail-value">{formatCurrency(totalPaid)}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Remaining Amount</span>
+                    <span className={`detail-value ${(loan.loanAmount - totalPaid) > 0 ? 'remaining-amount' : 'paid-full'}`}>
+                      {formatCurrency(Math.max(0, loan.loanAmount - totalPaid))}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="detail-section">
@@ -331,256 +327,6 @@ const LoanReport = () => {
                 </div>
               </div>
             </div>
-
-            {/* Additional Information */}
-            {(loan.membership || loan.nominee || loan.guarantor || loan.coApplicant) && (
-              <div className="additional-info-card">
-                <div className="card-header additional-info-header">
-                  <h3>Additional Information</h3>
-                </div>
-                <div className="details-grid expanded-content">
-                  {/* Additional Membership Information */}
-                  {loan.membership && (
-                    <div className="detail-section">
-                      <h3>Additional Membership Details</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Father/Husband Name</span>
-                        <span className="detail-value">{loan.membership.fatherOrHusbandName || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Age</span>
-                        <span className="detail-value">{loan.membership.age ? `${loan.membership.age} years` : 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Date of Birth</span>
-                        <span className="detail-value">{formatDate(loan.membership.dateOfBirth)}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Occupation</span>
-                        <span className="detail-value">{loan.membership.occupation || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Aadhar Number</span>
-                        <span className="detail-value">{loan.membership.aadhar || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">PAN Number</span>
-                        <span className="detail-value">{loan.membership.pan || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Bank Account Number</span>
-                        <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
-                      </div>
-                      {loan.membership.address ? (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">
-                              {[
-                                loan.membership.address.village,
-                                loan.membership.address.postOffice,
-                                loan.membership.address.policeStation,
-                                loan.membership.address.district,
-                                loan.membership.address.pinCode,
-                              ]
-                                .filter(Boolean)
-                                .join(', ') || 'N/A'}
-                            </span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">{loan.membership.address.landmark || 'N/A'}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Nominee Information */}
-                  {loan.nominee && (
-                    <div className="detail-section">
-                      <h3>Nominee Information</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Name</span>
-                        <span className="detail-value">{loan.nominee.name || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Relationship</span>
-                        <span className="detail-value">{loan.nominee.relationship || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Mobile Number</span>
-                        <span className="detail-value">{loan.nominee.mobileNumber || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Bank Account Number</span>
-                        <span className="detail-value">{loan.nominee.bankAccountNumber || 'N/A'}</span>
-                      </div>
-                      {loan.nominee.address ? (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">
-                              {[
-                                loan.nominee.address.village,
-                                loan.nominee.address.postOffice,
-                                loan.nominee.address.policeStation,
-                                loan.nominee.address.district,
-                                loan.nominee.address.pinCode,
-                              ]
-                                .filter(Boolean)
-                                .join(', ') || 'N/A'}
-                            </span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">{loan.nominee.address.landmark || 'N/A'}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Guarantor Information */}
-                  {loan.guarantor && (
-                    <div className="detail-section">
-                      <h3>Guarantor Information</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Name</span>
-                        <span className="detail-value">{loan.guarantor.name || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Father/Husband Name</span>
-                        <span className="detail-value">{loan.guarantor.fatherOrHusbandName || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Relationship</span>
-                        <span className="detail-value">{loan.guarantor.relationship || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Mobile Number</span>
-                        <span className="detail-value">{loan.guarantor.mobileNumber || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Bank Account Number</span>
-                        <span className="detail-value">{loan.guarantor.bankAccountNumber || 'N/A'}</span>
-                      </div>
-                      {loan.guarantor.address ? (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">
-                              {[
-                                loan.guarantor.address.village,
-                                loan.guarantor.address.postOffice,
-                                loan.guarantor.address.policeStation,
-                                loan.guarantor.address.district,
-                                loan.guarantor.address.pinCode,
-                              ]
-                                .filter(Boolean)
-                                .join(', ') || 'N/A'}
-                            </span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">{loan.guarantor.address.landmark || 'N/A'}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Co-Applicant Information */}
-                  {loan.coApplicant && (
-                    <div className="detail-section">
-                      <h3>Co-Applicant Information</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Full Name</span>
-                        <span className="detail-value">{loan.coApplicant.fullName || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Father/Husband Name</span>
-                        <span className="detail-value">{loan.coApplicant.fatherOrHusbandName || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Mobile Number</span>
-                        <span className="detail-value">{loan.coApplicant.mobileNumber || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Email</span>
-                        <span className="detail-value">{loan.coApplicant.email || 'N/A'}</span>
-                      </div>
-                      {loan.coApplicant.address ? (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">
-                              {[
-                                loan.coApplicant.address.village,
-                                loan.coApplicant.address.postOffice,
-                                loan.coApplicant.address.policeStation,
-                                loan.coApplicant.address.district,
-                                loan.coApplicant.address.pinCode,
-                              ]
-                                .filter(Boolean)
-                                .join(', ') || 'N/A'}
-                            </span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">{loan.coApplicant.address.landmark || 'N/A'}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="detail-row">
-                            <span className="detail-label">Address</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                          <div className="detail-row">
-                            <span className="detail-label">Landmark</span>
-                            <span className="detail-value">N/A</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Repayment History */}
             {['approved', 'active', 'closed'].includes(loan.status) && (
