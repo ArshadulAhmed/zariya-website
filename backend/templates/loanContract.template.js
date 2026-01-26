@@ -264,16 +264,18 @@ export const generateLoanContractPDF = (doc, loan, logoPath) => {
   y += 30;
 
   /* ---------------- FOOTER LINE ---------------- */
-  doc
-    .moveTo(START_X, y)
-    .lineTo(START_X + PAGE_WIDTH, y)
-    .stroke(BORDER);
+
+
+    doc.text("Guarantor's Signature", START_X, y);
+    doc.text("Applicant's Signature", START_X + PAGE_WIDTH - 130, y);
 
   y += 15;
 
   /* ---------------- SIGNATURES ---------------- */
-  doc.text("Guarantor's Signature", START_X, y);
-  doc.text("Applicant's Signature", START_X + PAGE_WIDTH - 130, y);
+  doc
+    .moveTo(START_X, y)
+    .lineTo(START_X + PAGE_WIDTH, y)
+    .stroke(BORDER);
 
   y += 35;
 
