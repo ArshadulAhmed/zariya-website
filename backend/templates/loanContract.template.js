@@ -526,17 +526,57 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
     signatureTextY = maxFooterY - 10;
   }
   
-  doc.fontSize(7.5).font('Helvetica')
-    .text("Guarantor's Signature", START_X, signatureTextY);
+  // Signatures row - evenly distributed (space-between) - hardcoded positions
+  // Use smaller font and condensed style to ensure "Signature of Borrower" fits on one line
+  doc.fontSize(6.5).font('Helvetica');
+  // Try using condensed/compressed text rendering
   
-  // Applicant's Signature - right aligned to edge of page, single line
-  doc.fontSize(7.5).font('Helvetica'); // Ensure font is set
-  const applicantSigText = "Signature of Borrower";
-  // Use text with width to prevent wrapping, right aligned
-  doc.text(applicantSigText, START_X, signatureTextY, {
-    width: PAGE_WIDTH,
-    align: 'right'
-  });
+  const hasCoApplicant = loan.coApplicant && loan.coApplicant.fullName;
+  
+  if (hasCoApplicant) {
+    // Three signatures: Guarantor | Co-Applicant | Borrower
+    const guarantorText = "Guarantor's Signature";
+    const coApplicantText = "Co-Applicant's Signature";
+    // Use shorter text to ensure single line rendering
+    const borrowerText = "Borrower's Signature";
+    
+    // Calculate widths with current font size
+    const guarantorWidth = doc.widthOfString(guarantorText);
+    const coApplicantWidth = doc.widthOfString(coApplicantText);
+    const borrowerWidth = doc.widthOfString(borrowerText);
+    
+    const totalWidth = guarantorWidth + coApplicantWidth + borrowerWidth;
+    const availableSpace = PAGE_WIDTH - totalWidth;
+    const spacing = availableSpace / 2; // Space between each signature
+    
+    // Left: Guarantor's Signature
+    doc.text(guarantorText, START_X, signatureTextY);
+    
+    // Middle: Co-Applicant's Signature
+    const coApplicantX = START_X + guarantorWidth + spacing;
+    doc.text(coApplicantText, coApplicantX, signatureTextY);
+    
+    // Right: Signature of Borrower - render without width to prevent wrapping
+    const borrowerX = START_X + PAGE_WIDTH - borrowerWidth - 10;
+    // Render without width parameter - PDFKit will render as single line
+    doc.text(borrowerText, borrowerX, signatureTextY);
+  } else {
+    // Two signatures: Guarantor | Borrower
+    const guarantorText = "Guarantor's Signature";
+    // Use shorter text to ensure single line rendering
+    const borrowerText = "Borrower's Signature";
+    
+    const guarantorWidth = doc.widthOfString(guarantorText);
+    const borrowerWidth = doc.widthOfString(borrowerText);
+    
+    // Left: Guarantor's Signature
+    doc.text(guarantorText, START_X, signatureTextY);
+    
+    // Right: Signature of Borrower - render without width to prevent wrapping
+    const borrowerX = START_X + PAGE_WIDTH - borrowerWidth;
+    // Render without width parameter - PDFKit will render as single line
+    doc.text(borrowerText, borrowerX, signatureTextY);
+  }
 
   y = signatureTextY + 10;
   
