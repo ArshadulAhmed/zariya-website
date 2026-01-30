@@ -573,7 +573,7 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
     doc.text(guarantorText, START_X, signatureTextY);
     
     // Right: Signature of Borrower - render without width to prevent wrapping
-    const borrowerX = START_X + PAGE_WIDTH - borrowerWidth;
+    const borrowerX = START_X + PAGE_WIDTH - borrowerWidth - 10;
     // Render without width parameter - PDFKit will render as single line
     doc.text(borrowerText, borrowerX, signatureTextY);
   }
