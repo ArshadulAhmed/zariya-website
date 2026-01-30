@@ -53,28 +53,15 @@ export const generateLoanContractPDF = async (doc, loan, logoPath) => {
   const START_X = 40;
   const BORDER = '#333';
   const FONT = 9;
-  const PAD_X = 6;
-  const PAD_Y = 6;
+  const PAD_X = 6; // Increased from 4 to fill white space
+  const PAD_Y = 5; // Increased from 3 to fill white space
   const PAGE_HEIGHT = doc.page.height;
   const BOTTOM_MARGIN = doc.page.margins.bottom;
   const TOP_MARGIN = doc.page.margins.top;
 
   let y = 30;
   let currentPage = 1;
-  const MAX_PAGES = 2; // Hardcode to 2 pages maximum
-  
-  // Helper to check and handle page breaks
-  const checkPageBreak = (requiredHeight) => {
-    if (y + requiredHeight > PAGE_HEIGHT - BOTTOM_MARGIN - 30) {
-      if (currentPage < MAX_PAGES) {
-        currentPage++;
-        doc.addPage();
-        y = TOP_MARGIN;
-        return true;
-      }
-    }
-    return false;
-  };
+  const MAX_PAGES = 1; // Single page only
 
   /* ---------------- HEADER ---------------- */
   y = drawPDFHeader(doc, {
@@ -86,6 +73,23 @@ export const generateLoanContractPDF = async (doc, loan, logoPath) => {
     registrationText: 'Registered Under The Assam Co-operative Societies Act, 2007',
     addressText: 'DEWRIKUCHI (SONKUCHI COLONY BAZAR), DIST. BARPETA, ASSAM, PIN-781314',
     spacingAfter: 50
+  });
+
+  /* ---------------- REGISTRATION NUMBER ---------------- */
+  // Position registration number exactly below address line, center aligned
+  // Address line Y position: startY (30) + 18 (company name) + 12 (registration text) = 60
+  // Address text height is approximately 9px, so registration number should be at y = 60 + 9 + 3 = 72
+  const registrationNumber = 'B-03/2025-26';
+  const addressLineY = 30 + 18 + 12; // y = 60 (address line position)
+  const registrationY = addressLineY + 12; // Position below address line
+  
+  // Center align registration number with label, matching address font style
+  doc.fontSize(9.5).font('Helvetica'); // Match address font style, increased from 7.5px by 2px
+  const regLabel = 'Registration No.: ';
+  const regFullText = regLabel + registrationNumber;
+  doc.text(regFullText, START_X, registrationY, {
+    width: PAGE_WIDTH,
+    align: 'center'
   });
 
   /* ---------------- HEADING WITH LINES ---------------- */
@@ -110,23 +114,20 @@ export const generateLoanContractPDF = async (doc, loan, logoPath) => {
   // Draw heading text
   doc.text(heading, centerX - headingWidth / 2, headingY);
 
-  y = headingY + 40;
+  y = headingY + 30; // Increased bottom space by 5px (from 25 to 30)
 
   /* ---------------- TABLE HELPERS ---------------- */
 /* ---------------- TABLE HELPERS ---------------- */
 
 const cellHeight = (label, value, width) => {
   doc.fontSize(FONT);
-
-  const labelHeight = doc
+  // Calculate height for label and value on same line
+  const combinedText = `${label}: ${value || ''}`;
+  const textHeight = doc
     .font('Helvetica-Bold')
-    .heightOfString(label, { width });
-
-  const valueHeight = doc
-    .font('Helvetica')
-    .heightOfString(value || '', { width });
-
-  return labelHeight + valueHeight + PAD_Y * 2;
+    .heightOfString(combinedText, { width });
+  
+  return textHeight + PAD_Y * 2;
 };
 
 const drawRow = (cells) => {
@@ -142,13 +143,13 @@ const drawRow = (cells) => {
 
     doc.rect(x, baseY, c.w, h).stroke(BORDER);
 
+    // Draw label and value on same line
     doc.fontSize(FONT).font('Helvetica-Bold');
-    const labelHeight = doc.heightOfString(c.label, {
-      width: c.w - PAD_X * 2,
-    });
-
+    const combinedText = `${c.label}: `;
+    const labelWidth = doc.widthOfString(combinedText);
+    
     doc.text(
-      c.label,
+      combinedText,
       x + PAD_X,
       baseY + PAD_Y,
       { width: c.w - PAD_X * 2 }
@@ -156,9 +157,9 @@ const drawRow = (cells) => {
 
     doc.font('Helvetica').text(
       c.value || '',
-      x + PAD_X,
-      baseY + PAD_Y + labelHeight,
-      { width: c.w - PAD_X * 2 }
+      x + PAD_X + labelWidth,
+      baseY + PAD_Y,
+      { width: c.w - PAD_X * 2 - labelWidth }
     );
 
     doc.y = oldDocY;          // ✅ restore cursor
@@ -175,13 +176,13 @@ const drawFullRow = (label, value) => {
 
   doc.rect(START_X, baseY, PAGE_WIDTH, h).stroke(BORDER);
 
+  // Draw label and value on same line
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const labelHeight = doc.heightOfString(label, {
-    width: PAGE_WIDTH - PAD_X * 2,
-  });
-
+  const combinedText = `${label}: `;
+  const labelWidth = doc.widthOfString(combinedText);
+  
   doc.text(
-    label,
+    combinedText,
     START_X + PAD_X,
     baseY + PAD_Y,
     { width: PAGE_WIDTH - PAD_X * 2 }
@@ -189,9 +190,9 @@ const drawFullRow = (label, value) => {
 
   doc.font('Helvetica').text(
     value || '',
-    START_X + PAD_X,
-    baseY + PAD_Y + labelHeight,
-    { width: PAGE_WIDTH - PAD_X * 2 }
+    START_X + PAD_X + labelWidth,
+    baseY + PAD_Y,
+    { width: PAGE_WIDTH - PAD_X * 2 - labelWidth }
   );
 
   doc.y = oldDocY;            // ✅ restore cursor
@@ -280,148 +281,160 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
 };
 
   /* ---------------- APPLICANT ---------------- */
+  // Layout matching mock: Photo on right, fields in 2-column grid on left
   const applicantBaseY = y;
   const oldDocYApplicant = doc.y;
-  const PHOTO_SIZE = 200;
-  const LEFT_SECTION_WIDTH = PAGE_WIDTH - PHOTO_SIZE;
-  const PHOTO_X = START_X + LEFT_SECTION_WIDTH;
   
-  // Left section: Applicant information
-  let leftY = applicantBaseY;
+  // Photo column on right (wider for better display)
+  const PHOTO_COLUMN_WIDTH = 120;
+  const INFO_SECTION_WIDTH = PAGE_WIDTH - PHOTO_COLUMN_WIDTH;
+  const INFO_COLUMN_WIDTH = INFO_SECTION_WIDTH / 2;
+  const PHOTO_X = START_X + INFO_SECTION_WIDTH;
   
-  // Applicant's Name
-  const nameCellHeight = cellHeight("Applicant's Name", loan.membership?.fullName || 'N/A', LEFT_SECTION_WIDTH - PAD_X * 2);
-  doc.rect(START_X, leftY, LEFT_SECTION_WIDTH, nameCellHeight).stroke(BORDER);
+  let currentY = applicantBaseY;
+  
+  // Row 1: Applicant's Name (full width, spans 2 info columns)
+  const name1Height = cellHeight("Applicant's Name", loan.membership?.fullName || 'N/A', INFO_SECTION_WIDTH - PAD_X * 2);
+  doc.rect(START_X, currentY, INFO_SECTION_WIDTH, name1Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const nameLabelHeight = doc.heightOfString("Applicant's Name", { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.text("Applicant's Name", START_X + PAD_X, leftY + PAD_Y, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.fullName || 'N/A', START_X + PAD_X, leftY + PAD_Y + nameLabelHeight, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  leftY += nameCellHeight;
+  const nameLabelText = "Applicant's Name: ";
+  const nameLabelWidth = doc.widthOfString(nameLabelText);
+  doc.text(nameLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.fullName || 'N/A', START_X + PAD_X + nameLabelWidth, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 - nameLabelWidth });
+  currentY += name1Height;
   
-  // Father's/Husband's Name
-  const fatherCellHeight = cellHeight("Father's/Husband's Name", loan.membership?.fatherOrHusbandName || 'N/A', LEFT_SECTION_WIDTH - PAD_X * 2);
-  doc.rect(START_X, leftY, LEFT_SECTION_WIDTH, fatherCellHeight).stroke(BORDER);
+  // Row 2: Father's/Husband's Name (full width, spans 2 info columns)
+  const name2Height = cellHeight("Father's/Husband's Name", loan.membership?.fatherOrHusbandName || 'N/A', INFO_SECTION_WIDTH - PAD_X * 2);
+  doc.rect(START_X, currentY, INFO_SECTION_WIDTH, name2Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const fatherLabelHeight = doc.heightOfString("Father's/Husband's Name", { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.text("Father's/Husband's Name", START_X + PAD_X, leftY + PAD_Y, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.fatherOrHusbandName || 'N/A', START_X + PAD_X, leftY + PAD_Y + fatherLabelHeight, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  leftY += fatherCellHeight;
+  const fatherLabelText = "Father's/Husband's Name: ";
+  const fatherLabelWidth = doc.widthOfString(fatherLabelText);
+  doc.text(fatherLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.fatherOrHusbandName || 'N/A', START_X + PAD_X + fatherLabelWidth, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 - fatherLabelWidth });
+  currentY += name2Height;
   
-  // Address
+  // Row 3: Address (spans 2 info columns, full width)
   const addressText = loan.membership?.address
     ? `Vill/Ward ${loan.membership.address.village}, PO ${loan.membership.address.postOffice}, PS ${loan.membership.address.policeStation}, Dist ${loan.membership.address.district}, PIN-${loan.membership.address.pinCode}`
     : 'N/A';
-  const addressCellHeight = cellHeight('Address', addressText, LEFT_SECTION_WIDTH - PAD_X * 2);
-  doc.rect(START_X, leftY, LEFT_SECTION_WIDTH, addressCellHeight).stroke(BORDER);
+  const addressCellHeight = cellHeight('Address', addressText, INFO_SECTION_WIDTH - PAD_X * 2);
+  doc.rect(START_X, currentY, INFO_SECTION_WIDTH, addressCellHeight).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const addressLabelHeight = doc.heightOfString('Address', { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.text('Address', START_X + PAD_X, leftY + PAD_Y, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.font('Helvetica').text(addressText, START_X + PAD_X, leftY + PAD_Y + addressLabelHeight, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  leftY += addressCellHeight;
+  const addressLabelText = 'Address: ';
+  const addressLabelWidth = doc.widthOfString(addressLabelText);
+  doc.text(addressLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(addressText, START_X + PAD_X + addressLabelWidth, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 - addressLabelWidth });
+  currentY += addressCellHeight;
   
-  // Date of Birth, Occupation, Mobile Number, Account Number in 2x2 grid
-  const gridCellWidth = LEFT_SECTION_WIDTH / 2;
+  // Row 4: Date of Birth | Occupation
+  const row3Height = Math.max(
+    cellHeight('Date of Birth', formatDate(loan.membership?.dateOfBirth), INFO_COLUMN_WIDTH - PAD_X * 2),
+    cellHeight('Occupation', loan.membership?.occupation || 'N/A', INFO_COLUMN_WIDTH - PAD_X * 2)
+  );
   
-  // Row 1: Date of Birth, Occupation
-  const dobCellHeight = cellHeight('Date of Birth', formatDate(loan.membership?.dateOfBirth), gridCellWidth - PAD_X * 2);
-  const occupationCellHeight = cellHeight('Occupation', loan.membership?.occupation || 'N/A', gridCellWidth - PAD_X * 2);
-  const gridRow1Height = Math.max(dobCellHeight, occupationCellHeight);
-  
-  doc.rect(START_X, leftY, gridCellWidth, gridRow1Height).stroke(BORDER);
+  doc.rect(START_X, currentY, INFO_COLUMN_WIDTH, row3Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const dobLabelHeight = doc.heightOfString('Date of Birth', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Date of Birth', START_X + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(formatDate(loan.membership?.dateOfBirth), START_X + PAD_X, leftY + PAD_Y + dobLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  const dobLabelText = 'Date of Birth: ';
+  const dobLabelWidth = doc.widthOfString(dobLabelText);
+  doc.text(dobLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(formatDate(loan.membership?.dateOfBirth), START_X + PAD_X + dobLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - dobLabelWidth });
   
-  doc.rect(START_X + gridCellWidth, leftY, gridCellWidth, gridRow1Height).stroke(BORDER);
+  doc.rect(START_X + INFO_COLUMN_WIDTH, currentY, INFO_COLUMN_WIDTH, row3Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const occupationLabelHeight = doc.heightOfString('Occupation', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Occupation', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.occupation || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + occupationLabelHeight, { width: gridCellWidth - PAD_X * 2 });
-  leftY += gridRow1Height;
+  const occupationLabelText = 'Occupation: ';
+  const occupationLabelWidth = doc.widthOfString(occupationLabelText);
+  doc.text(occupationLabelText, START_X + INFO_COLUMN_WIDTH + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.occupation || 'N/A', START_X + INFO_COLUMN_WIDTH + PAD_X + occupationLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - occupationLabelWidth });
+  currentY += row3Height;
   
-  // Row 2: Mobile Number, Account Number
-  const mobileCellHeight = cellHeight('Mobile Number', loan.mobileNumber || 'N/A', gridCellWidth - PAD_X * 2);
-  const accountCellHeight = cellHeight('Bank Account Number', loan.bankAccountNumber || 'N/A', gridCellWidth - PAD_X * 2);
-  const gridRow2Height = Math.max(mobileCellHeight, accountCellHeight);
+  // Row 5: Mobile Number | Bank Account Number
+  const row4Height = Math.max(
+    cellHeight('Mobile Number', loan.mobileNumber || 'N/A', INFO_COLUMN_WIDTH - PAD_X * 2),
+    cellHeight('Bank Account Number', loan.bankAccountNumber || 'N/A', INFO_COLUMN_WIDTH - PAD_X * 2)
+  );
   
-  doc.rect(START_X, leftY, gridCellWidth, gridRow2Height).stroke(BORDER);
+  doc.rect(START_X, currentY, INFO_COLUMN_WIDTH, row4Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const mobileLabelHeight = doc.heightOfString('Mobile Number', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Mobile Number', START_X + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.mobileNumber || 'N/A', START_X + PAD_X, leftY + PAD_Y + mobileLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  const mobileLabelText = 'Mobile Number: ';
+  const mobileLabelWidth = doc.widthOfString(mobileLabelText);
+  doc.text(mobileLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.mobileNumber || 'N/A', START_X + PAD_X + mobileLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - mobileLabelWidth });
   
-  doc.rect(START_X + gridCellWidth, leftY, gridCellWidth, gridRow2Height).stroke(BORDER);
+  doc.rect(START_X + INFO_COLUMN_WIDTH, currentY, INFO_COLUMN_WIDTH, row4Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const accountLabelHeight = doc.heightOfString('Bank Account Number', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Bank Account Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.bankAccountNumber || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + accountLabelHeight, { width: gridCellWidth - PAD_X * 2 });
-  leftY += gridRow2Height;
+  const accountLabelText = 'Bank Account Number: ';
+  const accountLabelWidth = doc.widthOfString(accountLabelText);
+  doc.text(accountLabelText, START_X + INFO_COLUMN_WIDTH + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.bankAccountNumber || 'N/A', START_X + INFO_COLUMN_WIDTH + PAD_X + accountLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - accountLabelWidth });
+  currentY += row4Height;
   
-  // Row 3: Aadhar, PAN
-  const aadharCellHeight = cellHeight('Aadhar Number', loan.membership?.aadhar || 'N/A', gridCellWidth - PAD_X * 2);
-  const panCellHeight = cellHeight('PAN Number', loan.membership?.pan || 'N/A', gridCellWidth - PAD_X * 2);
-  const gridRow3Height = Math.max(aadharCellHeight, panCellHeight);
+  // Row 6: Aadhar Number | PAN Number
+  const row5Height = Math.max(
+    cellHeight('Aadhar Number', loan.membership?.aadhar || 'N/A', INFO_COLUMN_WIDTH - PAD_X * 2),
+    cellHeight('PAN', loan.membership?.pan || 'N/A', INFO_COLUMN_WIDTH - PAD_X * 2)
+  );
   
-  doc.rect(START_X, leftY, gridCellWidth, gridRow3Height).stroke(BORDER);
+  doc.rect(START_X, currentY, INFO_COLUMN_WIDTH, row5Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const aadharLabelHeight = doc.heightOfString('Aadhar Number', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('Aadhar Number', START_X + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.aadhar || 'N/A', START_X + PAD_X, leftY + PAD_Y + aadharLabelHeight, { width: gridCellWidth - PAD_X * 2 });
+  const aadharLabelText = 'Aadhar Number: ';
+  const aadharLabelWidth = doc.widthOfString(aadharLabelText);
+  doc.text(aadharLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.aadhar || 'N/A', START_X + PAD_X + aadharLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - aadharLabelWidth });
   
-  doc.rect(START_X + gridCellWidth, leftY, gridCellWidth, gridRow3Height).stroke(BORDER);
+  doc.rect(START_X + INFO_COLUMN_WIDTH, currentY, INFO_COLUMN_WIDTH, row5Height).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const panLabelHeight = doc.heightOfString('PAN Number', { width: gridCellWidth - PAD_X * 2 });
-  doc.text('PAN Number', START_X + gridCellWidth + PAD_X, leftY + PAD_Y, { width: gridCellWidth - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.membership?.pan || 'N/A', START_X + gridCellWidth + PAD_X, leftY + PAD_Y + panLabelHeight, { width: gridCellWidth - PAD_X * 2 });
-  leftY += gridRow3Height;
+  const panLabelText = 'PAN: ';
+  const panLabelWidth = doc.widthOfString(panLabelText);
+  doc.text(panLabelText, START_X + INFO_COLUMN_WIDTH + PAD_X, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.membership?.pan || 'N/A', START_X + INFO_COLUMN_WIDTH + PAD_X + panLabelWidth, currentY + PAD_Y, { width: INFO_COLUMN_WIDTH - PAD_X * 2 - panLabelWidth });
+  currentY += row5Height;
   
-  // Row 4: Email (full width)
-  const emailCellHeight = cellHeight('Email', loan.email || loan.membership?.email || 'N/A', LEFT_SECTION_WIDTH - PAD_X * 2);
-  doc.rect(START_X, leftY, LEFT_SECTION_WIDTH, emailCellHeight).stroke(BORDER);
+  // Row 7: Email (full width, spans 2 info columns)
+  const emailCellHeight = cellHeight('Email', loan.email || loan.membership?.email || 'N/A', INFO_SECTION_WIDTH - PAD_X * 2);
+  doc.rect(START_X, currentY, INFO_SECTION_WIDTH, emailCellHeight).stroke(BORDER);
   doc.fontSize(FONT).font('Helvetica-Bold');
-  const emailLabelHeight = doc.heightOfString('Email', { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.text('Email', START_X + PAD_X, leftY + PAD_Y, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  doc.font('Helvetica').text(loan.email || loan.membership?.email || 'N/A', START_X + PAD_X, leftY + PAD_Y + emailLabelHeight, { width: LEFT_SECTION_WIDTH - PAD_X * 2 });
-  leftY += emailCellHeight;
+  const emailLabelText = 'Email: ';
+  const emailLabelWidth = doc.widthOfString(emailLabelText);
+  doc.text(emailLabelText, START_X + PAD_X, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 });
+  doc.font('Helvetica').text(loan.email || loan.membership?.email || 'N/A', START_X + PAD_X + emailLabelWidth, currentY + PAD_Y, { width: INFO_SECTION_WIDTH - PAD_X * 2 - emailLabelWidth });
+  currentY += emailCellHeight;
   
-  // Calculate total left section height
-  const leftSectionHeight = leftY - applicantBaseY;
+  // Calculate total section height for photo
+  const totalSectionHeight = currentY - applicantBaseY;
   
-  // Right section: Passport Photo - height matches left section
+  // Photo column on right - spans full height
   const photoUrl = loan.membership?.passportPhoto?.secure_url;
   const photoMetadata = loan.membership?.passportPhoto;
-  console.log('Passport Photo URL:', photoUrl);
-  console.log('Passport Photo object:', photoMetadata);
-  await drawImageCell(PHOTO_X, applicantBaseY, PHOTO_SIZE, leftSectionHeight, photoUrl, photoMetadata);
+  await drawImageCell(PHOTO_X, applicantBaseY, PHOTO_COLUMN_WIDTH, totalSectionHeight, photoUrl, photoMetadata);
   
   // Update y to the end of the section
-  y = leftY;
-  
+  y = currentY;
   doc.y = oldDocYApplicant;
 
-  y += 12;
+  y += 6;
 
   /* ---------------- CO-APPLICANT ---------------- */
-  // Always display co-applicant section, show "N/A" if data not present
-  drawRow([
-    { w: PAGE_WIDTH / 2, label: "Co-Applicant's Name", value: loan.coApplicant?.fullName || 'N/A' },
-    { w: PAGE_WIDTH / 2, label: "Father's/Husband's Name", value: loan.coApplicant?.fatherOrHusbandName || 'N/A' },
-  ]);
+  // Only display co-applicant section if co-applicant data exists
+  if (loan.coApplicant && loan.coApplicant.fullName) {
+    drawRow([
+      { w: PAGE_WIDTH / 2, label: "Co-Applicant's Name", value: loan.coApplicant.fullName },
+      { w: PAGE_WIDTH / 2, label: "Father's/Husband's Name", value: loan.coApplicant.fatherOrHusbandName || 'N/A' },
+    ]);
 
-  drawFullRow(
-    'Address',
-    loan.coApplicant?.address
-      ? `Vill/Ward ${loan.coApplicant.address.village}, PO ${loan.coApplicant.address.postOffice}, PS ${loan.coApplicant.address.policeStation}, Dist ${loan.coApplicant.address.district}, PIN-${loan.coApplicant.address.pinCode}`
-      : 'N/A'
-  );
+    drawFullRow(
+      'Address',
+      loan.coApplicant.address
+        ? `Vill/Ward ${loan.coApplicant.address.village}, PO ${loan.coApplicant.address.postOffice}, PS ${loan.coApplicant.address.policeStation}, Dist ${loan.coApplicant.address.district}, PIN-${loan.coApplicant.address.pinCode}`
+        : 'N/A'
+    );
 
-  drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.coApplicant?.mobileNumber || 'N/A' },
-    { w: PAGE_WIDTH / 2, label: 'Email', value: loan.coApplicant?.email || 'N/A' },
-  ]);
+    drawRow([
+      { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.coApplicant.mobileNumber || 'N/A' },
+      { w: PAGE_WIDTH / 2, label: 'Email', value: loan.coApplicant.email || 'N/A' },
+    ]);
 
-  y += 12;
+    y += 8;
+  }
 
   /* ---------------- NOMINEE ---------------- */
   drawRow([
@@ -441,7 +454,7 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
     { w: PAGE_WIDTH / 2, label: 'Bank Account Number', value: loan.nominee?.bankAccountNumber || 'N/A' },
   ]);
 
-  y += 12;
+  y += 8;
 
   /* ---------------- GUARANTOR ---------------- */
   drawRow([
@@ -461,24 +474,7 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
     { w: PAGE_WIDTH / 2, label: 'Mobile Number', value: loan.guarantor?.mobileNumber || 'N/A' },
   ]);
 
-  y += 12;
-
-  /* ---------------- MOVE TO PAGE 2 ---------------- */
-  // Check if we need a new page before LOAN DETAILS section
-  const estimatedLoanDetailsHeight = 200; // Estimated height for loan details + footer
-  
-  // Add page number at bottom of page 1 before moving to page 2
-  doc.fontSize(8).font('Helvetica')
-    .text('Page 1 of 2', START_X, PAGE_HEIGHT - 60, {
-      width: PAGE_WIDTH,
-      align: 'center'
-    });
-  
-  if (y + estimatedLoanDetailsHeight > PAGE_HEIGHT - BOTTOM_MARGIN) {
-    currentPage++;
-    doc.addPage();
-    y = TOP_MARGIN;
-  }
+  y += 8;
 
   /* ---------------- LOAN DETAILS ---------------- */
   drawRow([
@@ -488,154 +484,116 @@ const drawImageCell = async (x, y, w, h, imageUrl, imageMetadata = null) => {
 
   drawRow([
     { w: PAGE_WIDTH / 2, label: 'Installment Amount', value: formatCurrency(loan.installmentAmount) },
-    { w: PAGE_WIDTH / 2, label: 'Membership Fees Deposited', value: formatCurrency(100) },
+    { w: PAGE_WIDTH / 2, label: 'Membership Fees Paid', value: formatCurrency(100) },
   ]);
 
   drawRow([
     { w: PAGE_WIDTH / 2, label: 'Loan Repayment Period', value: `${loan.loanTenure} days` },
-    { w: PAGE_WIDTH / 2, label: 'Loan Taken Amount', value: formatCurrency(loan.loanAmount) },
+    { w: PAGE_WIDTH / 2, label: 'Loan Amount', value: formatCurrency(loan.loanAmount) },
   ]);
   const amountInWords = numberToWords(Math.floor(loan.loanAmount || 0)) + ' Rupees Only';
   drawFullRow('In Words: ', amountInWords);
 
   /* ---------------- EXTRA GAP BEFORE FOOTER ---------------- */
-  y += 15;
+  y += 5;
 
   /* ---------------- DECLARATION ---------------- */
   const declarationText = 'I/We shall be bound to repay the loan regularly as per the decision of the cooperative.';
-  const declarationHeight = doc.heightOfString(declarationText, { width: PAGE_WIDTH }) + 20;
-  
-  // Check if we need to move to next page for footer content
-  const footerContentHeight = declarationHeight + 15 + 15 + 35 + 150; // declaration + signatures + office section
-  
-  if (y + footerContentHeight > PAGE_HEIGHT - BOTTOM_MARGIN - 30 && currentPage === 1) {
-    // Should already be on page 2, but double check
-    if (currentPage === 1) {
-      currentPage++;
-      doc.addPage();
-      y = TOP_MARGIN;
-    }
-  }
+  doc.fontSize(8).font('Helvetica');
+  const declarationHeight = doc.heightOfString(declarationText, { width: PAGE_WIDTH }) + 5;
   
   const oldDocY = doc.y;
-  doc.fontSize(9.5).font('Helvetica')
-    .text(declarationText, START_X, y, { width: PAGE_WIDTH });
+  doc.text(declarationText, START_X, y, { width: PAGE_WIDTH });
   doc.y = oldDocY; // Prevent cursor advancement
   y += declarationHeight;
 
-  /* ---------------- FOOTER LINE ---------------- */
-  const footerStartY = y + 20;
-  doc.text("Guarantor's Signature", START_X, footerStartY);
-  doc.text("Applicant's Signature", START_X + PAGE_WIDTH - 130, footerStartY);
-
-  y = footerStartY + 15;
-
-  /* ---------------- SIGNATURES ---------------- */
-  // doc
-  //   .moveTo(START_X, y)
-  //   .lineTo(START_X + PAGE_WIDTH, y)
-  //   .stroke(BORDER);
-
-  y += 35;
-
   /* ---------------- OFFICE USE ONLY ---------------- */
-  y += 25; // Extra space before office section
+  // Position office section at the bottom of the page
+  const officeSectionHeight = 105; // Increased height by 30px (from 75 to 105)
+  const officeSectionStartY = PAGE_HEIGHT - BOTTOM_MARGIN - officeSectionHeight;
   
-  const officeSectionStartY = y;
+  /* ---------------- FOOTER LINE ---------------- */
+  // Add space above signatures for manual signing
+  const signatureSpaceHeight = 25; // Space for manual signature
+  const footerStartY = y + 6;
   
-  // Draw border around entire office section
-  const officeSectionHeight = 180; // Total height for office section
+  // Ensure signatures don't overlap with office section
+  const maxFooterY = officeSectionStartY - 15; // Leave gap before office section
+  let signatureTextY = footerStartY + signatureSpaceHeight + 15; // Shifted down by 15px (10px additional from previous 5px)
+  
+  // If signatures would overlap, adjust position
+  if (signatureTextY + 10 > maxFooterY) {
+    signatureTextY = maxFooterY - 10;
+  }
+  
+  doc.fontSize(7.5).font('Helvetica')
+    .text("Guarantor's Signature", START_X, signatureTextY);
+  
+  // Applicant's Signature - right aligned to edge of page, single line
+  doc.fontSize(7.5).font('Helvetica'); // Ensure font is set
+  const applicantSigText = "Signature of Borrower";
+  // Use text with width to prevent wrapping, right aligned
+  doc.text(applicantSigText, START_X, signatureTextY, {
+    width: PAGE_WIDTH,
+    align: 'right'
+  });
+
+  y = signatureTextY + 10;
+  
+  // Draw border around entire office section at bottom
   doc.rect(START_X, officeSectionStartY, PAGE_WIDTH, officeSectionHeight).stroke(BORDER);
   
-  // Center "OFFICE USE ONLY" title with underline
-  y = officeSectionStartY + 12;
-  doc.font('Helvetica-Bold').fontSize(FONT + 1);
+  // Center "OFFICE USE ONLY" title (underline removed)
+  let officeY = officeSectionStartY + 4;
+  doc.font('Helvetica-Bold').fontSize(7.5); // Reduced font size
   const officeTitle = 'OFFICE USE ONLY';
   const titleWidth = doc.widthOfString(officeTitle);
-  doc.text(officeTitle, START_X + (PAGE_WIDTH - titleWidth) / 2, y);
+  doc.text(officeTitle, START_X + (PAGE_WIDTH - titleWidth) / 2, officeY);
   
-  // Underline for title
-  y += 12;
-  doc.moveTo(START_X + (PAGE_WIDTH - titleWidth) / 2 - 5, y)
-     .lineTo(START_X + (PAGE_WIDTH - titleWidth) / 2 + titleWidth + 5, y)
-     .lineWidth(1)
-     .stroke(BORDER);
-  
-  y += 20; // Space after title
+  officeY += 14; // Space after title (adjusted since underline removed)
 
-  // Office information in a structured 2-column layout
-  doc.font('Helvetica').fontSize(FONT);
-  const infoLeftX = START_X + 20;
-  const infoRightX = START_X + PAGE_WIDTH / 2 + 20;
-  const infoLineHeight = 18;
-  const infoStartY = y;
+  // Office information - compact layout, removed redundant info
+  doc.font('Helvetica').fontSize(7); // Reduced font size further
+  const infoLeftX = START_X + 15;
+  const infoRightX = START_X + PAGE_WIDTH - 15;
+  const infoLineHeight = 10; // Reduced from 18
+  const infoStartY = officeY;
   
-  // Left column - labels and values with no gap
+  // Single row: Date (left) and Accepted by Loan Committee (right)
   let infoY = infoStartY;
   
-  // Date
-  doc.font('Helvetica-Bold').text('Date: ', infoLeftX, infoY);
-  const dateLabelWidth = doc.widthOfString('Date: ');
+  // Date - left aligned
+  doc.font('Helvetica-Bold').text('Loan sectioned date: ', infoLeftX, infoY);
+  const dateLabelWidth = doc.widthOfString('Loan sectioned date: ');
   doc.font('Helvetica').text(formatDate(loan.approvedAt), infoLeftX + dateLabelWidth, infoY);
-  infoY += infoLineHeight;
   
-  // Loan Account Number
-  doc.font('Helvetica-Bold').text('Loan Account Number: ', infoLeftX, infoY);
-  const accountLabelWidth = doc.widthOfString('Loan Account Number: ');
-  doc.font('Helvetica').text(loan.loanAccountNumber, infoLeftX + accountLabelWidth, infoY);
-  infoY += infoLineHeight;
+  // Accepted by Loan Committee - right aligned
+  doc.font('Helvetica-Bold');
+  const acceptedLabelText = 'Accepted by Loan Committee: ';
+  const acceptedLabelWidth = doc.widthOfString(acceptedLabelText);
+  const acceptedValueText = 'Yes';
+  const acceptedValueWidth = doc.widthOfString(acceptedValueText);
+  const acceptedStartX = infoRightX - acceptedLabelWidth - acceptedValueWidth;
   
-  // Loan Amount
-  doc.font('Helvetica-Bold').text('Loan Amount: ', infoLeftX, infoY);
-  const amountLabelWidth = doc.widthOfString('Loan Amount: ');
-  doc.font('Helvetica').text(formatCurrency(loan.loanAmount), infoLeftX + amountLabelWidth, infoY);
+  doc.text(acceptedLabelText, acceptedStartX, infoY);
+  doc.font('Helvetica').text(acceptedValueText, acceptedStartX + acceptedLabelWidth, infoY);
   
-  // Right column - labels and values with no gap
-  infoY = infoStartY;
+  // Chairman's Signature at the bottom of the office box - left aligned with space for manual signature
+  const officeSignatureSpace = 20; // Space for manual signature
+  const signatureY = officeSectionStartY + officeSectionHeight - officeSignatureSpace;
+  doc.font('Helvetica').fontSize(7);
+  doc.text("Chairman's Signature", infoLeftX, signatureY);
   
-  // Loan Repayment Period
-  doc.font('Helvetica-Bold').text('Loan Repayment Period: ', infoRightX, infoY);
-  const periodLabelWidth = doc.widthOfString('Loan Repayment Period: ');
-  doc.font('Helvetica').text(`${loan.loanTenure} days`, infoRightX + periodLabelWidth, infoY);
-  infoY += infoLineHeight;
-  
-  // Accepted by Loan Committee
-  doc.font('Helvetica-Bold').text('Accepted by Loan Committee: ', infoRightX, infoY);
-  const committeeLabelWidth = doc.widthOfString('Accepted by Loan Committee: ');
-  doc.font('Helvetica').text('Yes', infoRightX + committeeLabelWidth, infoY);
-  
-  y = infoStartY + (infoLineHeight * 3) + 30; // Move past info section
-  
-  // Signature section - properly aligned
-  const signatureSectionY = y + 20;
-  const signatureLineLength = 180;
-  const signatureLineY = signatureSectionY + 18;
-  
-  // Left signature area
-  doc.font('Helvetica').fontSize(FONT);
-  doc.text("Applicant's Signature", infoLeftX, signatureSectionY);
-  // doc.moveTo(infoLeftX, signatureLineY)
-  //    .lineTo(infoLeftX + signatureLineLength, signatureLineY)
-  //    .lineWidth(0.8)
-  //    .stroke(BORDER);
-  
-  // Right signature area
-  doc.text("Chairman's Signature", infoRightX, signatureSectionY);
-  // doc.moveTo(infoRightX, signatureLineY)
-  //    .lineTo(infoRightX + signatureLineLength, signatureLineY)
-  //    .lineWidth(0.8)
-  //    .stroke(BORDER);
-
-  
+  // Update y to end of office section
   y = officeSectionStartY + officeSectionHeight;
   
-  // Note: Page numbers will be added after document is finalized
-  // Store currentPage for later use
-  doc._currentPage = currentPage;
-  // add hardcoded page number at bottom of page 2
-  doc.fontSize(8).font('Helvetica')
-    .text('Page 2 of 2', START_X, PAGE_HEIGHT - 60, {
-      width: PAGE_WIDTH,
-      align: 'center'
-    });
+  // Ensure we stay on page 1 - verify content doesn't exceed page height
+  if (y > PAGE_HEIGHT - BOTTOM_MARGIN) {
+    console.warn('Content may exceed single page limit. Current y:', y, 'Page height:', PAGE_HEIGHT - BOTTOM_MARGIN);
+  }
+  
+  // Ensure document is single page
+  if (doc.bufferedPageRange().count > 1) {
+    console.warn('Multiple pages detected. Expected single page only.');
+  }
 };
