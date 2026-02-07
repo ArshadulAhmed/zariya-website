@@ -226,6 +226,17 @@
           animation: spin 1s linear infinite;
         }
       }
+
+      &.btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+        }
+      }
     }
   }
 

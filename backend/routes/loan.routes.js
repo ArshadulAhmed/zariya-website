@@ -276,8 +276,8 @@ const updateLoanValidation = [
 
 const reviewLoanValidation = [
   body('status')
-    .isIn(['approved', 'rejected'])
-    .withMessage('Status must be either approved or rejected'),
+    .isIn(['active', 'rejected'])
+    .withMessage('Status must be either active or rejected'),
   body('rejectionReason')
     .optional()
     .trim()
@@ -291,11 +291,11 @@ router.post('/', isAdminOrEmployee, createLoanValidation, createLoan);
 
 // Get loans - Admin or Employee
 router.get('/', isAdminOrEmployee, getLoans);
-// Get ongoing loans (approved/active only) for repayment records - Admin or Employee
+// Get ongoing loans (active only) for repayment records - Admin or Employee
 router.get('/ongoing', isAdminOrEmployee, getOngoingLoans);
 router.get('/account/:loanAccountNumber', isAdminOrEmployee, getLoanByAccountNumber);
 
-// Download loan contract - Admin or Employee (only for approved loans)
+// Download loan contract - Admin or Employee (only for active loans)
 // Must be before /:id route to avoid route conflicts
 router.get('/:id/contract', isAdminOrEmployee, downloadLoanContract);
 
@@ -310,7 +310,7 @@ router.get('/:id/repayment-history', isAdminOrEmployee, downloadRepaymentHistory
 // Get single loan - Must be after specific routes
 router.get('/:id', isAdminOrEmployee, getLoan);
 
-// Update loan - Admin only for approved loans, Admin/Employee for pending/rejected
+// Update loan - Admin only for active loans, Admin/Employee for pending/rejected
 router.put('/:id', isAdminOrEmployee, updateLoanValidation, updateLoan);
 
 // Review loan - Admin only

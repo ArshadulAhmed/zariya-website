@@ -1,2 +1,39 @@
 @use '../../../styles/main.scss' as *;
 
+.address-copy-section {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
+  padding: 0.8rem;
+  background: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  flex-wrap: wrap;
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    font-weight: 500;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    span {
+      user-select: none;
+    }
+  }
+}
+

@@ -1,4 +1,6 @@
-import { useAppSelector } from '../../../store/hooks'
+import { useState } from 'react'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { copyAddress } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import Select from '../../Select'
@@ -6,9 +8,33 @@ import { RELATIONSHIPS } from '../../../constants/relationships'
 import './GuarantorForm.scss'
 
 const GuarantorForm = () => {
+  const dispatch = useAppDispatch()
   const formData = useAppSelector((state) => state.newLoan.formData.guarantor)
+  const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
+  const nomineeAddress = useAppSelector((state) => state.newLoan.formData.nominee.address)
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
+  
+  // State to track which checkbox is checked
+  const [checkedSource, setCheckedSource] = useState(null)
+  
+  const handleCopyMemberAddress = (e) => {
+    if (e.target.checked && selectedMembership?.address) {
+      dispatch(copyAddress({ from: 'member', to: 'guarantor' }))
+      setCheckedSource('member')
+    } else {
+      setCheckedSource(null)
+    }
+  }
+  
+  const handleCopyNomineeAddress = (e) => {
+    if (e.target.checked && nomineeAddress?.village) {
+      dispatch(copyAddress({ from: 'nominee', to: 'guarantor' }))
+      setCheckedSource('nominee')
+    } else {
+      setCheckedSource(null)
+    }
+  }
 
   return (
     <div className="form-section">
@@ -18,6 +44,27 @@ const GuarantorForm = () => {
           <h2>Guarantor Details</h2>
           <p className="section-description">Provide guarantor information</p>
         </div>
+      </div>
+
+      <div className="address-copy-section">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={checkedSource === 'member'}
+            onChange={handleCopyMemberAddress}
+            disabled={!selectedMembership?.address}
+          />
+          <span>Same as Member Address</span>
+        </label>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={checkedSource === 'nominee'}
+            onChange={handleCopyNomineeAddress}
+            disabled={!nomineeAddress?.village}
+          />
+          <span>Same as Nominee Address</span>
+        </label>
       </div>
 
       <div className="form-grid">

@@ -24,12 +24,27 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+// Calculate min and max dates (3 months before and after today)
+const getDateLimits = () => {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setMonth(today.getMonth() - 3)
+  const maxDate = new Date(today)
+  maxDate.setMonth(today.getMonth() + 3)
+  
+  return {
+    min: minDate.toISOString().split('T')[0],
+    max: maxDate.toISOString().split('T')[0]
+  }
+}
+
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { collections, totalCollection, collectionByMethod, isLoading, isDownloading, error, date } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
+  const dateLimits = getDateLimits()
 
   // Clear daily collection data on mount (to remove any stale data from previous visits)
   useEffect(() => {
@@ -46,6 +61,19 @@ const DailyCollectionReport = () => {
   const handleSearch = async () => {
     if (!selectedDate) {
       dispatch(setError('Please select a date'))
+      return
+    }
+
+    // Validate date is within 3 months range
+    const selected = new Date(selectedDate)
+    const today = new Date()
+    const minDate = new Date(today)
+    minDate.setMonth(today.getMonth() - 3)
+    const maxDate = new Date(today)
+    maxDate.setMonth(today.getMonth() + 3)
+    
+    if (selected < minDate || selected > maxDate) {
+      dispatch(setError('Date must be within 3 months from today'))
       return
     }
 
@@ -102,7 +130,9 @@ const DailyCollectionReport = () => {
                 className="date-input"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
+                min={dateLimits.min}
+                max={dateLimits.max}
+                required
               />
               <button
                 type="submit"
@@ -203,7 +233,7 @@ const DailyCollectionReport = () => {
                       <span className="payment-method-badge">
                         {repayment.paymentMethod === 'cash' ? 'Cash' :
                          repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-                         repayment.paymentMethod === 'cheque' ? 'Cheque' : 'Other'}
+                         repayment.paymentMethod === 'upi' ? 'UPI' : 'Other'}
                       </span>
                     </td>
                     <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>

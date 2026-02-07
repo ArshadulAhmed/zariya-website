@@ -162,7 +162,14 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
     { w: PAGE_WIDTH / 2, label: 'Total Paid: ', value: formatCurrency(totalPaid) },
   ]);
 
-  drawFullRow('Remaining Amount: ', formatCurrency(remainingAmount));
+  drawRow([
+    { w: PAGE_WIDTH / 2, label: 'Remaining Amount: ', value: formatCurrency(remainingAmount) },
+    { w: PAGE_WIDTH / 2, label: 'Total Repayments: ', value: String(repayments.length) },
+  ]);
+
+  if (remainingAmount <= 0) {
+    drawFullRow('Loan Status: ', 'Fully Paid');
+  }
 
   y += 10;
 
@@ -203,7 +210,7 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
   doc.text('Amount', x + 5, y + 6);
   x += colWidths.amount;
 
-  doc.text('Method', x + 5, y + 6);
+  doc.text('Payment Method', x + 5, y + 6);
 
   // Draw header border
   doc.rect(START_X, y, tableWidth, 20)
@@ -244,7 +251,7 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
     // Method
     const method = repayment.paymentMethod === 'cash' ? 'Cash' :
                    repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-                   repayment.paymentMethod === 'cheque' ? 'Cheque' : 'Other';
+                   repayment.paymentMethod === 'upi' ? 'UPI' : 'Other';
     doc.text(method, x + 5, y + 8);
 
     y += rowHeight;
@@ -254,25 +261,5 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
   doc.rect(START_X, y, tableWidth, 0)
      .lineWidth(0.7)
      .stroke(BORDER_COLOR);
-
-  y += 20;
-
-  // Summary section
-  doc.fontSize(FONT_SIZE).font('Helvetica-Bold');
-  doc.text('Summary:', START_X, y);
-  y += 15;
-
-  doc.font('Helvetica');
-  doc.text(`Total Repayments: ${repayments.length}`, START_X, y);
-  y += 12;
-
-  doc.text(`Total Amount Paid: ${formatCurrency(totalPaid)}`, START_X, y);
-  y += 12;
-
-  if (remainingAmount > 0) {
-    doc.text(`Remaining Amount: ${formatCurrency(remainingAmount)}`, START_X, y);
-  } else {
-    doc.text('Loan Status: Fully Paid', START_X, y);
-  }
 };
 

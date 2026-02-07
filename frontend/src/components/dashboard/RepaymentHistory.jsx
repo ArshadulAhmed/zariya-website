@@ -53,7 +53,7 @@ const RepaymentHistory = memo(() => {
                     <span className="payment-method-badge">
                       {repayment.paymentMethod === 'cash' ? 'Cash' :
                        repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-                       repayment.paymentMethod === 'cheque' ? 'Cheque' : 'Other'}
+                       repayment.paymentMethod === 'upi' ? 'UPI' : 'Other'}
                     </span>
                   </td>
                   <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>

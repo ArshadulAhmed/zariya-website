@@ -93,6 +93,7 @@
 
           .repayment-input,
           .repayment-date-input,
+          .repayment-method-select,
           .repayment-remarks-input {
             width: 100%;
             max-width: 150px;
@@ -124,6 +125,11 @@
               -webkit-appearance: none;
               margin: 0;
             }
+          }
+
+          .repayment-method-select {
+            width: 100%;
+            min-width: 120px;
           }
 
           .repayment-remarks-input {

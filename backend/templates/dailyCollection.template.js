@@ -247,7 +247,7 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
       amount: formatCurrency(repayment.amount),
       method: repayment.paymentMethod === 'cash' ? 'Cash' :
               repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-              repayment.paymentMethod === 'cheque' ? 'Cheque' : 'Other',
+              repayment.paymentMethod === 'upi' ? 'UPI' : 'Other',
       recordedBy: repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A',
       remarks: repayment.remarks || '-',
     };

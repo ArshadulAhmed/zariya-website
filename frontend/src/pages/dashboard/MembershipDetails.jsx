@@ -311,7 +311,9 @@ const MembershipDetails = () => {
                 )}
                 <div className="info-row">
                   <span className="info-label">Email</span>
-                  <span className="info-value">{membership.email || 'N/A'}</span>
+                  <span className="info-value">
+                    {membership.email && membership.email.trim() ? membership.email.trim() : 'N/A'}
+                  </span>
                 </div>
                 {membership.aadhar && (
                   <div className="info-row">

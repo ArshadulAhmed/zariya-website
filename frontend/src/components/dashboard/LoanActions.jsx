@@ -24,7 +24,7 @@ const LoanActions = () => {
   const handleApprove = async () => {
     if (!id || !loanId) return
     
-    const result = await dispatch(reviewLoan({ id: loanId, reviewData: { status: 'approved' } }))
+    const result = await dispatch(reviewLoan({ id: loanId, reviewData: { status: 'active' } }))
     if (reviewLoan.fulfilled.match(result)) {
       setApproveConfirm({ open: false })
       dispatch(fetchLoan(id))

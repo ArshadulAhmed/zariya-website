@@ -5,7 +5,7 @@ import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlic
 import { authAPI } from '../services/api'
 import TextField from '../components/TextField'
 import Snackbar from '../components/Snackbar'
-import logoImage from '../assets/logo.jpeg'
+import logoImage from '../assets/logo.png'
 import './Login.scss'
 
 const Login = () => {

@@ -1,5 +1,5 @@
 import React from 'react'
-import logoImage from '../assets/logo.jpeg'
+import logoImage from '../assets/logo_footer.png'
 import LocationIcon from './icons/LocationIcon'
 import PhoneIcon from './icons/PhoneIcon'
 import EmailIcon from './icons/EmailIcon'
@@ -18,10 +18,10 @@ const Footer = () => {
             <div className="footer-logo">
               <img src={logoImage} alt="Zariya Logo" />
             </div>
-            <p className="footer-tagline">The Thrift and Credit Co-operative Society Limited</p>
-            <p className="footer-description">
+            {/* <p className="footer-tagline">The Thrift and Credit Co-operative Society Limited</p> */}
+            {/* <p className="footer-description">
               Empowering individuals and small businesses through accessible financial solutions.
-            </p>
+            </p> */}
           </div>
           <div className="footer-section">
             <h4>Quick Links</h4>

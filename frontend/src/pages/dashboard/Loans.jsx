@@ -171,7 +171,6 @@ const Loans = memo(() => {
             placeholder="All Status"
             options={[
               { value: 'pending', label: 'Pending' },
-              { value: 'approved', label: 'Approved' },
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
               { value: 'rejected', label: 'Rejected' }

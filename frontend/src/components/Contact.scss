@@ -114,6 +114,32 @@
         resize: vertical;
         min-height: 120px;
       }
+
+      input.error,
+      textarea.error {
+        border-color: #dc2626;
+        
+        &:focus {
+          border-color: #dc2626;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+      }
+
+      .error-message {
+        display: block;
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 6px;
+        font-weight: 500;
+      }
+
+      .char-count {
+        display: block;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        margin-top: 4px;
+        text-align: right;
+      }
     }
 
     .btn {

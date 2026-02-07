@@ -172,7 +172,7 @@ const RepaymentForm = () => {
             options={[
               { value: 'cash', label: 'Cash' },
               { value: 'bank_transfer', label: 'Bank Transfer' },
-              { value: 'cheque', label: 'Cheque' },
+              { value: 'upi', label: 'UPI' },
               { value: 'other', label: 'Other' },
             ]}
             required

@@ -131,6 +131,40 @@ const newLoanSlice = createSlice({
     resetForm: (state) => {
       return initialState
     },
+    copyAddress: (state, action) => {
+      const { from, to } = action.payload
+      // from and to can be: 'member', 'nominee', 'guarantor', 'coApplicant'
+      let sourceAddress = null
+      
+      if (from === 'member') {
+        sourceAddress = state.selectedMembership?.address
+      } else if (from === 'nominee') {
+        sourceAddress = state.formData.nominee.address
+      } else if (from === 'guarantor') {
+        sourceAddress = state.formData.guarantor.address
+      } else if (from === 'coApplicant') {
+        sourceAddress = state.formData.coApplicant.address
+      }
+      
+      if (sourceAddress) {
+        const addressCopy = {
+          village: sourceAddress.village || '',
+          postOffice: sourceAddress.postOffice || '',
+          policeStation: sourceAddress.policeStation || '',
+          district: sourceAddress.district || '',
+          pinCode: sourceAddress.pinCode || '',
+          landmark: sourceAddress.landmark || '',
+        }
+        
+        if (to === 'nominee') {
+          state.formData.nominee.address = addressCopy
+        } else if (to === 'guarantor') {
+          state.formData.guarantor.address = addressCopy
+        } else if (to === 'coApplicant') {
+          state.formData.coApplicant.address = addressCopy
+        }
+      }
+    },
   },
 })
 
@@ -145,6 +179,7 @@ export const {
   setErrors,
   clearError,
   resetForm,
+  copyAddress,
 } = newLoanSlice.actions
 
 export default newLoanSlice.reducer

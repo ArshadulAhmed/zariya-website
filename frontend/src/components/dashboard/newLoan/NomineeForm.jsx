@@ -1,4 +1,6 @@
-import { useAppSelector } from '../../../store/hooks'
+import { useState } from 'react'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { copyAddress } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import Select from '../../Select'
@@ -6,9 +8,23 @@ import { RELATIONSHIPS } from '../../../constants/relationships'
 import './NomineeForm.scss'
 
 const NomineeForm = () => {
+  const dispatch = useAppDispatch()
   const formData = useAppSelector((state) => state.newLoan.formData.nominee)
+  const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
+  
+  // State to track if checkbox is checked
+  const [isMemberAddressChecked, setIsMemberAddressChecked] = useState(false)
+  
+  const handleCopyMemberAddress = (e) => {
+    if (e.target.checked && selectedMembership?.address) {
+      dispatch(copyAddress({ from: 'member', to: 'nominee' }))
+      setIsMemberAddressChecked(true)
+    } else {
+      setIsMemberAddressChecked(false)
+    }
+  }
 
   return (
     <div className="form-section">
@@ -18,6 +34,18 @@ const NomineeForm = () => {
           <h2>Nominee Details</h2>
           <p className="section-description">Provide nominee information</p>
         </div>
+      </div>
+
+      <div className="address-copy-section">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={isMemberAddressChecked}
+            onChange={handleCopyMemberAddress}
+            disabled={!selectedMembership?.address}
+          />
+          <span>Same as Member Address</span>
+        </label>
       </div>
 
       <div className="form-grid">

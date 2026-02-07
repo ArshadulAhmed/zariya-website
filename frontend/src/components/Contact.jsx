@@ -19,20 +19,59 @@ const Contact = () => {
     message: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errors, setErrors] = useState({})
 
   const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      })
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+    
+    // Validate message (matching backend: min 10, max 1000 characters)
+    const messageTrimmed = formData.message.trim()
+    if (!messageTrimmed) {
+      newErrors.message = 'Message is required'
+    } else if (messageTrimmed.length < 10) {
+      newErrors.message = 'Message must be at least 10 characters'
+    } else if (messageTrimmed.length > 1000) {
+      newErrors.message = 'Message must not exceed 1000 characters'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return
+    }
+    
     setIsSubmitting(true)
 
     try {
-      const response = await contactAPI.submitContact(formData)
+      // Trim all fields before submission (matching backend)
+      const trimmedFormData = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        message: formData.message.trim()
+      }
+      const response = await contactAPI.submitContact(trimmedFormData)
       
       if (response.success) {
         dispatch(setSnackbar({
@@ -149,8 +188,15 @@ const Contact = () => {
                 rows="5"
                 value={formData.message}
                 onChange={handleChange}
-                required
+                maxLength={1000}
+                className={errors.message ? 'error' : ''}
               ></textarea>
+              {errors.message && (
+                <span className="error-message">{errors.message}</span>
+              )}
+              <span className="char-count">
+                {formData.message.trim().length}/1000 characters
+              </span>
             </div>
             <button 
               type="submit" 

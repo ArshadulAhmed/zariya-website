@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { setHasCoApplicant } from '../../../store/slices/newLoanSlice'
+import { setHasCoApplicant, copyAddress } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import './CoApplicantForm.scss'
@@ -7,9 +8,42 @@ import './CoApplicantForm.scss'
 const CoApplicantForm = () => {
   const dispatch = useAppDispatch()
   const formData = useAppSelector((state) => state.newLoan.formData.coApplicant)
+  const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
+  const nomineeAddress = useAppSelector((state) => state.newLoan.formData.nominee.address)
+  const guarantorAddress = useAppSelector((state) => state.newLoan.formData.guarantor.address)
   const hasCoApplicant = useAppSelector((state) => state.newLoan.hasCoApplicant)
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
+  
+  // State to track which checkbox is checked
+  const [checkedSource, setCheckedSource] = useState(null)
+  
+  const handleCopyMemberAddress = (e) => {
+    if (e.target.checked && selectedMembership?.address) {
+      dispatch(copyAddress({ from: 'member', to: 'coApplicant' }))
+      setCheckedSource('member')
+    } else {
+      setCheckedSource(null)
+    }
+  }
+  
+  const handleCopyNomineeAddress = (e) => {
+    if (e.target.checked && nomineeAddress?.village) {
+      dispatch(copyAddress({ from: 'nominee', to: 'coApplicant' }))
+      setCheckedSource('nominee')
+    } else {
+      setCheckedSource(null)
+    }
+  }
+  
+  const handleCopyGuarantorAddress = (e) => {
+    if (e.target.checked && guarantorAddress?.village) {
+      dispatch(copyAddress({ from: 'guarantor', to: 'coApplicant' }))
+      setCheckedSource('guarantor')
+    } else {
+      setCheckedSource(null)
+    }
+  }
 
   return (
     <div className="form-section">
@@ -33,17 +67,48 @@ const CoApplicantForm = () => {
       </div>
 
       {hasCoApplicant && (
-        <div className="form-grid">
-          <TextField
-            label="Co-Applicant Full Name"
-            name="coApplicant.fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Enter co-applicant full name"
-            error={errors['coApplicant.fullName']}
-            helperText={errors['coApplicant.fullName']}
-            required={hasCoApplicant}
-          />
+        <>
+          <div className="address-copy-section">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={checkedSource === 'member'}
+                onChange={handleCopyMemberAddress}
+                disabled={!selectedMembership?.address}
+              />
+              <span>Same as Member Address</span>
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={checkedSource === 'nominee'}
+                onChange={handleCopyNomineeAddress}
+                disabled={!nomineeAddress?.village}
+              />
+              <span>Same as Nominee Address</span>
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={checkedSource === 'guarantor'}
+                onChange={handleCopyGuarantorAddress}
+                disabled={!guarantorAddress?.village}
+              />
+              <span>Same as Guarantor Address</span>
+            </label>
+          </div>
+
+          <div className="form-grid">
+            <TextField
+              label="Co-Applicant Full Name"
+              name="coApplicant.fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Enter co-applicant full name"
+              error={errors['coApplicant.fullName']}
+              helperText={errors['coApplicant.fullName']}
+              required={hasCoApplicant}
+            />
 
           <TextField
             label="Father's / Husband's Name"
@@ -142,7 +207,8 @@ const CoApplicantForm = () => {
             onChange={handleChange}
             placeholder="Enter landmark"
           />
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

@@ -5,13 +5,25 @@ import { fetchOngoingLoans, closeSnackbar, setSnackbar, clearLoans, setFilters }
 import { repaymentsAPI } from '../../services/api'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
-import FilterSelect from '../../components/dashboard/FilterSelect'
 import './RepaymentRecords.scss'
 
 const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+// Calculate min and max dates (3 months before and after today)
+const getDateLimits = () => {
+  const today = new Date()
+  const minDate = new Date(today)
+  minDate.setMonth(today.getMonth() - 3)
+  const maxDate = new Date(today)
+  maxDate.setMonth(today.getMonth() + 3)
+  
+  return {
+    min: minDate.toISOString().split('T')[0],
+    max: maxDate.toISOString().split('T')[0]
+  }
+}
 
 const RepaymentRecords = () => {
   const navigate = useNavigate()
@@ -20,10 +32,10 @@ const RepaymentRecords = () => {
   
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
-  const filters = loansState?.filters || { status: '', search: '' }
+  const filters = loansState?.filters || { search: '' }
   const snackbar = loansState?.snackbar || { open: false, message: '', severity: 'success' }
   
-  // Loans from ongoing endpoint are already filtered to approved/active
+  // Loans from ongoing endpoint are already filtered to active
   const activeLoans = loans
   
   // State for repayment forms (one per loan)
@@ -32,6 +44,7 @@ const RepaymentRecords = () => {
   const [errors, setErrors] = useState({})
   const [searchInput, setSearchInput] = useState(filters.search || '')
   
+  const dateLimits = getDateLimits()
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   
@@ -45,7 +58,6 @@ const RepaymentRecords = () => {
     dispatch(clearLoans())
     
     const params = {}
-    if (filters.status) params.status = filters.status
     if (filters.search) params.search = filters.search
     
     // Create a unique key for these params
@@ -59,7 +71,7 @@ const RepaymentRecords = () => {
       dispatch(fetchOngoingLoans(params))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, filters.status, filters.search])
+  }, [dispatch, filters.search])
   
   // Debounce search
   useEffect(() => {
@@ -89,6 +101,7 @@ const RepaymentRecords = () => {
         forms[loanId] = {
           amount: '',
           paymentDate: new Date().toISOString().split('T')[0],
+          paymentMethod: 'cash',
           remarks: '',
         }
       } else {
@@ -147,6 +160,16 @@ const RepaymentRecords = () => {
     }))
   }
   
+  const handlePaymentMethodChange = (loanId, value) => {
+    setRepaymentForms(prev => ({
+      ...prev,
+      [loanId]: {
+        ...prev[loanId],
+        paymentMethod: value,
+      }
+    }))
+  }
+  
   const validateRepaymentForm = (loanId) => {
     const form = repaymentForms[loanId]
     if (!form) return false
@@ -163,6 +186,22 @@ const RepaymentRecords = () => {
       setErrors(prev => ({
         ...prev,
         [loanId]: 'Payment date is required'
+      }))
+      return false
+    }
+
+    // Validate date is within 3 months range
+    const selectedDate = new Date(form.paymentDate)
+    const today = new Date()
+    const minDate = new Date(today)
+    minDate.setMonth(today.getMonth() - 3)
+    const maxDate = new Date(today)
+    maxDate.setMonth(today.getMonth() + 3)
+    
+    if (selectedDate < minDate || selectedDate > maxDate) {
+      setErrors(prev => ({
+        ...prev,
+        [loanId]: 'Payment date must be within 3 months from today'
       }))
       return false
     }
@@ -190,7 +229,7 @@ const RepaymentRecords = () => {
         loan: loanId,
         amount: paymentAmount,
         paymentDate: paymentDateWithTime,
-        paymentMethod: 'cash',
+        paymentMethod: form.paymentMethod || 'cash',
         remarks: form.remarks?.trim() || undefined,
       })
       
@@ -207,6 +246,7 @@ const RepaymentRecords = () => {
           [loanId]: {
             amount: '',
             paymentDate: new Date().toISOString().split('T')[0],
+            paymentMethod: 'cash',
             remarks: '',
           }
         }))
@@ -218,7 +258,6 @@ const RepaymentRecords = () => {
         // Refresh ongoing loans to get updated remaining amounts - wait for it to complete
         // Preserve current filters
         const params = {}
-        if (filters.status) params.status = filters.status
         if (filters.search) params.search = filters.search
         await dispatch(fetchOngoingLoans(params))
       }
@@ -247,6 +286,7 @@ const RepaymentRecords = () => {
       const form = repaymentForms[loanId] || {
         amount: '',
         paymentDate: new Date().toISOString().split('T')[0],
+        paymentMethod: 'cash',
         remarks: '',
       }
       return {
@@ -302,6 +342,7 @@ const RepaymentRecords = () => {
           disabled={row.isSubmitting}
           min="0.01"
           step="0.01"
+          autoComplete="off"
         />
       ),
     },
@@ -316,7 +357,27 @@ const RepaymentRecords = () => {
           value={row.form.paymentDate}
           onChange={(e) => handleRepaymentDateChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
+          autoComplete="off"
+          min={dateLimits.min}
+          max={dateLimits.max}
         />
+      ),
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Payment Method',
+      width: '150px',
+      render: (value, row) => (
+        <select
+          className="repayment-method-select"
+          value={row.form.paymentMethod || 'cash'}
+          onChange={(e) => handlePaymentMethodChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+        >
+          <option value="cash">Cash</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="upi">UPI</option>
+        </select>
       ),
     },
     {
@@ -331,10 +392,11 @@ const RepaymentRecords = () => {
           value={row.form.remarks || ''}
           onChange={(e) => handleRemarksChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
+          autoComplete="off"
         />
       ),
     },
-  ], [repaymentForms, submittingLoanId, errors])
+  ], [repaymentForms, submittingLoanId, errors, handlePaymentMethodChange])
 
   // Define actions for DataTable
   const handleActions = (row) => {
@@ -389,17 +451,7 @@ const RepaymentRecords = () => {
             className="search-input"
             value={searchInput}
             onChange={handleSearchChange}
-          />
-        </div>
-        <div className="filter-select-group">
-          <FilterSelect
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            placeholder="All Status"
-            options={[
-              { value: 'approved', label: 'Approved' },
-              { value: 'active', label: 'Active' }
-            ]}
+            autoComplete="off"
           />
         </div>
       </div>

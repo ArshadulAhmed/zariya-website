@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from 'react'
+import { memo, useState } from 'react'
 import { useAppSelector } from '../../store/hooks'
 import { loansAPI } from '../../services/api'
 import AdditionalInfo from './AdditionalInfo'
@@ -7,14 +7,9 @@ import './LoanInfo.scss'
 const LoanInfo = memo(() => {
   // Use specific selectors to prevent unnecessary re-renders
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
-  const totalPaid = useAppSelector((state) => state.repaymentRecords.totalPaid)
 
   const loan = selectedLoan
-  const isActive = loan ? ['approved', 'active'].includes(loan.status) : false
-  const remainingAmount = useMemo(() => {
-    if (!loan) return 0
-    return (loan.loanAmount || 0) - totalPaid
-  }, [loan, totalPaid])
+  const isActive = loan ? loan.status === 'active' : false
   
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
@@ -80,7 +75,7 @@ const LoanInfo = memo(() => {
           <span className={`status-badge status-${loan.status}`}>
             {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
           </span>
-          {loan.status === 'approved' && (
+          {loan.status === 'active' && (
             <button
               className="download-contract-button"
               onClick={handleDownloadContract}
@@ -172,20 +167,6 @@ const LoanInfo = memo(() => {
             <span className="detail-label">Bank Account Number</span>
             <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
           </div>
-          {isActive && (
-            <>
-              <div className="detail-row">
-                <span className="detail-label">Total Paid</span>
-                <span className="detail-value">{formatCurrency(totalPaid)}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Remaining Amount</span>
-                <span className={`detail-value ${remainingAmount > 0 ? 'remaining-amount' : 'paid-full'}`}>
-                  {formatCurrency(remainingAmount)}
-                </span>
-              </div>
-            </>
-          )}
         </div>
 
         <div className="detail-section">

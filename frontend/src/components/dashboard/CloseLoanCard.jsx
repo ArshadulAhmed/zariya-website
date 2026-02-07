@@ -69,13 +69,12 @@ const CloseLoanCard = memo(() => {
       return
     }
     
-    // Check if loan can be closed (must be approved or active)
+    // Check if loan can be closed (must be active)
     const loanStatus = loanToCheck.status
-    const isActive = loanStatus ? ['approved', 'active'].includes(loanStatus) : false
     
-    if (!isActive) {
+    if (loanStatus !== 'active') {
       dispatch(setSnackbar({ 
-        message: 'Only approved or active loans can be closed', 
+        message: 'Only active loans can be closed', 
         severity: 'error' 
       }))
       return

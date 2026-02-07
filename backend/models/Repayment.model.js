@@ -19,7 +19,7 @@ const repaymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'bank_transfer', 'cheque', 'other'],
+    enum: ['cash', 'bank_transfer', 'upi', 'other'],
     default: 'cash'
   },
   remarks: {

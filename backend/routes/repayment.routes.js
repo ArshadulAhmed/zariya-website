@@ -33,7 +33,7 @@ const createRepaymentValidation = [
     .withMessage('Valid payment date is required'),
   body('paymentMethod')
     .optional()
-    .isIn(['cash', 'bank_transfer', 'cheque', 'other'])
+    .isIn(['cash', 'bank_transfer', 'upi', 'other'])
     .withMessage('Invalid payment method'),
   body('remarks')
     .optional()
@@ -52,7 +52,7 @@ const updateRepaymentValidation = [
     .withMessage('Valid payment date is required'),
   body('paymentMethod')
     .optional()
-    .isIn(['cash', 'bank_transfer', 'cheque', 'other'])
+    .isIn(['cash', 'bank_transfer', 'upi', 'other'])
     .withMessage('Invalid payment method'),
   body('remarks')
     .optional()

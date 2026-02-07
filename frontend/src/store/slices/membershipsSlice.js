@@ -249,6 +249,7 @@ const membershipsSlice = createSlice({
           dateOfBirth: dateOfBirthFormatted,
           occupation: String(membership.occupation || ''),
           mobileNumber: String(membership.mobileNumber || ''),
+          email: membership.email ? String(membership.email) : null,
           aadhar: String(membership.aadhar || ''),
           pan: String(membership.pan || ''),
           // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)

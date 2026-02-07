@@ -271,7 +271,7 @@ const LoanReport = () => {
                 )}
               </button>
             )}
-            {['approved', 'active', 'closed'].includes(loan.status) && repayments.length > 0 && (
+            {['active', 'closed'].includes(loan.status) && repayments.length > 0 && (
               <button
                 className="btn-primary"
                 onClick={handleDownloadRepaymentHistory}
@@ -407,7 +407,7 @@ const LoanReport = () => {
             </div>
 
             {/* Repayment History */}
-            {['approved', 'active', 'closed'].includes(loan.status) && (
+            {['active', 'closed'].includes(loan.status) && (
               <div className="repayment-history-section">
                 <div className="repayment-history-card">
                   <h2>Repayment History</h2>
@@ -441,7 +441,10 @@ const LoanReport = () => {
                               <td className="amount-cell">{formatCurrency(repayment.amount)}</td>
                               <td>
                                 <span className="payment-method-badge">
-                                  {repayment.paymentMethod || 'N/A'}
+                                  {repayment.paymentMethod === 'cash' ? 'Cash' :
+                                   repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                                   repayment.paymentMethod === 'upi' ? 'UPI' : 
+                                   repayment.paymentMethod || 'N/A'}
                                 </span>
                               </td>
                               <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
