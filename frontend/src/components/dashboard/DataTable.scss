@@ -103,7 +103,6 @@
   }
 }
 
-.data-table-loading,
 .data-table-empty {
   display: flex;
   flex-direction: column;
@@ -123,24 +122,6 @@
     color: #6b7280;
     font-size: 0.76rem;
     font-family: 'Poppins', sans-serif;
-  }
-}
-
-.data-table-loading {
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 2px solid #f3f4f6;
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 13px;
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 

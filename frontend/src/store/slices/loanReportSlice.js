@@ -43,6 +43,19 @@ export const downloadNOC = createAsyncThunk(
   }
 )
 
+// Async thunk to download Repayment History
+export const downloadRepaymentHistory = createAsyncThunk(
+  'loanReport/downloadRepaymentHistory',
+  async (loanId, { rejectWithValue }) => {
+    try {
+      await loansAPI.downloadRepaymentHistory(loanId)
+      return { success: true }
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to download repayment history')
+    }
+  }
+)
+
 const initialState = {
   loanAccountNumber: '',
   loan: null,
@@ -51,8 +64,10 @@ const initialState = {
   isLoading: false,
   isLoadingRepayments: false,
   isDownloadingNOC: false,
+  isDownloadingRepaymentHistory: false,
   error: null,
   nocError: null,
+  repaymentHistoryError: null,
 }
 
 const loanReportSlice = createSlice({
@@ -92,6 +107,9 @@ const loanReportSlice = createSlice({
     },
     clearNOCError: (state) => {
       state.nocError = null
+    },
+    clearRepaymentHistoryError: (state) => {
+      state.repaymentHistoryError = null
     },
   },
   extraReducers: (builder) => {
@@ -142,6 +160,19 @@ const loanReportSlice = createSlice({
         state.isDownloadingNOC = false
         state.nocError = action.payload
       })
+      // Download Repayment History
+      .addCase(downloadRepaymentHistory.pending, (state) => {
+        state.isDownloadingRepaymentHistory = true
+        state.repaymentHistoryError = null
+      })
+      .addCase(downloadRepaymentHistory.fulfilled, (state) => {
+        state.isDownloadingRepaymentHistory = false
+        state.repaymentHistoryError = null
+      })
+      .addCase(downloadRepaymentHistory.rejected, (state, action) => {
+        state.isDownloadingRepaymentHistory = false
+        state.repaymentHistoryError = action.payload
+      })
   },
 })
 
@@ -152,6 +183,7 @@ export const {
   clearError,
   setError,
   clearNOCError,
+  clearRepaymentHistoryError,
 } = loanReportSlice.actions
 
 export default loanReportSlice.reducer

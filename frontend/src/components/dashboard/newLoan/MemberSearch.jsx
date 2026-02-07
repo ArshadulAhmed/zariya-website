@@ -161,7 +161,7 @@ const MemberSearch = () => {
                 handleSearch()
               }
             }}
-            placeholder="e.g., ZAR-20251227-0011"
+            placeholder="e.g., ZMID-0000001"
             disabled={!!selectedMembership}
           />
           <div className="search-buttons">

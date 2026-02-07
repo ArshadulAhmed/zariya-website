@@ -8,6 +8,7 @@ import membershipsReducer from './slices/membershipsSlice'
 import usersReducer from './slices/usersSlice'
 import dashboardReducer from './slices/dashboardSlice'
 import loanReportReducer from './slices/loanReportSlice'
+import repaymentRecordsReducer from './slices/repaymentRecordsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     users: usersReducer,
     dashboard: dashboardReducer,
     loanReport: loanReportReducer,
+    repaymentRecords: repaymentRecordsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

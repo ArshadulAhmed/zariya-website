@@ -4,6 +4,7 @@ import { validationResult } from 'express-validator';
 import PDFDocument from 'pdfkit';
 import { generateLoanContractPDF } from '../templates/loanContract.template.js';
 import { generateLoanNOCPDF } from '../templates/loanNOC.template.js';
+import { generateRepaymentHistoryPDF } from '../templates/repaymentHistory.template.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -149,26 +150,42 @@ export const getLoans = async (req, res) => {
 // @access  Private/Admin or Employee
 export const getOngoingLoans = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, status } = req.query;
 
     // Build query - only approved and active loans
     const query = {
       status: { $in: ['approved', 'active'] }
     };
     
-    // Search by loan account number or membership userId
+    // Filter by status if provided (must be approved or active)
+    if (status && ['approved', 'active'].includes(status)) {
+      query.status = status;
+    }
+    
+    // Search by loan account number or membership userId or member name
     if (search) {
       query.$or = [
         { loanAccountNumber: { $regex: search, $options: 'i' } }
       ];
       
-      // Also search in membership
-      const memberships = await Membership.find({
+      // Also search in membership by userId
+      const membershipsByUserId = await Membership.find({
         userId: { $regex: search, $options: 'i' }
       }).select('_id');
       
-      if (memberships.length > 0) {
-        query.$or.push({ membership: { $in: memberships.map(m => m._id) } });
+      // Also search in membership by fullName
+      const membershipsByName = await Membership.find({
+        fullName: { $regex: search, $options: 'i' }
+      }).select('_id');
+      
+      // Combine all membership IDs
+      const allMembershipIds = [
+        ...membershipsByUserId.map(m => m._id),
+        ...membershipsByName.map(m => m._id)
+      ];
+      
+      if (allMembershipIds.length > 0) {
+        query.$or.push({ membership: { $in: allMembershipIds } });
       }
     }
 
@@ -215,9 +232,9 @@ export const getLoan = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    // Check if id is a loanAccountNumber (starts with ZLID) or MongoDB ObjectId
     let loan;
-    if (id.startsWith('LOAN-')) {
+    if (id.startsWith('ZLID')) {
       loan = await Loan.findOne({ loanAccountNumber: id })
         .populate('membership')
         .populate('createdBy', 'username fullName')
@@ -393,6 +410,8 @@ export const updateLoan = async (req, res) => {
 
     // Allow status change to 'closed' only for admin when loan is fully paid
     const { status, ...updateData } = req.body;
+    const isStatusOnlyUpdate = status === 'closed' && Object.keys(updateData).length === 0;
+    
     if (status) {
       // Only allow changing status to 'closed' for admin
       if (status === 'closed' && req.user.role === 'admin') {
@@ -410,6 +429,33 @@ export const updateLoan = async (req, res) => {
           message: 'Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection, or close loan when fully paid.'
         });
       }
+    }
+
+    // If only updating status to 'closed', use findByIdAndUpdate to skip validation
+    // This prevents validation errors on existing incomplete data
+    if (isStatusOnlyUpdate) {
+      const updatedLoan = await Loan.findByIdAndUpdate(
+        req.params.id,
+        { status: 'closed' },
+        { new: true, runValidators: false }
+      ).populate('membership', 'userId fullName')
+       .populate('createdBy', 'username fullName')
+       .populate('reviewedBy', 'username fullName');
+
+      if (!updatedLoan) {
+        return res.status(404).json({
+          success: false,
+          message: 'Loan not found'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Loan closed successfully',
+        data: {
+          loan: updatedLoan
+        }
+      });
     }
 
     // Prevent modifying critical fields if loan is approved
@@ -474,9 +520,9 @@ export const downloadLoanContract = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    // Check if id is a loanAccountNumber (starts with ZLID) or MongoDB ObjectId
     let loan;
-    if (id.startsWith('LOAN-')) {
+    if (id.startsWith('ZLID')) {
       loan = await Loan.findOne({ loanAccountNumber: id })
         .populate('membership') // Populate all membership fields including passportPhoto
         .populate('createdBy', 'username fullName')
@@ -551,9 +597,9 @@ export const downloadLoanNOC = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if id is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    // Check if id is a loanAccountNumber (starts with ZLID) or MongoDB ObjectId
     let loan;
-    if (id.startsWith('LOAN-')) {
+    if (id.startsWith('ZLID')) {
       loan = await Loan.findOne({ loanAccountNumber: id })
         .populate('membership')
         .populate('createdBy', 'username fullName')
@@ -619,6 +665,82 @@ export const downloadLoanNOC = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error generating NOC PDF'
+    });
+  }
+};
+
+// @desc    Download repayment history PDF
+// @route   GET /api/loans/:id/repayment-history
+// @access  Private/Admin or Employee
+export const downloadRepaymentHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if id is a loanAccountNumber (starts with ZLID) or MongoDB ObjectId
+    let loan;
+    if (id.startsWith('ZLID')) {
+      loan = await Loan.findOne({ loanAccountNumber: id })
+        .populate('membership', 'fullName')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    } else {
+      loan = await Loan.findById(id)
+        .populate('membership', 'fullName')
+        .populate('createdBy', 'username fullName')
+        .populate('reviewedBy', 'username fullName');
+    }
+
+    if (!loan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan not found'
+      });
+    }
+
+    // Get all repayments for this loan
+    const Repayment = (await import('../models/Repayment.model.js')).default;
+    const repayments = await Repayment.find({ loan: loan._id })
+      .populate('recordedBy', 'username fullName')
+      .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
+
+    // Calculate total paid
+    const totalPaidResult = await Repayment.aggregate([
+      { $match: { loan: loan._id } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="Repayment_History_${loan.loanAccountNumber}.pdf"`
+    );
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Get logo path
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
+
+    // Generate Repayment History PDF
+    generateRepaymentHistoryPDF(doc, loan, repayments, totalPaid, logoPath);
+
+    // Finalize PDF
+    doc.end();
+  } catch (error) {
+    console.error('Error generating Repayment History PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error generating Repayment History PDF'
     });
   }
 };

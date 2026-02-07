@@ -7,7 +7,7 @@ import './LoanInfo.scss'
 const LoanInfo = memo(() => {
   // Use specific selectors to prevent unnecessary re-renders
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
-  const totalPaid = useAppSelector((state) => state.loans.totalPaid)
+  const totalPaid = useAppSelector((state) => state.repaymentRecords.totalPaid)
 
   const loan = selectedLoan
   const isActive = loan ? ['approved', 'active'].includes(loan.status) : false

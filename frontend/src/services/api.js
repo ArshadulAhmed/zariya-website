@@ -410,6 +410,49 @@ export const loansAPI = {
       throw error
     }
   },
+
+  downloadRepaymentHistory: async (id) => {
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loans/${id}/repayment-history`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download repayment history')
+      }
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `Repayment_History_${id}.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      return { success: true, message: 'Repayment history downloaded successfully' }
+    } catch (error) {
+      console.error('Loans API downloadRepaymentHistory error:', error)
+      throw error
+    }
+  },
 }
 
 // Repayments API
@@ -511,7 +554,7 @@ export const uploadAPI = {
   /**
    * Upload document via backend
    * @param {File} file - File to upload
-   * @param {string} memberId - Member ID (e.g., 'ZAR-20240115-0001')
+   * @param {string} memberId - Member ID (e.g., 'ZMID-0000001')
    * @param {string} imageType - Image type ('aadharUpload', 'aadharUploadBack', 'panUpload', 'passportPhoto')
    * @param {Function} onProgress - Progress callback (0-100)
    * @returns {Promise<Object>} - Cloudinary metadata

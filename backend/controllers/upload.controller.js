@@ -35,7 +35,7 @@ export const uploadDocument = async (req, res) => {
     }
 
     // Generate public_id with format: memberId_imageType
-    // Example: ZAR-20240115-0001_aadharUpload
+    // Example: ZMID-0000001_aadharUpload
     const publicId = `${memberId}_${imageType}`;
     // Full public_id includes folder: zariya/members/{memberId}/{publicId}
     const fullPublicId = `zariya/members/${memberId}/${publicId}`;

@@ -32,7 +32,7 @@ const upload = multer({
 // Upload document endpoint
 // POST /api/upload/document
 // Body: multipart/form-data with 'file' field
-// Query: ?memberId=ZAR-20240115-0001&imageType=aadharUpload
+// Query: ?memberId=ZMID-0000001&imageType=aadharUpload
 router.post('/document', protect, upload.single('file'), uploadDocument);
 
 export default router;

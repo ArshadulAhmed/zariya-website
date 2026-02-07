@@ -71,12 +71,14 @@ export const getRepaymentsByLoan = async (req, res) => {
     const { loanId } = req.params;
     const { page = 1, limit = 50 } = req.query;
 
-    // Check if loanId is a loanAccountNumber (starts with LOAN-) or MongoDB ObjectId
+    // Check if loanId is a loanAccountNumber (starts with ZLID) or MongoDB ObjectId
     let loan;
-    if (loanId.startsWith('LOAN-')) {
-      loan = await Loan.findOne({ loanAccountNumber: loanId });
+    if (loanId.startsWith('ZLID')) {
+      loan = await Loan.findOne({ loanAccountNumber: loanId })
+        .populate('membership', 'fullName');
     } else {
-      loan = await Loan.findById(loanId);
+      loan = await Loan.findById(loanId)
+        .populate('membership', 'fullName');
     }
 
     if (!loan) {
@@ -106,12 +108,27 @@ export const getRepaymentsByLoan = async (req, res) => {
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+    
+    // Calculate additional amount paid (amount paid beyond the loan amount)
+    const loanAmount = Number(loan.loanAmount) || 0;
+    const additionalAmountPaid = Math.max(0, totalPaid - loanAmount);
 
     res.status(200).json({
       success: true,
       data: {
         repayments,
         totalPaid,
+        additionalAmountPaid, // Amount paid beyond the original loan amount
+        // Include minimal loan info (needed for CloseLoanCard and summary display)
+        loan: {
+          _id: loan._id,
+          loanAccountNumber: loan.loanAccountNumber,
+          loanAmount: loanAmount, // Ensure loanAmount is always present as a number, default to 0 if missing
+          status: loan.status,
+          membership: loan.membership ? {
+            fullName: loan.membership.fullName
+          } : null
+        },
         pagination: {
           page: pageNum,
           limit: limitNum,

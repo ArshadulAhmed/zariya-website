@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { loansAPI, repaymentsAPI } from '../../services/api'
+import { loansAPI } from '../../services/api'
 
 const initialState = {
   loans: [],
@@ -21,10 +21,6 @@ const initialState = {
     status: '',
     search: '',
   },
-  // Repayment state
-  repayments: [],
-  totalPaid: 0,
-  isLoadingRepayments: false,
 }
 
 // Helper function to safely convert any value to string
@@ -142,23 +138,6 @@ export const updateLoan = createAsyncThunk(
   }
 )
 
-export const fetchRepayments = createAsyncThunk(
-  'loans/fetchRepayments',
-  async (loanId, { rejectWithValue }) => {
-    try {
-      const response = await repaymentsAPI.getRepaymentsByLoan(loanId)
-      if (response.success) {
-        return {
-          repayments: response.data.repayments || [],
-          totalPaid: response.data.totalPaid || 0,
-        }
-      }
-      return rejectWithValue(response.message || 'Failed to fetch repayments')
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to fetch repayments')
-    }
-  }
-)
 
 const loansSlice = createSlice({
   name: 'loans',
@@ -169,6 +148,9 @@ const loansSlice = createSlice({
     },
     clearFilters: (state) => {
       state.filters = initialState.filters
+    },
+    clearLoans: (state) => {
+      state.loans = []
     },
     clearSelectedLoan: (state) => {
       state.selectedLoan = null
@@ -191,10 +173,6 @@ const loansSlice = createSlice({
     },
     setPagination: (state, action) => {
       state.pagination = { ...state.pagination, ...action.payload }
-    },
-    clearRepayments: (state) => {
-      state.repayments = []
-      state.totalPaid = 0
     },
   },
   extraReducers: (builder) => {
@@ -342,6 +320,10 @@ const loansSlice = createSlice({
       .addCase(fetchLoan.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload || 'Failed to fetch loan'
+        // Clear selected loan and repayments on error to prevent showing stale data
+        state.selectedLoan = null
+        state.repayments = []
+        state.totalPaid = 0
       })
       // Create loan
       .addCase(createLoan.pending, (state) => {
@@ -450,31 +432,18 @@ const loansSlice = createSlice({
           severity: 'error',
         }
       })
-      // Fetch repayments
-      .addCase(fetchRepayments.pending, (state) => {
-        state.isLoadingRepayments = true
-      })
-      .addCase(fetchRepayments.fulfilled, (state, action) => {
-        state.isLoadingRepayments = false
-        state.repayments = action.payload.repayments
-        state.totalPaid = action.payload.totalPaid
-      })
-      .addCase(fetchRepayments.rejected, (state, action) => {
-        state.isLoadingRepayments = false
-        state.error = action.payload || 'Failed to fetch repayments'
-      })
   },
 })
 
 export const {
   setFilters,
   clearFilters,
+  clearLoans,
   clearSelectedLoan,
   clearError,
   setSnackbar,
   closeSnackbar,
   setPagination,
-  clearRepayments,
 } = loansSlice.actions
 
 export default loansSlice.reducer

@@ -237,15 +237,15 @@ loanSchema.pre('save', async function(next) {
   // Generate loan account number if it doesn't exist
   if (!this.loanAccountNumber) {
     try {
-      // Generate format: LOAN-YYYYMMDD-XXXX (e.g., LOAN-20240115-0001)
+      // Generate format: ZLID202500001 (ZLID + Year + 5 digit sequential)
       const date = new Date();
-      const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+      const year = date.getFullYear();
       
-      // Use atomic counter to get next sequence number
+      // Use atomic counter to get next sequence number for the year
       // This ensures thread-safe sequence generation
-      const sequence = await getNextSequence(`loan-${dateStr}`);
+      const sequence = await getNextSequence(`loan-${year}`);
       
-      this.loanAccountNumber = `LOAN-${dateStr}-${String(sequence).padStart(4, '0')}`;
+      this.loanAccountNumber = `ZLID${year}${String(sequence).padStart(5, '0')}`;
     } catch (error) {
       return next(error);
     }

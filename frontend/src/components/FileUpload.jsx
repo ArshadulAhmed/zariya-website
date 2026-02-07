@@ -13,7 +13,7 @@ const FileUpload = ({
   maxSizeMB = 0.1, // 100KB
   placeholderLabel, // Custom label to show inside the upload box
   onError, // Callback for error handling (for snackbar)
-  userId, // Optional member ID for file naming (e.g., 'ZAR-20240115-0001')
+  userId, // Optional member ID for file naming (e.g., 'ZMID-0000001')
 }) => {
   const fileInputRef = useRef(null)
   const [preview, setPreview] = useState(null)

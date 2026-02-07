@@ -9,7 +9,8 @@ import {
   reviewLoan,
   updateLoan,
   downloadLoanContract,
-  downloadLoanNOC
+  downloadLoanNOC,
+  downloadRepaymentHistory
 } from '../controllers/loan.controller.js';
 import { protect, isAdminOrEmployee, isAdmin } from '../middleware/auth.middleware.js';
 
@@ -298,9 +299,13 @@ router.get('/account/:loanAccountNumber', isAdminOrEmployee, getLoanByAccountNum
 // Must be before /:id route to avoid route conflicts
 router.get('/:id/contract', isAdminOrEmployee, downloadLoanContract);
 
-// Download loan NOC - Admin or Employee (only for closed loans)
+// Download loan NOC - Admin only (only for closed loans)
 // Must be before /:id route to avoid route conflicts
-router.get('/:id/noc', isAdminOrEmployee, downloadLoanNOC);
+router.get('/:id/noc', isAdmin, downloadLoanNOC);
+
+// Download repayment history - Admin or Employee
+// Must be before /:id route to avoid route conflicts
+router.get('/:id/repayment-history', isAdminOrEmployee, downloadRepaymentHistory);
 
 // Get single loan - Must be after specific routes
 router.get('/:id', isAdminOrEmployee, getLoan);

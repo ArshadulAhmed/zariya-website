@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchOngoingLoans, closeSnackbar, setSnackbar } from '../../store/slices/loansSlice'
+import { fetchOngoingLoans, closeSnackbar, setSnackbar, clearLoans, setFilters } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import Snackbar from '../../components/Snackbar'
+import TableSkeleton from '../../components/dashboard/TableSkeleton'
+import FilterSelect from '../../components/dashboard/FilterSelect'
 import './RepaymentRecords.scss'
 
 const formatCurrency = (amount) => {
@@ -18,6 +20,7 @@ const RepaymentRecords = () => {
   
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
+  const filters = loansState?.filters || { status: '', search: '' }
   const snackbar = loansState?.snackbar || { open: false, message: '', severity: 'success' }
   
   // Loans from ongoing endpoint are already filtered to approved/active
@@ -27,17 +30,55 @@ const RepaymentRecords = () => {
   const [repaymentForms, setRepaymentForms] = useState({})
   const [submittingLoanId, setSubmittingLoanId] = useState(null)
   const [errors, setErrors] = useState({})
+  const [searchInput, setSearchInput] = useState(filters.search || '')
   
   const hasFetchedRef = useRef(false)
+  const lastParamsRef = useRef('')
   
+  // Show skeleton if loading OR if we haven't fetched yet (initial load)
+  const showSkeleton = isLoading || !hasFetchedRef.current
+  
+  // Fetch ongoing loans when filters change
   useEffect(() => {
-    if (!hasFetchedRef.current) {
+    // Clear any existing loans data first to prevent showing stale data
+    // This ensures we don't show loans from the Loans page when navigating here
+    dispatch(clearLoans())
+    
+    const params = {}
+    if (filters.status) params.status = filters.status
+    if (filters.search) params.search = filters.search
+    
+    // Create a unique key for these params
+    const paramsKey = JSON.stringify(params)
+    
+    // Only fetch if params have changed (prevents duplicate calls from StrictMode)
+    if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
-      // Fetch ongoing loans (approved/active only)
-      dispatch(fetchOngoingLoans({}))
+      lastParamsRef.current = paramsKey
+      // Fetch ongoing loans with filters
+      dispatch(fetchOngoingLoans(params))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch])
+  }, [dispatch, filters.status, filters.search])
+  
+  // Debounce search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchInput !== filters.search) {
+        dispatch(setFilters({ search: searchInput }))
+      }
+    }, 500)
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput])
+  
+  const handleSearchChange = (e) => {
+    setSearchInput(e.target.value)
+  }
+  
+  const handleFilterChange = (key, value) => {
+    dispatch(setFilters({ [key]: value }))
+  }
   
   // Initialize repayment forms for each loan
   useEffect(() => {
@@ -175,7 +216,11 @@ const RepaymentRecords = () => {
           return newErrors
         })
         // Refresh ongoing loans to get updated remaining amounts - wait for it to complete
-        await dispatch(fetchOngoingLoans({}))
+        // Preserve current filters
+        const params = {}
+        if (filters.status) params.status = filters.status
+        if (filters.search) params.search = filters.search
+        await dispatch(fetchOngoingLoans(params))
       }
     } catch (error) {
       console.error('Error creating repayment:', error)
@@ -204,11 +249,44 @@ const RepaymentRecords = () => {
         </div>
       </div>
       
-      {isLoading && activeLoans.length === 0 ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading loans...</p>
+      <div className="page-filters">
+        <div className="search-input-group">
+          <input
+            type="text"
+            placeholder="Search by Loan Account, Member Name..."
+            className="search-input"
+            value={searchInput}
+            onChange={handleSearchChange}
+          />
         </div>
+        <div className="filter-select-group">
+          <FilterSelect
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            placeholder="All Status"
+            options={[
+              { value: 'approved', label: 'Approved' },
+              { value: 'active', label: 'Active' }
+            ]}
+          />
+        </div>
+      </div>
+      
+      {showSkeleton && activeLoans.length === 0 ? (
+        <TableSkeleton 
+          columns={[
+            { header: 'Loan Account Number', width: '180px' },
+            { header: 'Member Name', width: '200px' },
+            { header: 'Loan Amount', width: '150px' },
+            { header: 'Remaining Amount', width: '150px' },
+            { header: 'Repayment Amount', width: '150px' },
+            { header: 'Repayment Date', width: '150px' },
+            { header: 'Remarks', width: '200px' },
+            { header: 'Actions', width: '150px' },
+          ]}
+          rowCount={5}
+          showActions={false}
+        />
       ) : activeLoans.length === 0 ? (
         <div className="empty-state">
           <p>No active loans found</p>

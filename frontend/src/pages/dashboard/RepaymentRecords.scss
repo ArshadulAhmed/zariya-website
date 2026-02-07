@@ -22,7 +22,39 @@
     }
   }
 
-  .loading-container,
+  .page-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+
+    .search-input-group {
+      min-width: 20%;
+      flex: 1;
+      .search-input {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s ease;
+        line-height: 1.4375em;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+        }
+      }
+    }
+
+    .filter-select-group {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -34,21 +66,6 @@
     p {
       color: var(--text-secondary);
       font-size: 0.8rem;
-    }
-  }
-
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 2px solid #f3f4f6;
-    border-top-color: var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
     }
   }
 

@@ -73,7 +73,7 @@ export const fetchMembership = createAsyncThunk(
       // Try to fetch by userId first (if it looks like a userId format)
       // Otherwise fetch by database ID
       let response
-      if (id.startsWith('ZAR-')) {
+      if (id.startsWith('ZMID-')) {
         response = await membershipsAPI.getMembershipByUserId(id)
       } else {
         response = await membershipsAPI.getMembership(id)

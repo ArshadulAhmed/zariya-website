@@ -211,15 +211,12 @@ membershipSchema.pre('save', async function(next) {
   // Generate userId only if it doesn't exist and this is a new document
   if (!this.userId && this.isNew) {
     try {
-      // Generate format: ZAR-YYYYMMDD-XXXX (e.g., ZAR-20240115-0001)
-      const date = new Date();
-      const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-      
+      // Generate format: ZMID-0000001 (ZMID- + 7 digit sequential)
       // Use atomic counter to get next sequence number
       // This ensures thread-safe sequence generation
-      const sequence = await getNextSequence(`membership-${dateStr}`);
+      const sequence = await getNextSequence('membership');
       
-      this.userId = `ZAR-${dateStr}-${String(sequence).padStart(4, '0')}`;
+      this.userId = `ZMID-${String(sequence).padStart(7, '0')}`;
     } catch (error) {
       return next(error);
     }

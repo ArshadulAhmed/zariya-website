@@ -1,47 +1,138 @@
 import { memo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { updateLoan, fetchLoan, fetchRepayments } from '../../store/slices/loansSlice'
+import { updateLoan, fetchLoan, setSnackbar } from '../../store/slices/loansSlice'
+import { fetchRepayments } from '../../store/slices/repaymentRecordsSlice'
 import ConfirmationModal from './ConfirmationModal'
 import './CloseLoanCard.scss'
 
 const CloseLoanCard = memo(() => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
-  const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
-  const loanStatus = useAppSelector((state) => state.loans.selectedLoan?.status)
-  const memberName = useAppSelector((state) => state.loans.selectedLoan?.membership?.fullName)
+  // Get loan info from repaymentRecords (comes with repayments response)
+  // Fallback to loans.selectedLoan if not available
+  const loanInfoFromRepayments = useAppSelector((state) => state.repaymentRecords.loanInfo)
+  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
   const userRole = useAppSelector((state) => state.auth.user?.role)
+  const isLoading = useAppSelector((state) => state.loans.isLoading)
   
   const [closeConfirm, setCloseConfirm] = useState({ open: false })
   
   const isAdmin = userRole === 'admin'
-  const isActive = loanStatus ? ['approved', 'active'].includes(loanStatus) : false
-  const canCloseLoan = isActive && isAdmin
+  // Use loan info from repayments if available, otherwise use selectedLoan
+  const currentLoan = loanInfoFromRepayments || selectedLoan
+  const loanStatus = currentLoan?.status
+  
+  // Only show for admin users
+  if (!isAdmin) {
+    return null
+  }
+  
+  // Don't show if loan is already closed
+  if (loanStatus === 'closed') {
+    return null
+  }
+  
+  // Open modal - loan data should already be available from repayments response
+  // If not, fetch it as fallback
+  const handleOpenModal = async () => {
+    let loanToCheck = currentLoan
+    
+    // If loan data is not available, fetch it (fallback)
+    if (!loanToCheck) {
+      try {
+        const result = await dispatch(fetchLoan(id))
+        if (fetchLoan.fulfilled.match(result)) {
+          loanToCheck = result.payload
+        } else {
+          dispatch(setSnackbar({ 
+            message: 'Failed to load loan details', 
+            severity: 'error' 
+          }))
+          return
+        }
+      } catch (error) {
+        dispatch(setSnackbar({ 
+          message: 'Failed to load loan details', 
+          severity: 'error' 
+        }))
+        return
+      }
+    }
+    
+    // If still no loan data, can't proceed
+    if (!loanToCheck) {
+      dispatch(setSnackbar({ 
+        message: 'Loan details not available', 
+        severity: 'error' 
+      }))
+      return
+    }
+    
+    // Check if loan can be closed (must be approved or active)
+    const loanStatus = loanToCheck.status
+    const isActive = loanStatus ? ['approved', 'active'].includes(loanStatus) : false
+    
+    if (!isActive) {
+      dispatch(setSnackbar({ 
+        message: 'Only approved or active loans can be closed', 
+        severity: 'error' 
+      }))
+      return
+    }
+    
+    // All checks passed - open the modal
+    setCloseConfirm({ open: true })
+  }
 
   const handleCloseLoan = async () => {
-    if (!id || !loanId) return
+    // Get current loan data (should be available since modal is open)
+    const loanToClose = currentLoan
+    if (!loanToClose) {
+      dispatch(setSnackbar({ 
+        message: 'Loan details not available', 
+        severity: 'error' 
+      }))
+      setCloseConfirm({ open: false })
+      return
+    }
+    
+    const currentLoanId = loanToClose._id || loanToClose.id
+    if (!currentLoanId) {
+      dispatch(setSnackbar({ 
+        message: 'Loan ID not found', 
+        severity: 'error' 
+      }))
+      setCloseConfirm({ open: false })
+      return
+    }
     
     const result = await dispatch(
       updateLoan({
-        id: loanId,
+        id: currentLoanId,
         loanData: {
           status: 'closed',
         },
       })
     )
+    
     if (updateLoan.fulfilled.match(result)) {
       setCloseConfirm({ open: false })
-      dispatch(fetchLoan(id))
-      if (loanId && loanStatus && ['approved', 'active', 'closed'].includes(loanStatus)) {
-        dispatch(fetchRepayments(loanId))
-      }
+      dispatch(setSnackbar({ 
+        message: 'Loan closed successfully', 
+        severity: 'success' 
+      }))
+      // Refresh repayments
+      dispatch(fetchRepayments(id))
+    } else {
+      dispatch(setSnackbar({ 
+        message: result.payload || 'Failed to close loan', 
+        severity: 'error' 
+      }))
     }
   }
-
-  if (!canCloseLoan) {
-    return null
-  }
+  
+  const memberName = currentLoan?.membership?.fullName
   return (
     <>
       <div className="close-loan-card">
@@ -55,7 +146,8 @@ const CloseLoanCard = memo(() => {
           </div>
           <button
             className="btn-success"
-            onClick={() => setCloseConfirm({ open: true })}
+            onClick={handleOpenModal}
+            disabled={isLoading}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

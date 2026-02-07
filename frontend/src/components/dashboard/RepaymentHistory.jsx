@@ -1,6 +1,5 @@
-import { memo, useEffect, useRef } from 'react'
-import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchRepayments } from '../../store/slices/loansSlice'
+import { memo } from 'react'
+import { useAppSelector } from '../../store/hooks'
 import './RepaymentHistory.scss'
 
 const formatDateOnly = (dateString) => {
@@ -25,55 +24,11 @@ const formatCurrency = (amount) => {
 }
 
 const RepaymentHistory = memo(() => {
-  const dispatch = useAppDispatch()
-  const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
-  const loanStatus = useAppSelector((state) => state.loans.selectedLoan?.status)
-  const repayments = useAppSelector((state) => state.loans.repayments)
-  const isLoadingRepayments = useAppSelector((state) => state.loans.isLoadingRepayments)
-  
-  const lastFetchedLoanIdRef = useRef(null)
-
-  useEffect(() => {
-    if (loanId && loanStatus && ['approved', 'active', 'closed'].includes(loanStatus)) {
-      if (lastFetchedLoanIdRef.current !== loanId) {
-        lastFetchedLoanIdRef.current = loanId
-        dispatch(fetchRepayments(loanId))
-      }
-    } else {
-      lastFetchedLoanIdRef.current = null
-    }
-  }, [loanId, loanStatus, dispatch])
+  const repayments = useAppSelector((state) => state.repaymentRecords?.repayments) || []
 
   return (
     <div className="repayment-history-card">
-      {isLoadingRepayments ? (
-        <div className="repayment-list">
-          <table className="repayment-table">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Recorded By</th>
-                <th>Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <tr key={index}>
-                  <td><div className="skeleton-cell skeleton-number"></div></td>
-                  <td><div className="skeleton-cell skeleton-date"></div></td>
-                  <td><div className="skeleton-cell skeleton-amount"></div></td>
-                  <td><div className="skeleton-cell skeleton-badge"></div></td>
-                  <td><div className="skeleton-cell skeleton-name"></div></td>
-                  <td><div className="skeleton-cell skeleton-remarks"></div></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : repayments.length === 0 ? (
+      {!repayments || repayments.length === 0 ? (
         <div className="empty-state">No repayments recorded yet</div>
       ) : (
         <div className="repayment-list">

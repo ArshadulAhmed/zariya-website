@@ -8,9 +8,11 @@ import {
   clearError,
   setError,
   clearNOCError,
+  clearRepaymentHistoryError,
   fetchLoanByAccountNumber,
   fetchLoanRepayments,
   downloadNOC,
+  downloadRepaymentHistory,
 } from '../../store/slices/loanReportSlice'
 import './LoanReport.scss'
 
@@ -47,9 +49,14 @@ const LoanReport = () => {
     isLoading,
     isLoadingRepayments,
     isDownloadingNOC,
+    isDownloadingRepaymentHistory,
     error,
     nocError,
+    repaymentHistoryError,
   } = useAppSelector((state) => state.loanReport)
+
+  const userRole = useAppSelector((state) => state.auth.user?.role)
+  const isAdmin = userRole === 'admin'
 
   // Clear report when component mounts (to remove any stale data from previous visits)
   useEffect(() => {
@@ -70,6 +77,14 @@ const LoanReport = () => {
       dispatch(clearNOCError())
     }
   }, [nocError, dispatch])
+
+  // Show Repayment History error if any
+  useEffect(() => {
+    if (repaymentHistoryError) {
+      alert(repaymentHistoryError)
+      dispatch(clearRepaymentHistoryError())
+    }
+  }, [repaymentHistoryError, dispatch])
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -106,6 +121,13 @@ const LoanReport = () => {
     dispatch(downloadNOC(loanId))
   }
 
+  const handleDownloadRepaymentHistory = () => {
+    if (!loan) return
+
+    const loanId = loan._id || loan.id || loan.loanAccountNumber
+    dispatch(downloadRepaymentHistory(loanId))
+  }
+
   // Mock Redux state for LoanInfo and AdditionalInfo components
   // These components expect Redux state, so we'll need to adapt them or create report-specific versions
   const mockSelectedLoan = loan
@@ -136,7 +158,7 @@ const LoanReport = () => {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Enter loan account number (e.g., LOAN-20260126-0001)"
+                placeholder="Enter loan account number (e.g., ZLID202500001)"
                 value={loanAccountNumber}
                 onChange={(e) => dispatch(setLoanAccountNumber(e.target.value.toUpperCase()))}
                 disabled={isLoading}
@@ -195,7 +217,7 @@ const LoanReport = () => {
       {loan && (
         <>
           <div className="report-actions">
-            {loan.status === 'closed' && (
+            {loan.status === 'closed' && isAdmin && (
               <button
                 className="btn-primary"
                 onClick={handleDownloadNOC}
@@ -219,6 +241,36 @@ const LoanReport = () => {
                       <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     Generate NOC
+                  </>
+                )}
+              </button>
+            )}
+            {['approved', 'active', 'closed'].includes(loan.status) && repayments.length > 0 && (
+              <button
+                className="btn-primary"
+                onClick={handleDownloadRepaymentHistory}
+                disabled={isDownloadingRepaymentHistory}
+              >
+                {isDownloadingRepaymentHistory ? (
+                  <>
+                    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
+                        <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                      </circle>
+                    </svg>
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Print Repayment History
                   </>
                 )}
               </button>
@@ -352,7 +404,6 @@ const LoanReport = () => {
                             <th>Payment Date</th>
                             <th>Amount</th>
                             <th>Payment Method</th>
-                            <th>Reference Number</th>
                             <th>Recorded By</th>
                             <th>Recorded At</th>
                           </tr>
@@ -367,7 +418,6 @@ const LoanReport = () => {
                                   {repayment.paymentMethod || 'N/A'}
                                 </span>
                               </td>
-                              <td>{repayment.referenceNumber || 'N/A'}</td>
                               <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                               <td>{formatDate(repayment.createdAt)}</td>
                             </tr>
