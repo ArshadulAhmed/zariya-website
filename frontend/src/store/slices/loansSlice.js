@@ -67,6 +67,21 @@ export const fetchLoans = createAsyncThunk(
   }
 )
 
+export const fetchOngoingLoans = createAsyncThunk(
+  'loans/fetchOngoingLoans',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const response = await loansAPI.getOngoingLoans(params)
+      if (response.success) {
+        return response.data
+      }
+      return rejectWithValue(response.message || 'Failed to fetch ongoing loans')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch ongoing loans')
+    }
+  }
+)
+
 export const fetchLoan = createAsyncThunk(
   'loans/fetchLoan',
   async (id, { rejectWithValue }) => {
@@ -220,10 +235,12 @@ const loansSlice = createSlice({
           }
           const loanId = safeToString(loan._id) || safeToString(loan.id) || ''
           const loanAmount = Number(loan.loanAmount) || 0
-          // Calculate remaining amount (for now, it's the full loan amount since payment tracking is not implemented)
-          // TODO: Subtract paid amount when payment tracking is added
-          const remainingAmount = loanAmount
+          // Use remainingAmount from backend if available, otherwise calculate it
+          const remainingAmount = loan.remainingAmount !== undefined 
+            ? Number(loan.remainingAmount) 
+            : loanAmount
           return {
+            _id: loan._id, // Preserve MongoDB _id
             loanAccountNumber: String(loan.loanAccountNumber || '-'),
             memberName: String(loan.membership?.fullName || ''),
             memberUserId: String(loan.membership?.userId || ''),
@@ -232,12 +249,64 @@ const loansSlice = createSlice({
             status: String(loan.status || 'pending'),
             createdAt: String(createdAtFormatted),
             id: String(loanId),
+            membership: loan.membership, // Preserve membership object for memberName access
           }
         })
       })
       .addCase(fetchLoans.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload || 'Failed to fetch loans'
+      })
+      // Fetch ongoing loans
+      .addCase(fetchOngoingLoans.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(fetchOngoingLoans.fulfilled, (state, action) => {
+        state.isLoading = false
+        const loansData = action.payload.loans || []
+        // Format loans data
+        state.loans = loansData.map((loan) => {
+          let createdAtFormatted = ''
+          if (loan.createdAt) {
+            try {
+              const date = new Date(loan.createdAt)
+              if (!isNaN(date.getTime())) {
+                createdAtFormatted = date.toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              }
+            } catch (e) {
+              console.error('Error formatting createdAt:', e)
+            }
+          }
+          const loanId = safeToString(loan._id) || safeToString(loan.id) || ''
+          const loanAmount = Number(loan.loanAmount) || 0
+          // Use remainingAmount from backend if available, otherwise calculate it
+          const remainingAmount = loan.remainingAmount !== undefined 
+            ? Number(loan.remainingAmount) 
+            : loanAmount
+          return {
+            _id: loan._id, // Preserve MongoDB _id
+            loanAccountNumber: String(loan.loanAccountNumber || '-'),
+            memberName: String(loan.membership?.fullName || ''),
+            memberUserId: String(loan.membership?.userId || ''),
+            loanAmount: loanAmount,
+            remainingAmount: remainingAmount,
+            status: String(loan.status || 'pending'),
+            createdAt: String(createdAtFormatted),
+            id: String(loanId),
+            membership: loan.membership, // Preserve membership object for memberName access
+          }
+        })
+      })
+      .addCase(fetchOngoingLoans.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || 'Failed to fetch ongoing loans'
       })
       // Fetch single loan
       .addCase(fetchLoan.pending, (state) => {

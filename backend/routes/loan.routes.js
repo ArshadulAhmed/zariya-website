@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import {
   createLoan,
   getLoans,
+  getOngoingLoans,
   getLoan,
   getLoanByAccountNumber,
   reviewLoan,
@@ -289,6 +290,8 @@ router.post('/', isAdminOrEmployee, createLoanValidation, createLoan);
 
 // Get loans - Admin or Employee
 router.get('/', isAdminOrEmployee, getLoans);
+// Get ongoing loans (approved/active only) for repayment records - Admin or Employee
+router.get('/ongoing', isAdminOrEmployee, getOngoingLoans);
 router.get('/account/:loanAccountNumber', isAdminOrEmployee, getLoanByAccountNumber);
 
 // Download loan contract - Admin or Employee (only for approved loans)

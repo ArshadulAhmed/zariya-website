@@ -46,9 +46,33 @@ const RepaymentHistory = memo(() => {
 
   return (
     <div className="repayment-history-card">
-      <h2>Repayment History</h2>
       {isLoadingRepayments ? (
-        <div className="loading-text">Loading repayments...</div>
+        <div className="repayment-list">
+          <table className="repayment-table">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Recorded By</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <tr key={index}>
+                  <td><div className="skeleton-cell skeleton-number"></div></td>
+                  <td><div className="skeleton-cell skeleton-date"></div></td>
+                  <td><div className="skeleton-cell skeleton-amount"></div></td>
+                  <td><div className="skeleton-cell skeleton-badge"></div></td>
+                  <td><div className="skeleton-cell skeleton-name"></div></td>
+                  <td><div className="skeleton-cell skeleton-remarks"></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : repayments.length === 0 ? (
         <div className="empty-state">No repayments recorded yet</div>
       ) : (

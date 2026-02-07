@@ -108,10 +108,26 @@ export const getLoans = async (req, res) => {
 
     const total = await Loan.countDocuments(query);
 
+    // Calculate remaining amount for each loan
+    const Repayment = (await import('../models/Repayment.model.js')).default;
+    const loansWithRemaining = await Promise.all(
+      loans.map(async (loan) => {
+        const loanObj = loan.toObject();
+        // Calculate total paid amount for this loan
+        const totalPaidResult = await Repayment.aggregate([
+          { $match: { loan: loan._id } },
+          { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+        loanObj.remainingAmount = Math.max(0, (loan.loanAmount || 0) - totalPaid);
+        return loanObj;
+      })
+    );
+
     res.status(200).json({
       success: true,
       data: {
-        loans,
+        loans: loansWithRemaining,
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -124,6 +140,70 @@ export const getLoans = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching loans'
+    });
+  }
+};
+
+// @desc    Get ongoing loans (approved and active only) for repayment records
+// @route   GET /api/loans/ongoing
+// @access  Private/Admin or Employee
+export const getOngoingLoans = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    // Build query - only approved and active loans
+    const query = {
+      status: { $in: ['approved', 'active'] }
+    };
+    
+    // Search by loan account number or membership userId
+    if (search) {
+      query.$or = [
+        { loanAccountNumber: { $regex: search, $options: 'i' } }
+      ];
+      
+      // Also search in membership
+      const memberships = await Membership.find({
+        userId: { $regex: search, $options: 'i' }
+      }).select('_id');
+      
+      if (memberships.length > 0) {
+        query.$or.push({ membership: { $in: memberships.map(m => m._id) } });
+      }
+    }
+
+    const loans = await Loan.find(query)
+      .populate('membership', 'userId fullName')
+      .populate('createdBy', 'username fullName')
+      .populate('reviewedBy', 'username fullName')
+      .sort({ createdAt: -1 });
+
+    // Calculate remaining amount for each loan
+    const Repayment = (await import('../models/Repayment.model.js')).default;
+    const loansWithRemaining = await Promise.all(
+      loans.map(async (loan) => {
+        const loanObj = loan.toObject();
+        // Calculate total paid amount for this loan
+        const totalPaidResult = await Repayment.aggregate([
+          { $match: { loan: loan._id } },
+          { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+        loanObj.remainingAmount = Math.max(0, (loan.loanAmount || 0) - totalPaid);
+        return loanObj;
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        loans: loansWithRemaining
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching ongoing loans'
     });
   }
 };

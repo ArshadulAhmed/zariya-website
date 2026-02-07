@@ -248,6 +248,20 @@ export const loansAPI = {
     }
   },
 
+  getOngoingLoans: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/loans/ongoing${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API getOngoingLoans error:', error)
+      throw error
+    }
+  },
+
   getLoan: async (id) => {
     try {
       const data = await apiRequest(`/loans/${id}`, {
