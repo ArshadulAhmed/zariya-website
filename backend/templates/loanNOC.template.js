@@ -15,8 +15,11 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     })}`;
 
   const formatDate = (d) => {
+    if (!d) return '';
     try {
-      return new Date(d).toLocaleDateString('en-IN');
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('en-IN');
     } catch {
       return '';
     }
@@ -27,7 +30,8 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   const PAGE_WIDTH = 515;
   const START_X = 40;
   const BORDER_COLOR = '#333333';
-  const CELL_PADDING = 8;
+  const PAD_X = 8;
+  const PAD_Y = 7;
   const FONT_SIZE = 9;
 
   let y = 30;
@@ -36,47 +40,43 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
 
   const getCellHeight = (label, value, width) => {
     doc.fontSize(FONT_SIZE);
-
-    const labelWidth = doc.font('Helvetica-Bold').widthOfString(label);
-    const usableWidth = width - CELL_PADDING * 2;
-
-    const valueHeight = doc
-      .font('Helvetica')
-      .heightOfString(value || 'N/A', {
-        width: usableWidth - labelWidth,
-      });
-
-    const labelHeight = doc
+    // Calculate height for label and value on same line (like contract PDF)
+    const combinedText = `${label}${value || ''}`;
+    const textHeight = doc
       .font('Helvetica-Bold')
-      .heightOfString(label, {
-        width: usableWidth,
-      });
-
-    return Math.max(
-      labelHeight + valueHeight + CELL_PADDING * 2,
-      FONT_SIZE + CELL_PADDING * 2
-    );
+      .heightOfString(combinedText, { width: width - PAD_X * 2 });
+    
+    return textHeight + PAD_Y * 2;
   };
 
   /* -------------------- Draw Cell -------------------- */
 
   const drawCell = (x, y, w, h, label, value) => {
-    doc.rect(x, y, w, h).lineWidth(0.7).stroke(BORDER_COLOR);
+    const baseY = y;
+    const oldDocY = doc.y; // lock internal cursor
 
-    const startX = x + CELL_PADDING;
-    const startY = y + CELL_PADDING;
-    const usableWidth = w - CELL_PADDING * 2;
+    doc.rect(x, baseY, w, h).lineWidth(0.7).stroke(BORDER_COLOR);
 
-    doc.fontSize(FONT_SIZE)
-      .font('Helvetica-Bold')
-      .text(label, startX, startY, { width: usableWidth });
+    // Draw label and value on same line
+    doc.fontSize(FONT_SIZE).font('Helvetica-Bold');
+    const combinedText = `${label}: `;
+    const labelWidth = doc.widthOfString(combinedText);
+    
+    doc.text(
+      combinedText,
+      x + PAD_X,
+      baseY + PAD_Y,
+      { width: w - PAD_X * 2 }
+    );
 
-    const labelWidth = doc.widthOfString(label);
+    doc.font('Helvetica').text(
+      value || '',
+      x + PAD_X + labelWidth,
+      baseY + PAD_Y,
+      { width: w - PAD_X * 2 - labelWidth }
+    );
 
-    doc.font('Helvetica')
-      .text(value || 'N/A', startX + labelWidth, startY, {
-        width: usableWidth - labelWidth,
-      });
+    doc.y = oldDocY; // restore cursor
   };
 
   /* -------------------- Draw Row -------------------- */
@@ -115,6 +115,21 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     spacingAfter: 46
   });
 
+  /* -------------------- REGISTRATION NUMBER -------------------- */
+  // Position registration number exactly below address line, center aligned
+  const registrationNumber = 'B-03/2025-26';
+  const addressLineY = 30 + 18 + 12; // y = 60 (address line position)
+  const registrationY = addressLineY + 12; // Position below address line
+  
+  // Center align registration number with label, matching address font style
+  doc.fontSize(9.5).font('Helvetica');
+  const regLabel = 'Registration No.: ';
+  const regFullText = regLabel + registrationNumber;
+  doc.text(regFullText, START_X, registrationY, {
+    width: PAGE_WIDTH,
+    align: 'center'
+  });
+
   /* -------------------- HEADING WITH LINES -------------------- */
 
   const headingText = 'NO OBJECTION CERTIFICATE';
@@ -145,21 +160,21 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   /* -------------------- MEMBER INFORMATION -------------------- */
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Member Name: ', value: loan.membership?.fullName },
-    { w: PAGE_WIDTH / 2, label: "Father's / Husband's Name: ", value: loan.membership?.fatherName },
+    { w: PAGE_WIDTH / 2, label: "Member Name", value: loan.membership?.fullName || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: "Father's / Husband's Name", value: loan.membership?.fatherOrHusbandName || 'N/A' },
   ]);
 
   drawFullRow(
-    'Address: ',
+    'Address',
     loan.membership?.address
-      ? `Vill/Ward ${loan.membership.address.village}, PO ${loan.membership.address.postOffice}, PS ${loan.membership.address.policeStation}, Dist ${loan.membership.address.district}, PIN ${loan.membership.address.pinCode}`
-      : ''
+      ? `Vill/Ward ${loan.membership.address.village}, PO ${loan.membership.address.postOffice}, PS ${loan.membership.address.policeStation}, Dist ${loan.membership.address.district}, PIN-${loan.membership.address.pinCode}`
+      : 'N/A'
   );
 
   drawRow([
-    { w: PAGE_WIDTH / 3, label: 'Date of Birth: ', value: formatDate(loan.membership?.dob) },
-    { w: PAGE_WIDTH / 3, label: 'Occupation: ', value: loan.membership?.occupation },
-    { w: PAGE_WIDTH / 3, label: 'Mobile No: ', value: loan.mobileNumber },
+    { w: PAGE_WIDTH / 3, label: 'Date of Birth', value: loan.membership?.dateOfBirth ? formatDate(loan.membership.dateOfBirth) || 'N/A' : 'N/A' },
+    { w: PAGE_WIDTH / 3, label: 'Occupation', value: loan.membership?.occupation || 'N/A' },
+    { w: PAGE_WIDTH / 3, label: 'Mobile No', value: loan.mobileNumber || 'N/A' },
   ]);
 
   y += 10;
@@ -167,32 +182,32 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
   /* -------------------- LOAN INFORMATION -------------------- */
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Membership No: ', value: loan.membership?.userId },
-    { w: PAGE_WIDTH / 2, label: 'Loan Account No: ', value: loan.loanAccountNumber },
+    { w: PAGE_WIDTH / 2, label: 'Membership No', value: loan.membership?.userId || 'N/A' },
+    { w: PAGE_WIDTH / 2, label: 'Loan Account No', value: loan.loanAccountNumber || 'N/A' },
   ]);
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Loan Amount: ', value: formatCurrency(loan.loanAmount) },
-    { w: PAGE_WIDTH / 2, label: 'Total Paid: ', value: formatCurrency(totalPaid) },
+    { w: PAGE_WIDTH / 2, label: 'Loan Amount', value: formatCurrency(loan.loanAmount) },
+    { w: PAGE_WIDTH / 2, label: 'Total Paid', value: formatCurrency(totalPaid) },
   ]);
 
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Loan Tenure: ', value: `${loan.loanTenure} days` },
-    { w: PAGE_WIDTH / 2, label: 'Outstanding Amount: ', value: formatCurrency(Math.max(0, loan.loanAmount - totalPaid)) },
+    { w: PAGE_WIDTH / 2, label: 'Loan Tenure', value: `${loan.loanTenure} days` },
+    { w: PAGE_WIDTH / 2, label: 'Outstanding Amount', value: formatCurrency(Math.max(0, loan.loanAmount - totalPaid)) },
   ]);
-
-  y += 10;
 
   /* -------------------- CERTIFICATE STATEMENT -------------------- */
-
+  // Statement as last table cell
   drawFullRow(
-    'Statement: ',
+    'Statement',
     'This is to certify that the above loan account has been fully closed and all dues have been cleared. There are no outstanding liabilities against the member as on the date of issue.'
   );
 
+  y += 10;
+
   drawRow([
-    { w: PAGE_WIDTH / 2, label: 'Date of Issue: ', value: formatDate(new Date()) },
-    { w: PAGE_WIDTH / 2, label: 'Place: ', value: 'Barpeta, Assam' },
+    { w: PAGE_WIDTH / 2, label: 'Date of Issue', value: formatDate(new Date()) },
+    { w: PAGE_WIDTH / 2, label: 'Place', value: 'Barpeta, Assam' },
   ]);
 
   /* -------------------- FOOTER (LOCKED TO BOTTOM) -------------------- */

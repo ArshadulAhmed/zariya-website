@@ -21,6 +21,7 @@ const RepaymentDetails = lazy(() => import('./pages/dashboard/RepaymentDetails')
 const Users = lazy(() => import('./pages/dashboard/Users'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
+const DailyCollectionReport = lazy(() => import('./pages/dashboard/DailyCollectionReport'))
 
 // Loading component - Skeleton loader for lazy-loaded routes
 const PageLoader = () => (
@@ -226,6 +227,14 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <LoanReport />
+            </Suspense>
+          }
+        />
+        <Route
+          path="reports/daily-collection"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <DailyCollectionReport />
             </Suspense>
           }
         />

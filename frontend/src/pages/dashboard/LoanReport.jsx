@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
   setLoanAccountNumber,
@@ -40,6 +40,7 @@ const formatCurrency = (amount) => {
 const LoanReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const [searchParams] = useSearchParams()
   
   const {
     loanAccountNumber,
@@ -58,10 +59,35 @@ const LoanReport = () => {
   const userRole = useAppSelector((state) => state.auth.user?.role)
   const isAdmin = userRole === 'admin'
 
-  // Clear report when component mounts (to remove any stale data from previous visits)
+  // Check for loan account number in URL params and auto-load
   useEffect(() => {
-    dispatch(resetLoanReport())
-  }, [dispatch])
+    const loanAccountFromUrl = searchParams.get('loanAccountNumber')
+    
+    if (loanAccountFromUrl) {
+      // Set the loan account number
+      dispatch(setLoanAccountNumber(loanAccountFromUrl))
+      
+      // Auto-fetch loan and repayments
+      const autoLoadData = async () => {
+        dispatch(clearLoanReport())
+        const result = await dispatch(fetchLoanByAccountNumber(loanAccountFromUrl.trim()))
+        
+        if (fetchLoanByAccountNumber.fulfilled.match(result)) {
+          const fetchedLoan = result.payload
+          if (fetchedLoan) {
+            const loanId = fetchedLoan._id || fetchedLoan.id
+            dispatch(fetchLoanRepayments(loanId))
+          }
+        }
+      }
+      
+      autoLoadData()
+    } else {
+      // Clear report when component mounts without URL param (to remove any stale data from previous visits)
+      dispatch(resetLoanReport())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]) // Run when searchParams change
 
   // Clear report when component unmounts (to prevent stale data in next visit)
   useEffect(() => {

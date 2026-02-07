@@ -520,6 +520,59 @@ export const repaymentsAPI = {
       throw error
     }
   },
+
+  getDailyCollections: async (date) => {
+    try {
+      const data = await apiRequest(`/repayments/daily/${date}`, {
+        method: 'GET',
+      })
+      return data
+    } catch (error) {
+      console.error('Repayments API getDailyCollections error:', error)
+      throw error
+    }
+  },
+
+  downloadDailyCollectionPDF: async (date) => {
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/repayments/daily/${date}/pdf`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download daily collection PDF')
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `Daily_Collection_${date}.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      return { success: true, message: 'Daily collection PDF downloaded successfully' }
+    } catch (error) {
+      console.error('Repayments API downloadDailyCollectionPDF error:', error)
+      throw error
+    }
+  },
 }
 
 // Dashboard API

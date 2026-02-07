@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchOngoingLoans, closeSnackbar, setSnackbar, clearLoans, setFilters } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import Snackbar from '../../components/Snackbar'
-import TableSkeleton from '../../components/dashboard/TableSkeleton'
+import DataTable from '../../components/dashboard/DataTable'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import './RepaymentRecords.scss'
 
@@ -239,6 +239,138 @@ const RepaymentRecords = () => {
       : loan._id || loan.id
     navigate(`/dashboard/repayment-records/${loanId}`)
   }
+
+  // Prepare data for DataTable with form state
+  const tableData = useMemo(() => {
+    return activeLoans.map((loan) => {
+      const loanId = loan._id || loan.id
+      const form = repaymentForms[loanId] || {
+        amount: '',
+        paymentDate: new Date().toISOString().split('T')[0],
+        remarks: '',
+      }
+      return {
+        ...loan,
+        loanId,
+        form,
+        isSubmitting: submittingLoanId === loanId,
+        error: errors[loanId],
+      }
+    })
+  }, [activeLoans, repaymentForms, submittingLoanId, errors])
+
+  // Define columns for DataTable
+  const columns = useMemo(() => [
+    {
+      key: 'loanAccountNumber',
+      header: 'Loan Account Number',
+      width: '180px',
+    },
+    {
+      key: 'memberName',
+      header: 'Member Name',
+      width: '200px',
+      render: (value, row) => row.membership?.fullName || row.memberName || 'N/A',
+    },
+    {
+      key: 'loanAmount',
+      header: 'Loan Amount',
+      width: '150px',
+      render: (value) => <span className="amount-cell">{formatCurrency(value || 0)}</span>,
+    },
+    {
+      key: 'remainingAmount',
+      header: 'Remaining Amount',
+      width: '150px',
+      render: (value, row) => (
+        <span className={`amount-cell ${(value || 0) > 0 ? 'remaining-amount' : 'paid-full'}`}>
+          {formatCurrency(value || 0)}
+        </span>
+      ),
+    },
+    {
+      key: 'repaymentAmount',
+      header: 'Repayment Amount',
+      width: '150px',
+      render: (value, row) => (
+        <input
+          type="number"
+          className="repayment-input"
+          placeholder="0.00"
+          value={row.form.amount}
+          onChange={(e) => handleRepaymentAmountChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+          min="0.01"
+          step="0.01"
+        />
+      ),
+    },
+    {
+      key: 'repaymentDate',
+      header: 'Repayment Date',
+      width: '150px',
+      render: (value, row) => (
+        <input
+          type="date"
+          className="repayment-date-input"
+          value={row.form.paymentDate}
+          onChange={(e) => handleRepaymentDateChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+        />
+      ),
+    },
+    {
+      key: 'remarks',
+      header: 'Remarks',
+      width: '200px',
+      render: (value, row) => (
+        <input
+          type="text"
+          className="repayment-remarks-input"
+          placeholder="Enter remarks (optional)"
+          value={row.form.remarks || ''}
+          onChange={(e) => handleRemarksChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+        />
+      ),
+    },
+  ], [repaymentForms, submittingLoanId, errors])
+
+  // Define actions for DataTable
+  const handleActions = (row) => {
+    const loan = activeLoans.find(l => (l._id || l.id) === row.loanId)
+    if (!loan) return null
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
+        <div className="table-actions">
+          <button
+            className="btn-submit"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSubmitRepayment(loan)
+            }}
+            disabled={row.isSubmitting || !row.form.amount || parseFloat(row.form.amount) <= 0}
+          >
+            {row.isSubmitting ? 'Submitting...' : 'Submit'}
+          </button>
+          <button
+            className="btn-view"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleViewRepayment(loan)
+            }}
+            disabled={row.isSubmitting}
+          >
+            View
+          </button>
+        </div>
+        {row.error && (
+          <div className="error-message">{row.error}</div>
+        )}
+      </div>
+    )
+  }
   
   return (
     <div className="repayment-records-page">
@@ -272,118 +404,14 @@ const RepaymentRecords = () => {
         </div>
       </div>
       
-      {showSkeleton && activeLoans.length === 0 ? (
-        <TableSkeleton 
-          columns={[
-            { header: 'Loan Account Number', width: '180px' },
-            { header: 'Member Name', width: '200px' },
-            { header: 'Loan Amount', width: '150px' },
-            { header: 'Remaining Amount', width: '150px' },
-            { header: 'Repayment Amount', width: '150px' },
-            { header: 'Repayment Date', width: '150px' },
-            { header: 'Remarks', width: '200px' },
-            { header: 'Actions', width: '150px' },
-          ]}
-          rowCount={5}
-          showActions={false}
-        />
-      ) : activeLoans.length === 0 ? (
-        <div className="empty-state">
-          <p>No active loans found</p>
-        </div>
-      ) : (
-        <div className="repayment-table-container">
-          <table className="repayment-records-table">
-            <thead>
-              <tr>
-                <th>Loan Account Number</th>
-                <th>Member Name</th>
-                <th>Loan Amount</th>
-                <th>Remaining Amount</th>
-                <th>Repayment Amount</th>
-                <th>Repayment Date</th>
-                <th>Remarks</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeLoans.map((loan) => {
-                const loanId = loan._id || loan.id
-                const form = repaymentForms[loanId] || {
-                  amount: '',
-                  paymentDate: new Date().toISOString().split('T')[0],
-                  remarks: '',
-                }
-                const isSubmitting = submittingLoanId === loanId
-                const error = errors[loanId]
-                
-                return (
-                  <tr key={loanId}>
-                    <td>{loan.loanAccountNumber || '-'}</td>
-                    <td>{loan.membership?.fullName || loan.memberName || 'N/A'}</td>
-                    <td className="amount-cell">{formatCurrency(loan.loanAmount || 0)}</td>
-                    <td className={`amount-cell ${(loan.remainingAmount || 0) > 0 ? 'remaining-amount' : 'paid-full'}`}>
-                      {formatCurrency(loan.remainingAmount || 0)}
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        className="repayment-input"
-                        placeholder="0.00"
-                        value={form.amount}
-                        onChange={(e) => handleRepaymentAmountChange(loanId, e.target.value)}
-                        disabled={isSubmitting}
-                        min="0.01"
-                        step="0.01"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="date"
-                        className="repayment-date-input"
-                        value={form.paymentDate}
-                        onChange={(e) => handleRepaymentDateChange(loanId, e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="repayment-remarks-input"
-                        placeholder="Enter remarks (optional)"
-                        value={form.remarks || ''}
-                        onChange={(e) => handleRemarksChange(loanId, e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          className="btn-submit"
-                          onClick={() => handleSubmitRepayment(loan)}
-                          disabled={isSubmitting || !form.amount || parseFloat(form.amount) <= 0}
-                        >
-                          {isSubmitting ? 'Submitting...' : 'Submit'}
-                        </button>
-                        <button
-                          className="btn-view"
-                          onClick={() => handleViewRepayment(loan)}
-                          disabled={isSubmitting}
-                        >
-                          View
-                        </button>
-                      </div>
-                      {error && (
-                        <div className="error-message">{error}</div>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={tableData}
+        loading={showSkeleton}
+        actions={handleActions}
+        emptyMessage="No active loans found"
+        skeletonRowCount={5}
+      />
       
       {snackbar && (
         <Snackbar

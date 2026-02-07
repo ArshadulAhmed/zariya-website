@@ -5,7 +5,9 @@ import {
   getRepaymentsByLoan,
   getRepayment,
   updateRepayment,
-  deleteRepayment
+  deleteRepayment,
+  getDailyCollections,
+  downloadDailyCollectionPDF
 } from '../controllers/repayment.controller.js';
 import { protect, isAdminOrEmployee, isAdmin } from '../middleware/auth.middleware.js';
 
@@ -63,6 +65,12 @@ router.post('/', isAdminOrEmployee, createRepaymentValidation, createRepayment);
 
 // Get repayments by loan - Admin or Employee
 router.get('/loan/:loanId', isAdminOrEmployee, getRepaymentsByLoan);
+
+// Get daily collections by date - Admin or Employee
+router.get('/daily/:date', isAdminOrEmployee, getDailyCollections);
+
+// Download daily collection PDF - Admin or Employee
+router.get('/daily/:date/pdf', isAdminOrEmployee, downloadDailyCollectionPDF);
 
 // Get single repayment - Admin or Employee
 router.get('/:id', isAdminOrEmployee, getRepayment);

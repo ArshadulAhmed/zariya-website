@@ -1,6 +1,10 @@
 import Repayment from '../models/Repayment.model.js';
 import Loan from '../models/Loan.model.js';
 import { validationResult } from 'express-validator';
+import PDFDocument from 'pdfkit';
+import { generateDailyCollectionPDF } from '../templates/dailyCollection.template.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // @desc    Create repayment record
 // @route   POST /api/repayments
@@ -265,6 +269,230 @@ export const deleteRepayment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error deleting repayment'
+    });
+  }
+};
+
+// @desc    Get daily collections by date
+// @route   GET /api/repayments/daily/:date
+// @access  Private/Admin or Employee
+export const getDailyCollections = async (req, res) => {
+  try {
+    const { date } = req.params;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date is required'
+      });
+    }
+
+    // Parse date and create start/end of day
+    const selectedDate = new Date(date);
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Find all repayments for the selected date
+    const repayments = await Repayment.find({
+      paymentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    })
+      .populate({
+        path: 'loan',
+        select: 'loanAccountNumber membership',
+        populate: {
+          path: 'membership',
+          select: 'fullName userId'
+        }
+      })
+      .populate('recordedBy', 'username fullName')
+      .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
+
+    // Calculate total collection for the day
+    const totalCollectionResult = await Repayment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const totalCollection = totalCollectionResult.length > 0 ? totalCollectionResult[0].total : 0;
+
+    // Calculate collection by payment method
+    const collectionByMethodResult = await Repayment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$paymentMethod',
+          total: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const collectionByMethod = {};
+    collectionByMethodResult.forEach(item => {
+      collectionByMethod[item._id] = {
+        total: item.total,
+        count: item.count
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        date: date,
+        repayments,
+        totalCollection,
+        collectionByMethod,
+        totalCount: repayments.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching daily collections'
+    });
+  }
+};
+
+// @desc    Download daily collection PDF
+// @route   GET /api/repayments/daily/:date/pdf
+// @access  Private/Admin or Employee
+export const downloadDailyCollectionPDF = async (req, res) => {
+  try {
+    const { date } = req.params;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date is required'
+      });
+    }
+
+    // Parse date and create start/end of day
+    const selectedDate = new Date(date);
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Find all repayments for the selected date
+    const repayments = await Repayment.find({
+      paymentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    })
+      .populate({
+        path: 'loan',
+        select: 'loanAccountNumber membership',
+        populate: {
+          path: 'membership',
+          select: 'fullName userId'
+        }
+      })
+      .populate('recordedBy', 'username fullName')
+      .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
+
+    // Calculate total collection for the day
+    const totalCollectionResult = await Repayment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const totalCollection = totalCollectionResult.length > 0 ? totalCollectionResult[0].total : 0;
+
+    // Calculate collection by payment method
+    const collectionByMethodResult = await Repayment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$paymentMethod',
+          total: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const collectionByMethod = {};
+    collectionByMethodResult.forEach(item => {
+      collectionByMethod[item._id] = {
+        total: item.total,
+        count: item.count
+      };
+    });
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    });
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="Daily_Collection_${date}.pdf"`
+    );
+
+    doc.pipe(res);
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
+
+    // Generate Daily Collection PDF
+    generateDailyCollectionPDF(doc, date, repayments, totalCollection, collectionByMethod, logoPath);
+
+    doc.end();
+  } catch (error) {
+    console.error('Error generating Daily Collection PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error generating Daily Collection PDF'
     });
   }
 };

@@ -9,6 +9,7 @@ import usersReducer from './slices/usersSlice'
 import dashboardReducer from './slices/dashboardSlice'
 import loanReportReducer from './slices/loanReportSlice'
 import repaymentRecordsReducer from './slices/repaymentRecordsSlice'
+import dailyCollectionReducer from './slices/dailyCollectionSlice'
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     loanReport: loanReportReducer,
     repaymentRecords: repaymentRecordsReducer,
+    dailyCollection: dailyCollectionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

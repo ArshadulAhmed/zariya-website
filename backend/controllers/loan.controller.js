@@ -601,12 +601,12 @@ export const downloadLoanNOC = async (req, res) => {
     let loan;
     if (id.startsWith('ZLID')) {
       loan = await Loan.findOne({ loanAccountNumber: id })
-        .populate('membership')
+        .populate('membership', 'fullName fatherOrHusbandName dateOfBirth occupation address userId')
         .populate('createdBy', 'username fullName')
         .populate('reviewedBy', 'username fullName');
     } else {
       loan = await Loan.findById(id)
-        .populate('membership')
+        .populate('membership', 'fullName fatherOrHusbandName dateOfBirth occupation address userId')
         .populate('createdBy', 'username fullName')
         .populate('reviewedBy', 'username fullName');
     }

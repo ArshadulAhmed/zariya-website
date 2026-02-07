@@ -69,55 +69,14 @@
     }
   }
 
-  .repayment-table-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e5e7eb;
-    overflow-x: auto;
-  }
-
-  .repayment-records-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 1000px;
-
-    thead {
-      background: #f9fafb;
-      
-      th {
-        padding: 0.8rem 1rem;
-        text-align: left;
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-bottom: 2px solid #e5e7eb;
-        white-space: nowrap;
-      }
-    }
-
-    tbody {
-      tr {
-        border-bottom: 1px solid #f3f4f6;
-        transition: background 0.2s;
-
-        &:hover {
-          background: #f9fafb;
-        }
-
-        &:last-child {
-          border-bottom: none;
-        }
-
+  // Styles for DataTable with repayment forms
+  .data-table-wrapper {
+    .data-table {
+      tbody {
         td {
-          padding: 0.8rem 1rem;
-          font-size: 0.76rem;
-          color: var(--text-primary);
           vertical-align: middle;
 
-          &.amount-cell {
+          .amount-cell {
             font-weight: 500;
             font-family: 'Courier New', monospace;
 
@@ -170,12 +129,21 @@
           .repayment-remarks-input {
             max-width: 200px;
           }
+        }
+      }
+    }
+  }
 
-          .action-buttons {
+  // Override table-actions styles for repayment records
+  .data-table-wrapper {
+    .data-table {
+      tbody {
+        td {
+          .table-actions {
             display: flex;
             gap: 0.6rem;
             align-items: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             justify-content: flex-start;
 
             button {
@@ -200,6 +168,7 @@
               background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
               color: white;
               box-shadow: 0 2px 8px rgba(26, 95, 63, 0.2);
+              border: none;
 
               &:hover:not(:disabled) {
                 transform: translateY(-1px);
@@ -224,6 +193,7 @@
             color: #dc2626;
             font-size: 0.7rem;
             font-weight: 500;
+            line-height: 1.4;
           }
         }
       }
@@ -233,25 +203,12 @@
   @media (max-width: 768px) {
     padding: 1.2rem;
 
-    .repayment-table-container {
-      border-radius: 8px;
-    }
+    .table-actions {
+      flex-direction: column;
+      width: 100%;
 
-    .repayment-records-table {
-      font-size: 0.7rem;
-
-      thead th,
-      tbody td {
-        padding: 0.6rem 0.8rem;
-      }
-
-      .action-buttons {
-        flex-direction: column;
+      button {
         width: 100%;
-
-        button {
-          width: 100%;
-        }
       }
     }
   }
