@@ -209,6 +209,7 @@ const Users = memo(() => {
           <input
             type="text"
             placeholder="Search by Username, Email, or Name..."
+            autoComplete="off"
             className="search-input"
             value={filters.search}
             onChange={(e) => handleFilterChange('search', e.target.value)}

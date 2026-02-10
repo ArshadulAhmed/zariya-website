@@ -98,7 +98,7 @@ const CoApplicantForm = () => {
             </label>
           </div>
 
-          <div className="form-grid">
+          <div className="form-grid" data-form="co-applicant">
             <TextField
               label="Co-Applicant Full Name"
               name="coApplicant.fullName"
@@ -108,6 +108,7 @@ const CoApplicantForm = () => {
               error={errors['coApplicant.fullName']}
               helperText={errors['coApplicant.fullName']}
               required={hasCoApplicant}
+              inputProps={{ autoComplete: 'off' }}
             />
 
           <TextField
@@ -119,6 +120,7 @@ const CoApplicantForm = () => {
             error={errors['coApplicant.fatherOrHusbandName']}
             helperText={errors['coApplicant.fatherOrHusbandName']}
             required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -131,6 +133,7 @@ const CoApplicantForm = () => {
             helperText={errors['coApplicant.mobileNumber']}
             required={hasCoApplicant}
             maxLength={10}
+            inputProps={{ autoComplete: 'off', maxLength: 10, pattern: '[0-9]*' }}
           />
 
           <TextField
@@ -142,6 +145,7 @@ const CoApplicantForm = () => {
             placeholder="email@example.com"
             error={errors['coApplicant.email']}
             helperText={errors['coApplicant.email']}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -153,6 +157,7 @@ const CoApplicantForm = () => {
             error={errors['coApplicant.address.village']}
             helperText={errors['coApplicant.address.village']}
             required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -164,6 +169,7 @@ const CoApplicantForm = () => {
             error={errors['coApplicant.address.postOffice']}
             helperText={errors['coApplicant.address.postOffice']}
             required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -175,6 +181,7 @@ const CoApplicantForm = () => {
             error={errors['coApplicant.address.policeStation']}
             helperText={errors['coApplicant.address.policeStation']}
             required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -186,6 +193,7 @@ const CoApplicantForm = () => {
             error={errors['coApplicant.address.district']}
             helperText={errors['coApplicant.address.district']}
             required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
           />
 
           <TextField
@@ -198,6 +206,7 @@ const CoApplicantForm = () => {
             helperText={errors['coApplicant.address.pinCode']}
             required={hasCoApplicant}
             maxLength={6}
+            inputProps={{ autoComplete: 'off', maxLength: 6 }}
           />
 
           <TextField
@@ -206,6 +215,7 @@ const CoApplicantForm = () => {
             value={formData.address.landmark}
             onChange={handleChange}
             placeholder="Enter landmark"
+            inputProps={{ autoComplete: 'off' }}
           />
           </div>
         </>

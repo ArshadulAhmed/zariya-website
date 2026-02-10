@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchOngoingLoans, closeSnackbar, setSnackbar, clearLoans, setFilters } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
+import { getLocalDateString } from '../../utils/dashboardUtils'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
 import './RepaymentRecords.scss'
@@ -11,17 +12,16 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-// Calculate min and max dates (3 months before and after today)
+// Calculate min and max dates (3 months before and after today) in local calendar date
 const getDateLimits = () => {
   const today = new Date()
   const minDate = new Date(today)
   minDate.setMonth(today.getMonth() - 3)
   const maxDate = new Date(today)
   maxDate.setMonth(today.getMonth() + 3)
-  
   return {
-    min: minDate.toISOString().split('T')[0],
-    max: maxDate.toISOString().split('T')[0]
+    min: getLocalDateString(minDate),
+    max: getLocalDateString(maxDate),
   }
 }
 
@@ -100,7 +100,7 @@ const RepaymentRecords = () => {
       if (!repaymentForms[loanId]) {
         forms[loanId] = {
           amount: '',
-          paymentDate: new Date().toISOString().split('T')[0],
+          paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
           isLateFee: false,
@@ -230,16 +230,16 @@ const RepaymentRecords = () => {
       const form = repaymentForms[loanId]
       const paymentAmount = parseFloat(form.amount)
       
-      // Combine selected date with current time to avoid timezone issues
-      const selectedDate = new Date(form.paymentDate)
+      // Selected date (local) + current local time so stored value shows correct date and time
+      const selectedDate = new Date(form.paymentDate + 'T00:00:00')
       const now = new Date()
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds())
-      const paymentDateWithTime = selectedDate.toISOString()
-      
+      const paymentDateISO = selectedDate.toISOString()
+
       const response = await repaymentsAPI.createRepayment({
         loan: loanId,
         amount: paymentAmount,
-        paymentDate: paymentDateWithTime,
+        paymentDate: paymentDateISO,
         paymentMethod: form.paymentMethod || 'cash',
         remarks: form.remarks?.trim() || undefined,
         isLateFee: Boolean(form.isLateFee),
@@ -259,7 +259,7 @@ const RepaymentRecords = () => {
           ...prev,
           [loanId]: {
             amount: '',
-            paymentDate: new Date().toISOString().split('T')[0],
+            paymentDate: getLocalDateString(),
             paymentMethod: 'cash',
             remarks: '',
             isLateFee: false,
@@ -300,7 +300,7 @@ const RepaymentRecords = () => {
       const loanId = loan._id || loan.id
       const form = repaymentForms[loanId] || {
         amount: '',
-        paymentDate: new Date().toISOString().split('T')[0],
+        paymentDate: getLocalDateString(),
         paymentMethod: 'cash',
         remarks: '',
         isLateFee: false,
@@ -371,9 +371,9 @@ const RepaymentRecords = () => {
           type="date"
           className="repayment-date-input"
           value={row.form.paymentDate}
+          autoComplete="off"
           onChange={(e) => handleRepaymentDateChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
-          autoComplete="off"
           min={dateLimits.min}
           max={dateLimits.max}
         />
@@ -480,8 +480,8 @@ const RepaymentRecords = () => {
         <div className="search-input-group">
           <input
             type="text"
-            placeholder="Search by Loan Account, Member Name..."
             className="search-input"
+            placeholder="Search by Loan Account, Member Name..."
             value={searchInput}
             onChange={handleSearchChange}
             autoComplete="off"

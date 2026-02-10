@@ -49,6 +49,7 @@ const PersonalInfoSection = () => {
             error={validationErrors.fullName}
             helperText={validationErrors.fullName}
             required
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -62,6 +63,7 @@ const PersonalInfoSection = () => {
             error={validationErrors.fatherOrHusbandName}
             helperText={validationErrors.fatherOrHusbandName}
             required
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -92,6 +94,7 @@ const PersonalInfoSection = () => {
             required
             maxLength={10}
             inputProps={{
+              autoComplete: 'off',
               maxLength: 10,
               pattern: '[0-9]*'
             }}
@@ -108,6 +111,7 @@ const PersonalInfoSection = () => {
             placeholder="Enter your email address"
             error={validationErrors.email}
             helperText={validationErrors.email}
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -124,6 +128,7 @@ const PersonalInfoSection = () => {
             required
             maxLength={12}
             inputProps={{
+              autoComplete: 'off',
               maxLength: 12,
               pattern: '[0-9]*'
             }}
@@ -146,6 +151,7 @@ const PersonalInfoSection = () => {
             required
             maxLength={10}
             inputProps={{
+              autoComplete: 'off',
               style: { textTransform: 'uppercase' }
             }}
           />

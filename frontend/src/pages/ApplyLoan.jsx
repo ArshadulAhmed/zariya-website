@@ -120,7 +120,7 @@ const ApplyLoan = () => {
           <p>Please fill in the details below to apply for a loan</p>
         </div>
 
-        <form className="loan-form" onSubmit={handleSubmit}>
+        <form className="loan-form" onSubmit={handleSubmit} autoComplete="off">
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-section">
@@ -139,6 +139,7 @@ const ApplyLoan = () => {
                   onChange={handleChange}
                   placeholder="Enter your membership ID"
                   className={errors.membership ? 'error' : ''}
+                  autoComplete="off"
                 />
                 {errors.membership && <span className="field-error">{errors.membership}</span>}
               </div>
@@ -156,6 +157,7 @@ const ApplyLoan = () => {
                   placeholder="10 digit mobile number"
                   maxLength="10"
                   className={errors.mobileNumber ? 'error' : ''}
+                  autoComplete="off"
                 />
                 {errors.mobileNumber && <span className="field-error">{errors.mobileNumber}</span>}
               </div>
@@ -171,6 +173,7 @@ const ApplyLoan = () => {
                 onChange={handleChange}
                 placeholder="your.email@example.com"
                 className={errors.email ? 'error' : ''}
+                autoComplete="off"
               />
               {errors.email && <span className="field-error">{errors.email}</span>}
             </div>
@@ -194,6 +197,7 @@ const ApplyLoan = () => {
                   min="1"
                   step="0.01"
                   className={errors.loanAmount ? 'error' : ''}
+                  autoComplete="off"
                 />
                 {errors.loanAmount && <span className="field-error">{errors.loanAmount}</span>}
               </div>
@@ -211,6 +215,7 @@ const ApplyLoan = () => {
                   placeholder="Enter tenure in days"
                   min="1"
                   className={errors.loanTenure ? 'error' : ''}
+                  autoComplete="off"
                 />
                 {errors.loanTenure && <span className="field-error">{errors.loanTenure}</span>}
               </div>
@@ -247,6 +252,7 @@ const ApplyLoan = () => {
                   min="1"
                   step="0.01"
                   className={errors.installmentAmount ? 'error' : ''}
+                  autoComplete="off"
                 />
                 {errors.installmentAmount && <span className="field-error">{errors.installmentAmount}</span>}
               </div>
@@ -260,6 +266,7 @@ const ApplyLoan = () => {
                   value={formData.bankAccountNumber}
                   onChange={handleChange}
                   placeholder="Enter bank account number"
+                  autoComplete="off"
                 />
               </div>
             </div>

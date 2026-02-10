@@ -123,7 +123,7 @@ const EditUserModal = ({ open, onClose, user, onSuccess }) => {
             </button>
           </div>
 
-          <form className="edit-user-form" onSubmit={handleSubmit} noValidate>
+          <form className="edit-user-form" onSubmit={handleSubmit} noValidate autoComplete="off">
             <div className="form-group">
               <TextField
                 label="Full Name"

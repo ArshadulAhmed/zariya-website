@@ -128,7 +128,7 @@ const Login = () => {
             </div>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
+          <form className="login-form" onSubmit={handleSubmit} noValidate autoComplete="off">
 
             <div className="form-group">
               <TextField

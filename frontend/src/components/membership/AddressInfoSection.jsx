@@ -41,6 +41,7 @@ const AddressInfoSection = () => {
             error={validationErrors['address.village']}
             helperText={validationErrors['address.village'] || ''}
             required
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -54,6 +55,7 @@ const AddressInfoSection = () => {
             error={validationErrors['address.postOffice']}
             helperText={validationErrors['address.postOffice']}
             required
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -67,6 +69,7 @@ const AddressInfoSection = () => {
             error={validationErrors['address.policeStation']}
             helperText={validationErrors['address.policeStation']}
             required
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
 
@@ -97,6 +100,7 @@ const AddressInfoSection = () => {
             required
             maxLength={6}
             inputProps={{
+              autoComplete: 'off',
               maxLength: 6,
               pattern: '[0-9]*'
             }}
@@ -110,6 +114,7 @@ const AddressInfoSection = () => {
             value={formData.address.landmark}
             onChange={handleChange}
             placeholder="e.g., Near Park, Opposite School"
+            inputProps={{ autoComplete: 'off' }}
           />
         </div>
       </div>

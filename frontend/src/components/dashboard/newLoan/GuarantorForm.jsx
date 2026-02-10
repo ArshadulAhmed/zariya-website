@@ -77,6 +77,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.name']}
           helperText={errors['guarantor.name']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -88,6 +89,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.fatherOrHusbandName']}
           helperText={errors['guarantor.fatherOrHusbandName']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <Select
@@ -113,7 +115,7 @@ const GuarantorForm = () => {
           helperText={errors['guarantor.mobileNumber']}
           required
           maxLength={10}
-          inputProps={{ pattern: '[0-9]{10}' }}
+          inputProps={{ autoComplete: 'off', pattern: '[0-9]{10}' }}
         />
 
         <TextField
@@ -122,6 +124,7 @@ const GuarantorForm = () => {
           value={formData.bankAccountNumber}
           onChange={handleChange}
           placeholder="Enter bank account number"
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -133,6 +136,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.address.village']}
           helperText={errors['guarantor.address.village']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -144,6 +148,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.address.postOffice']}
           helperText={errors['guarantor.address.postOffice']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -155,6 +160,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.address.policeStation']}
           helperText={errors['guarantor.address.policeStation']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -166,6 +172,7 @@ const GuarantorForm = () => {
           error={errors['guarantor.address.district']}
           helperText={errors['guarantor.address.district']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -178,6 +185,7 @@ const GuarantorForm = () => {
           helperText={errors['guarantor.address.pinCode']}
           required
           maxLength={6}
+          inputProps={{ autoComplete: 'off', maxLength: 6 }}
         />
 
         <TextField
@@ -186,6 +194,7 @@ const GuarantorForm = () => {
           value={formData.address.landmark}
           onChange={handleChange}
           placeholder="Enter landmark"
+          inputProps={{ autoComplete: 'off' }}
         />
       </div>
     </div>

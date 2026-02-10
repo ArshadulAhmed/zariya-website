@@ -43,6 +43,7 @@ const TextField = ({
       rows={rows}
       inputProps={{
         maxLength: maxLength,
+        autoComplete: props.inputProps?.autoComplete ?? 'off',
         ...props.inputProps
       }}
       InputProps={

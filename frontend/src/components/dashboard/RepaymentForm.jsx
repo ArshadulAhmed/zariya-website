@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchLoan, fetchRepayments } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
+import { getLocalDateString } from '../../utils/dashboardUtils'
 import TextField from '../TextField'
 import Select from '../Select'
 import DatePicker from '../DatePicker'
@@ -13,13 +14,11 @@ const getDateConstraints = () => {
   const today = new Date()
   const threeMonthsPast = new Date(today)
   threeMonthsPast.setMonth(today.getMonth() - 3)
-  
   const threeMonthsFuture = new Date(today)
   threeMonthsFuture.setMonth(today.getMonth() + 3)
-  
   return {
-    minDate: threeMonthsPast.toISOString().split('T')[0],
-    maxDate: threeMonthsFuture.toISOString().split('T')[0],
+    minDate: getLocalDateString(threeMonthsPast),
+    maxDate: getLocalDateString(threeMonthsFuture),
   }
 }
 
@@ -31,7 +30,7 @@ const RepaymentForm = () => {
   
   const [repaymentForm, setRepaymentForm] = useState({
     amount: '',
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: getLocalDateString(),
     paymentMethod: 'cash',
     remarks: '',
     isLateFee: false,
@@ -86,16 +85,16 @@ const RepaymentForm = () => {
         return
       }
 
-      // Combine selected date with current time to avoid timezone issues
-      const selectedDate = new Date(repaymentForm.paymentDate)
+      // Selected date (local) + current local time so stored value shows correct date and time
+      const selectedDate = new Date(repaymentForm.paymentDate + 'T00:00:00')
       const now = new Date()
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds())
-      const paymentDateWithTime = selectedDate.toISOString()
+      const paymentDateISO = selectedDate.toISOString()
 
       const response = await repaymentsAPI.createRepayment({
         loan: loanId,
         amount: paymentAmount,
-        paymentDate: paymentDateWithTime,
+        paymentDate: paymentDateISO,
         paymentMethod: repaymentForm.paymentMethod,
         remarks: repaymentForm.remarks.trim() || undefined,
         isLateFee: Boolean(repaymentForm.isLateFee),
@@ -105,7 +104,7 @@ const RepaymentForm = () => {
         // Reset form
         setRepaymentForm({
           amount: '',
-          paymentDate: new Date().toISOString().split('T')[0],
+          paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
           isLateFee: false,
@@ -140,7 +139,7 @@ const RepaymentForm = () => {
       <h2>Record Repayment</h2>
       <p className="section-description">Enter daily repayment amount for this loan</p>
       
-      <form className="repayment-form" onSubmit={handleSubmitRepayment} noValidate>
+      <form className="repayment-form" onSubmit={handleSubmitRepayment} noValidate autoComplete="off">
         <div className="form-grid">
           <TextField
             label="Amount"

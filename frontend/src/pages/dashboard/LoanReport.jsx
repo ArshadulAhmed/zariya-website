@@ -183,12 +183,13 @@ const LoanReport = () => {
         <div className="search-card">
           <h2>Search Loan</h2>
           <p className="search-hint">Enter the loan account number to generate a detailed report</p>
-          <form onSubmit={handleSearch} className="search-form">
+          <form onSubmit={handleSearch} className="search-form" autoComplete="off">
             <div className="search-input-group">
               <input
                 type="text"
                 className="search-input"
                 placeholder="Enter loan account number (e.g., ZLID202500001)"
+                autoComplete="off"
                 value={loanAccountNumber}
                 onChange={(e) => dispatch(setLoanAccountNumber(e.target.value.toUpperCase()))}
                 disabled={isLoading}

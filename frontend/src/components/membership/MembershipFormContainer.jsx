@@ -31,7 +31,7 @@ const MembershipFormContainer = () => {
 
   return (
     <>
-      <form className="membership-form" noValidate>
+      <form className="membership-form" noValidate autoComplete="off">
         <PersonalInfoSection />
         <AddressInfoSection />
         <DocumentUploadSection />

@@ -148,7 +148,7 @@ const Contact = () => {
               </div>
             </div>
           </div>
-          <form className="contact-form" onSubmit={handleSubmit}>
+          <form className="contact-form" onSubmit={handleSubmit} autoComplete="off">
             <div className="form-row">
               <div className="form-group">
                 <input
@@ -158,6 +158,7 @@ const Contact = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  autoComplete="off"
                 />
               </div>
               <div className="form-group">
@@ -168,6 +169,7 @@ const Contact = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -179,6 +181,7 @@ const Contact = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
+                autoComplete="off"
               />
             </div>
             <div className="form-group">

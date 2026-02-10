@@ -196,19 +196,27 @@ export const generateLoanNOCPDF = (doc, loan, totalPaid, logoPath) => {
     { w: PAGE_WIDTH / 2, label: 'Outstanding Amount', value: formatCurrency(Math.max(0, loan.loanAmount - totalPaid)) },
   ]);
 
-  /* -------------------- CERTIFICATE STATEMENT -------------------- */
-  // Statement as last table cell
-  drawFullRow(
-    'Statement',
-    'This is to certify that the above loan account has been fully closed and all dues have been cleared. There are no outstanding liabilities against the member as on the date of issue.'
-  );
+  y += 14;
 
-  y += 10;
 
+
+  /* -------------------- DATE OF ISSUE & PLACE -------------------- */
   drawRow([
     { w: PAGE_WIDTH / 2, label: 'Date of Issue', value: formatDate(new Date()) },
     { w: PAGE_WIDTH / 2, label: 'Place', value: 'Barpeta, Assam' },
   ]);
+
+  y += 14;
+
+  /* -------------------- CERTIFICATE STATEMENT (plain text, no box) -------------------- */
+    const statementText = 'This is to certify that the above-mentioned loan account has been fully closed, and all outstanding dues have been settled. As of the date of issuance of this certificate, there are no pending liabilities against the member in respect of the said loan.';
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text(statementText, START_X, y, {
+      width: PAGE_WIDTH,
+      align: 'left',
+      lineGap: 2,
+    });
+    y = doc.y + 24;
 
   /* -------------------- FOOTER (LOCKED TO BOTTOM) -------------------- */
 

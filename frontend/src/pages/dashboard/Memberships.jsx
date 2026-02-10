@@ -149,8 +149,9 @@ const Memberships = memo(() => {
       <div className="page-filters">
           <div className="search-input-group">
           <input
-          type="text"
-          placeholder="Search by User ID or Name..."
+            type="text"
+            placeholder="Search by User ID or Name..."
+            autoComplete="off"
           className="search-input"
           value={searchInput}
           onChange={handleSearchChange}

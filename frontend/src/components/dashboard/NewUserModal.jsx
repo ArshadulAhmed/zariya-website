@@ -146,7 +146,7 @@ const NewUserModal = ({ open, onClose, onSuccess }) => {
             </button>
           </div>
 
-          <form className="new-user-form" onSubmit={handleSubmit} noValidate>
+          <form className="new-user-form" onSubmit={handleSubmit} noValidate autoComplete="off">
             <div className="form-group">
               <TextField
                 label="Full Name"

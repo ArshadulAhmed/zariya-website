@@ -94,7 +94,7 @@ const LoanFormContainer = () => {
   }
 
   return (
-    <form className="loan-form" onSubmit={handleSubmit}>
+    <form className="loan-form" onSubmit={handleSubmit} autoComplete="off">
       <LoanDetailsForm />
       <NomineeForm />
       <GuarantorForm />

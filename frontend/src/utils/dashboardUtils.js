@@ -1,4 +1,17 @@
 /**
+ * Get local calendar date as YYYY-MM-DD (for date inputs and API).
+ * Use this instead of new Date().toISOString().split('T')[0] which uses UTC and can show the wrong day in timezones ahead of UTC.
+ * @param {Date} [d=new Date()] - Date to format
+ * @returns {string} - YYYY-MM-DD in local time
+ */
+export const getLocalDateString = (d = new Date()) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Format number with Indian number system (lakhs, crores)
  * @param {number} num - Number to format
  * @returns {string} - Formatted string (e.g., "45.2L", "1.2Cr")

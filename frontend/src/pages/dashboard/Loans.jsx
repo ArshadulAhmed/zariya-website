@@ -159,6 +159,7 @@ const Loans = memo(() => {
           <input
             type="text"
             placeholder="Search by Loan Account, Member Name..."
+            autoComplete="off"
             className="search-input"
             value={searchInput}
             onChange={handleSearchChange}

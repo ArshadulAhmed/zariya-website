@@ -58,6 +58,7 @@ const NomineeForm = () => {
           error={errors['nominee.name']}
           helperText={errors['nominee.name']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <Select
@@ -83,10 +84,7 @@ const NomineeForm = () => {
           helperText={errors['nominee.mobileNumber']}
           required
           maxLength={10}
-          inputProps={{
-            maxLength: 10,
-            pattern: '[0-9]*'
-          }}
+          inputProps={{ autoComplete: 'off', maxLength: 10, pattern: '[0-9]*' }}
         />
 
         <TextField
@@ -95,6 +93,7 @@ const NomineeForm = () => {
           value={formData.bankAccountNumber}
           onChange={handleChange}
           placeholder="Enter bank account number"
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -106,6 +105,7 @@ const NomineeForm = () => {
           error={errors['nominee.address.village']}
           helperText={errors['nominee.address.village']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -117,6 +117,7 @@ const NomineeForm = () => {
           error={errors['nominee.address.postOffice']}
           helperText={errors['nominee.address.postOffice']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -128,6 +129,7 @@ const NomineeForm = () => {
           error={errors['nominee.address.policeStation']}
           helperText={errors['nominee.address.policeStation']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -139,6 +141,7 @@ const NomineeForm = () => {
           error={errors['nominee.address.district']}
           helperText={errors['nominee.address.district']}
           required
+          inputProps={{ autoComplete: 'off' }}
         />
 
         <TextField
@@ -151,6 +154,7 @@ const NomineeForm = () => {
           helperText={errors['nominee.address.pinCode']}
           required
           maxLength={6}
+          inputProps={{ autoComplete: 'off', maxLength: 6 }}
         />
 
         <TextField
@@ -159,6 +163,7 @@ const NomineeForm = () => {
           value={formData.address.landmark}
           onChange={handleChange}
           placeholder="Enter landmark"
+          inputProps={{ autoComplete: 'off' }}
         />
       </div>
     </div>

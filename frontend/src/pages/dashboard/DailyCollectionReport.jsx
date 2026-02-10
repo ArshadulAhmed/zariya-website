@@ -122,6 +122,7 @@ const DailyCollectionReport = () => {
               e.preventDefault()
               handleSearch()
             }}
+            autoComplete="off"
           >
             <div className="search-input-group">
               <label htmlFor="date">Select Date</label>
@@ -129,6 +130,7 @@ const DailyCollectionReport = () => {
                 type="date"
                 id="date"
                 className="date-input"
+                autoComplete="off"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={dateLimits.min}
