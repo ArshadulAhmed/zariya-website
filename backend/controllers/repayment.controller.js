@@ -107,23 +107,32 @@ export const getRepaymentsByLoan = async (req, res) => {
 
     const total = await Repayment.countDocuments({ loan: loan._id });
 
-    // Calculate total paid amount
+    // Calculate total paid amount (excluding late fee - late fee does not reduce remaining balance)
     const totalPaidResult = await Repayment.aggregate([
       { $match: { loan: loan._id } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
     ]);
     const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
+
+    // Calculate total late fee paid (sum of amounts where isLateFee is true)
+    const totalLateFeeResult = await Repayment.aggregate([
+      { $match: { loan: loan._id, isLateFee: true } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalLateFeePaid = totalLateFeeResult.length > 0 ? totalLateFeeResult[0].total : 0;
     
-    // Calculate additional amount paid (amount paid beyond the loan amount)
+    // Additional amount paid = total paid (EMI + late fee) minus loan amount
     const loanAmount = Number(loan.loanAmount) || 0;
-    const additionalAmountPaid = Math.max(0, totalPaid - loanAmount);
+    const totalAllPaid = totalPaid + totalLateFeePaid;
+    const additionalAmountPaid = Math.max(0, totalAllPaid - loanAmount);
 
     res.status(200).json({
       success: true,
       data: {
         repayments,
         totalPaid,
-        additionalAmountPaid, // Amount paid beyond the original loan amount
+        totalLateFeePaid,
+        additionalAmountPaid, // EMI + late fee in excess of loan amount
         // Include minimal loan info (needed for CloseLoanCard and summary display)
         loan: {
           _id: loan._id,
@@ -297,13 +306,14 @@ export const getDailyCollections = async (req, res) => {
     const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Find all repayments for the selected date
-    const repayments = await Repayment.find({
+    const dateMatch = {
       paymentDate: {
         $gte: startOfDay,
         $lte: endOfDay
       }
-    })
+    };
+
+    const repayments = await Repayment.find(dateMatch)
       .populate({
         path: 'loan',
         select: 'loanAccountNumber membership',
@@ -315,51 +325,31 @@ export const getDailyCollections = async (req, res) => {
       .populate('recordedBy', 'username fullName')
       .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
 
-    // Calculate total collection for the day
     const totalCollectionResult = await Repayment.aggregate([
-      {
-        $match: {
-          paymentDate: {
-            $gte: startOfDay,
-            $lte: endOfDay
-          }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$amount' }
-        }
-      }
+      { $match: dateMatch },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
-
     const totalCollection = totalCollectionResult.length > 0 ? totalCollectionResult[0].total : 0;
 
-    // Calculate collection by payment method
-    const collectionByMethodResult = await Repayment.aggregate([
-      {
-        $match: {
-          paymentDate: {
-            $gte: startOfDay,
-            $lte: endOfDay
-          }
-        }
-      },
-      {
-        $group: {
-          _id: '$paymentMethod',
-          total: { $sum: '$amount' },
-          count: { $sum: 1 }
-        }
-      }
+    const totalLateFeeResult = await Repayment.aggregate([
+      { $match: { ...dateMatch, isLateFee: true } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
+    const totalLateFee = totalLateFeeResult.length > 0 ? totalLateFeeResult[0].total : 0;
 
+    const emiCollectionResult = await Repayment.aggregate([
+      { $match: dateMatch },
+      { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
+    ]);
+    const emiCollection = emiCollectionResult.length > 0 ? emiCollectionResult[0].total : 0;
+
+    const collectionByMethodResult = await Repayment.aggregate([
+      { $match: dateMatch },
+      { $group: { _id: '$paymentMethod', total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
     const collectionByMethod = {};
     collectionByMethodResult.forEach(item => {
-      collectionByMethod[item._id] = {
-        total: item.total,
-        count: item.count
-      };
+      collectionByMethod[item._id] = { total: item.total, count: item.count };
     });
 
     res.status(200).json({
@@ -368,6 +358,8 @@ export const getDailyCollections = async (req, res) => {
         date: date,
         repayments,
         totalCollection,
+        totalLateFee,
+        emiCollection,
         collectionByMethod,
         totalCount: repayments.length
       }
@@ -402,13 +394,14 @@ export const downloadDailyCollectionPDF = async (req, res) => {
     const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Find all repayments for the selected date
-    const repayments = await Repayment.find({
+    const dateMatch = {
       paymentDate: {
         $gte: startOfDay,
         $lte: endOfDay
       }
-    })
+    };
+
+    const repayments = await Repayment.find(dateMatch)
       .populate({
         path: 'loan',
         select: 'loanAccountNumber membership',
@@ -420,36 +413,26 @@ export const downloadDailyCollectionPDF = async (req, res) => {
       .populate('recordedBy', 'username fullName')
       .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
 
-    // Calculate total collection for the day
     const totalCollectionResult = await Repayment.aggregate([
-      {
-        $match: {
-          paymentDate: {
-            $gte: startOfDay,
-            $lte: endOfDay
-          }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$amount' }
-        }
-      }
+      { $match: dateMatch },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
-
     const totalCollection = totalCollectionResult.length > 0 ? totalCollectionResult[0].total : 0;
 
-    // Calculate collection by payment method
+    const totalLateFeeResult = await Repayment.aggregate([
+      { $match: { ...dateMatch, isLateFee: true } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalLateFee = totalLateFeeResult.length > 0 ? totalLateFeeResult[0].total : 0;
+
+    const emiCollectionResult = await Repayment.aggregate([
+      { $match: dateMatch },
+      { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
+    ]);
+    const emiCollection = emiCollectionResult.length > 0 ? emiCollectionResult[0].total : 0;
+
     const collectionByMethodResult = await Repayment.aggregate([
-      {
-        $match: {
-          paymentDate: {
-            $gte: startOfDay,
-            $lte: endOfDay
-          }
-        }
-      },
+      { $match: dateMatch },
       {
         $group: {
           _id: '$paymentMethod',
@@ -458,7 +441,6 @@ export const downloadDailyCollectionPDF = async (req, res) => {
         }
       }
     ]);
-
     const collectionByMethod = {};
     collectionByMethodResult.forEach(item => {
       collectionByMethod[item._id] = {
@@ -486,8 +468,7 @@ export const downloadDailyCollectionPDF = async (req, res) => {
     const __dirname = path.dirname(__filename);
     const logoPath = path.join(__dirname, '..', 'assets', 'logo_white.png');
 
-    // Generate Daily Collection PDF
-    generateDailyCollectionPDF(doc, date, repayments, totalCollection, collectionByMethod, logoPath);
+    generateDailyCollectionPDF(doc, date, repayments, totalCollection, totalLateFee, emiCollection, collectionByMethod, logoPath);
 
     doc.end();
   } catch (error) {

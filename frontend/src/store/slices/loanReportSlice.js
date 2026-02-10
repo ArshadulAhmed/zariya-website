@@ -22,7 +22,9 @@ export const fetchLoanRepayments = createAsyncThunk(
       const response = await repaymentsAPI.getRepaymentsByLoan(loanId)
       return {
         repayments: response.data?.repayments || [],
-        totalPaid: response.data?.totalPaid || 0
+        totalPaid: response.data?.totalPaid || 0,
+        totalLateFeePaid: response.data?.totalLateFeePaid ?? 0,
+        additionalAmountPaid: response.data?.additionalAmountPaid ?? 0,
       }
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch repayments')
@@ -61,6 +63,8 @@ const initialState = {
   loan: null,
   repayments: [],
   totalPaid: 0,
+  totalLateFeePaid: 0,
+  additionalAmountPaid: 0,
   isLoading: false,
   isLoadingRepayments: false,
   isDownloadingNOC: false,
@@ -81,6 +85,8 @@ const loanReportSlice = createSlice({
       state.loan = null
       state.repayments = []
       state.totalPaid = 0
+      state.totalLateFeePaid = 0
+      state.additionalAmountPaid = 0
       state.error = null
       state.nocError = null
       state.isLoading = false
@@ -93,6 +99,8 @@ const loanReportSlice = createSlice({
       state.loan = null
       state.repayments = []
       state.totalPaid = 0
+      state.totalLateFeePaid = 0
+      state.additionalAmountPaid = 0
       state.error = null
       state.nocError = null
       state.isLoading = false
@@ -121,6 +129,8 @@ const loanReportSlice = createSlice({
         state.loan = null
         state.repayments = []
         state.totalPaid = 0
+        state.totalLateFeePaid = 0
+        state.additionalAmountPaid = 0
       })
       .addCase(fetchLoanByAccountNumber.fulfilled, (state, action) => {
         state.isLoading = false
@@ -140,12 +150,15 @@ const loanReportSlice = createSlice({
         state.isLoadingRepayments = false
         state.repayments = action.payload.repayments
         state.totalPaid = action.payload.totalPaid
+        state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
+        state.additionalAmountPaid = action.payload.additionalAmountPaid ?? 0
       })
       .addCase(fetchLoanRepayments.rejected, (state, action) => {
         state.isLoadingRepayments = false
-        // Don't set error for repayments, just set empty
         state.repayments = []
         state.totalPaid = 0
+        state.totalLateFeePaid = 0
+        state.additionalAmountPaid = 0
       })
       // Download NOC
       .addCase(downloadNOC.pending, (state) => {

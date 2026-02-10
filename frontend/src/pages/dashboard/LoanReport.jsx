@@ -14,6 +14,8 @@ import {
   downloadNOC,
   downloadRepaymentHistory,
 } from '../../store/slices/loanReportSlice'
+import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
+import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import './LoanReport.scss'
 
 const formatDate = (dateString) => {
@@ -47,6 +49,8 @@ const LoanReport = () => {
     loan,
     repayments,
     totalPaid,
+    totalLateFeePaid,
+    additionalAmountPaid,
     isLoading,
     isLoadingRepayments,
     isDownloadingNOC,
@@ -364,16 +368,6 @@ const LoanReport = () => {
                     <span className="detail-label">Bank Account Number</span>
                     <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Total Paid</span>
-                    <span className="detail-value">{formatCurrency(totalPaid)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Remaining Amount</span>
-                    <span className={`detail-value ${(loan.loanAmount - totalPaid) > 0 ? 'remaining-amount' : 'paid-full'}`}>
-                      {formatCurrency(Math.max(0, loan.loanAmount - totalPaid))}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="detail-section">
@@ -406,57 +400,24 @@ const LoanReport = () => {
               </div>
             </div>
 
-            {/* Repayment History */}
+            {/* Repayment Summary & History */}
             {['active', 'closed'].includes(loan.status) && (
               <div className="repayment-history-section">
-                <div className="repayment-history-card">
+                <RepaymentSummaryCard
+                  loanAmount={loan.loanAmount}
+                  totalPaid={totalPaid}
+                  totalLateFeePaid={totalLateFeePaid}
+                  additionalAmountPaid={additionalAmountPaid}
+                />
+                <div className="repayment-history-wrapper">
                   <h2>Repayment History</h2>
-                  {isLoadingRepayments ? (
-                    <div className="loading-text">Loading repayment history...</div>
-                  ) : repayments.length === 0 ? (
-                    <div className="empty-state">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <p>No repayment records found</p>
-                    </div>
-                  ) : (
-                    <div className="repayment-table-container">
-                      <table className="repayment-table">
-                        <thead>
-                          <tr>
-                            <th>Payment Date</th>
-                            <th>Amount</th>
-                            <th>Payment Method</th>
-                            <th>Late Fee</th>
-                            <th>Recorded By</th>
-                            <th>Recorded At</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {repayments.map((repayment) => (
-                            <tr key={repayment._id || repayment.id}>
-                              <td>{formatDate(repayment.paymentDate)}</td>
-                              <td className="amount-cell">{formatCurrency(repayment.amount)}</td>
-                              <td>
-                                <span className="payment-method-badge">
-                                  {repayment.paymentMethod === 'cash' ? 'Cash' :
-                                   repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-                                   repayment.paymentMethod === 'upi' ? 'UPI' : 
-                                   repayment.paymentMethod || 'N/A'}
-                                </span>
-                              </td>
-                              <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
-                              <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
-                              <td>{formatDate(repayment.createdAt)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  <RepaymentHistory
+                    repayments={repayments}
+                    isLoading={isLoadingRepayments}
+                    emptyMessage="No repayment records found"
+                    showRemarks
+                    showSNo
+                  />
                 </div>
               </div>
             )}

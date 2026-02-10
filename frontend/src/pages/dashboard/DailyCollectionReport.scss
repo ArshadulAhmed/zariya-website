@@ -166,15 +166,40 @@
           gap: 0.2rem;
 
           .summary-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
             font-size: 0.75rem;
             color: var(--text-secondary);
             font-weight: 500;
+
+            .summary-info-icon {
+              font-size: 0.85rem;
+              color: #9ca3af;
+              cursor: help;
+              line-height: 1;
+              flex-shrink: 0;
+              border-radius: 50%;
+              transition: color 0.15s ease;
+
+              &:hover {
+                color: var(--primary-color);
+              }
+            }
           }
 
           .summary-value {
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--text-primary);
+
+            &.late-fee {
+              color: #b45309;
+            }
+
+            &.emi {
+              color: #2563eb;
+            }
 
             &.total {
               color: #059669;

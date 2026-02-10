@@ -429,19 +429,25 @@
 
     .repayment-history-section {
       margin-top: 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+
+      .repayment-history-wrapper {
+        h2 {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 1rem 0;
+          font-family: 'Poppins', sans-serif;
+        }
+      }
 
       .repayment-history-card {
         background: white;
         border-radius: 12px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        padding: 1.6rem;
-
-        h2 {
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: var(--text-primary);
-          margin: 0 0 1.2rem 0;
-        }
+        // padding: 1.6rem;
 
         .loading-text,
         .empty-state {
@@ -460,7 +466,8 @@
           }
         }
 
-        .repayment-table-container {
+        .repayment-table-container,
+        .repayment-list {
           overflow-x: auto;
 
           .repayment-table {

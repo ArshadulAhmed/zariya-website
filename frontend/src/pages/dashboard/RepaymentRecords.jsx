@@ -246,9 +246,11 @@ const RepaymentRecords = () => {
       })
       
       if (response.success) {
-        // Show success message
+        const message = form.isLateFee
+          ? `Late fee of ${formatCurrency(paymentAmount)} recorded successfully`
+          : `Repayment of ${formatCurrency(paymentAmount)} recorded successfully`
         dispatch(setSnackbar({
-          message: `Repayment of ${formatCurrency(paymentAmount)} recorded successfully`,
+          message,
           severity: 'success'
         }))
         

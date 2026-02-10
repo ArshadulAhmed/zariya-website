@@ -117,7 +117,7 @@ export const getLoans = async (req, res) => {
         // Calculate total paid amount for this loan
         const totalPaidResult = await Repayment.aggregate([
           { $match: { loan: loan._id } },
-          { $group: { _id: null, total: { $sum: '$amount' } } }
+          { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
         ]);
         const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
         loanObj.remainingAmount = Math.max(0, (loan.loanAmount || 0) - totalPaid);
@@ -203,7 +203,7 @@ export const getOngoingLoans = async (req, res) => {
         // Calculate total paid amount for this loan
         const totalPaidResult = await Repayment.aggregate([
           { $match: { loan: loan._id } },
-          { $group: { _id: null, total: { $sum: '$amount' } } }
+          { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
         ]);
         const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
         loanObj.remainingAmount = Math.max(0, (loan.loanAmount || 0) - totalPaid);
@@ -626,11 +626,11 @@ export const downloadLoanNOC = async (req, res) => {
       });
     }
 
-    // Get total repayments to verify loan is fully paid
+    // Get total paid (excluding late fee) for NOC
     const Repayment = (await import('../models/Repayment.model.js')).default;
     const totalPaidResult = await Repayment.aggregate([
       { $match: { loan: loan._id } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
     ]);
     const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
 
@@ -703,10 +703,10 @@ export const downloadRepaymentHistory = async (req, res) => {
       .populate('recordedBy', 'username fullName')
       .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
 
-    // Calculate total paid
+    // Calculate total paid (excluding late fee) for remaining amount in PDF
     const totalPaidResult = await Repayment.aggregate([
       { $match: { loan: loan._id } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $group: { _id: null, total: { $sum: { $cond: [{ $eq: ['$isLateFee', true] }, 0, '$amount'] } } } }
     ]);
     const totalPaid = totalPaidResult.length > 0 ? totalPaidResult[0].total : 0;
 

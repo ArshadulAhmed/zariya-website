@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchLoan, clearSelectedLoan } from '../../store/slices/loansSlice'
+import { clearSelectedLoan } from '../../store/slices/loansSlice'
 import { fetchRepayments, clearRepayments } from '../../store/slices/repaymentRecordsSlice'
 import Snackbar from '../../components/Snackbar'
+import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import TableSkeleton from '../../components/dashboard/TableSkeleton'
 import CloseLoanCard from '../../components/dashboard/CloseLoanCard'
@@ -16,6 +17,7 @@ const RepaymentDetails = () => {
   const isLoadingRepayments = useAppSelector((state) => state.repaymentRecords?.isLoadingRepayments) || false
   const repayments = useAppSelector((state) => state.repaymentRecords?.repayments) || []
   const totalPaid = useAppSelector((state) => state.repaymentRecords?.totalPaid) || 0
+  const totalLateFeePaid = useAppSelector((state) => state.repaymentRecords?.totalLateFeePaid) ?? 0
   const additionalAmountPaid = useAppSelector((state) => state.repaymentRecords?.additionalAmountPaid) || 0
   const loanInfo = useAppSelector((state) => state.repaymentRecords?.loanInfo)
   const error = useAppSelector((state) => state.repaymentRecords?.error)
@@ -67,11 +69,6 @@ const RepaymentDetails = () => {
   // Show skeleton if loading AND no data yet - same pattern as LoanDetails (isLoading && !selectedLoan)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
 
-  const formatCurrency = (amount) => {
-    return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
-
-  // Get actual loan amount from loanInfo, ensure it's a number
   const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
 
@@ -122,32 +119,13 @@ const RepaymentDetails = () => {
         </div>
       ) : repayments.length > 0 || (!isLoadingRepayments && !error) ? (
         <div className="details-container">
-          {/* Summary Card */}
-          <div className="repayment-summary-card">
-            <h3 className="summary-title">Repayment Summary</h3>
-            <div className="summary-grid">
-              <div className="summary-item">
-                <span className="summary-label">Loan Amount</span>
-                <span className="summary-value">{formatCurrency(loanAmount)}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Total Paid</span>
-                <span className="summary-value total-paid">{formatCurrency(totalPaid)}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Remaining Amount</span>
-                <span className={`summary-value ${remainingAmount > 0 ? 'remaining' : 'paid-full'}`}>
-                  {formatCurrency(remainingAmount)}
-                </span>
-              </div>
-              {additionalAmountPaid > 0 && (
-                <div className="summary-item">
-                  <span className="summary-label">Additional Amount Paid</span>
-                  <span className="summary-value additional-paid">{formatCurrency(additionalAmountPaid)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+          <RepaymentSummaryCard
+            loanAmount={loanAmount}
+            totalPaid={totalPaid}
+            totalLateFeePaid={totalLateFeePaid}
+            remainingAmount={remainingAmount}
+            additionalAmountPaid={additionalAmountPaid}
+          />
           <RepaymentHistory />
           <CloseLoanCard />
         </div>

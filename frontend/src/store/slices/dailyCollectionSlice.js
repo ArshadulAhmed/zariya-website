@@ -12,6 +12,8 @@ export const fetchDailyCollections = createAsyncThunk(
           date: response.data.date,
           collections: response.data.repayments || [],
           totalCollection: response.data.totalCollection || 0,
+          totalLateFee: response.data.totalLateFee ?? 0,
+          emiCollection: response.data.emiCollection ?? 0,
           collectionByMethod: response.data.collectionByMethod || {},
           totalCount: response.data.totalCount || 0,
         }
@@ -40,6 +42,8 @@ const initialState = {
   date: null,
   collections: [],
   totalCollection: 0,
+  totalLateFee: 0,
+  emiCollection: 0,
   collectionByMethod: {},
   totalCount: 0,
   isLoading: false,
@@ -55,6 +59,8 @@ const dailyCollectionSlice = createSlice({
       state.date = null
       state.collections = []
       state.totalCollection = 0
+      state.totalLateFee = 0
+      state.emiCollection = 0
       state.collectionByMethod = {}
       state.totalCount = 0
       state.error = null
@@ -78,6 +84,8 @@ const dailyCollectionSlice = createSlice({
         state.date = action.payload.date
         state.collections = action.payload.collections
         state.totalCollection = action.payload.totalCollection
+        state.totalLateFee = action.payload.totalLateFee ?? 0
+        state.emiCollection = action.payload.emiCollection ?? 0
         state.collectionByMethod = action.payload.collectionByMethod
         state.totalCount = action.payload.totalCount
         state.error = null
@@ -87,6 +95,8 @@ const dailyCollectionSlice = createSlice({
         state.error = action.payload || 'Failed to fetch daily collections'
         state.collections = []
         state.totalCollection = 0
+        state.totalLateFee = 0
+        state.emiCollection = 0
         state.collectionByMethod = {}
         state.totalCount = 0
       })

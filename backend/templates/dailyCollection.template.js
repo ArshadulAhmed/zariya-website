@@ -3,8 +3,9 @@ import { drawPDFHeader } from './pdfHeader.template.js';
 
 /**
  * Daily Collection PDF – Table Layout with Same Header as NOC
+ * totalCollection = totalLateFee + emiCollection
  */
-export const generateDailyCollectionPDF = (doc, date, repayments, totalCollection, collectionByMethod, logoPath) => {
+export const generateDailyCollectionPDF = (doc, date, repayments, totalCollection, totalLateFee, emiCollection, collectionByMethod, logoPath) => {
 
   /* -------------------- Helpers -------------------- */
 
@@ -148,10 +149,14 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
 
   drawRow([
     { w: PAGE_WIDTH / 2, label: 'Date: ', value: formatDate(date) },
-    { w: PAGE_WIDTH / 2, label: 'Total Collections: ', value: formatCurrency(totalCollection) },
+    { w: PAGE_WIDTH / 2, label: 'Total Transactions: ', value: String(repayments.length) },
   ]);
 
-  drawFullRow('Total Transactions: ', String(repayments.length));
+  drawRow([
+    { w: PAGE_WIDTH / 3, label: 'Total Late Fee: ', value: formatCurrency(totalLateFee || 0) },
+    { w: PAGE_WIDTH / 3, label: 'EMI Collection: ', value: formatCurrency(emiCollection || 0) },
+    { w: PAGE_WIDTH / 3, label: 'Total Collection: ', value: formatCurrency(totalCollection || 0) },
+  ]);
 
   y += 10;
 

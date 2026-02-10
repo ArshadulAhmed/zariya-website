@@ -4,6 +4,7 @@ import { repaymentsAPI } from '../../services/api'
 const initialState = {
   repayments: [],
   totalPaid: 0,
+  totalLateFeePaid: 0,
   additionalAmountPaid: 0,
   isLoadingRepayments: false,
   error: null,
@@ -21,6 +22,7 @@ export const fetchRepayments = createAsyncThunk(
         return {
           repayments: response.data.repayments || [],
           totalPaid: response.data.totalPaid || 0,
+          totalLateFeePaid: response.data.totalLateFeePaid ?? 0,
           additionalAmountPaid: response.data.additionalAmountPaid || 0,
           // Store minimal loan info from repayments response (avoids separate API call)
           loanInfo: response.data.loan || null,
@@ -40,6 +42,7 @@ const repaymentRecordsSlice = createSlice({
     clearRepayments: (state) => {
       state.repayments = []
       state.totalPaid = 0
+      state.totalLateFeePaid = 0
       state.additionalAmountPaid = 0
       state.loanInfo = null
     },
@@ -58,6 +61,7 @@ const repaymentRecordsSlice = createSlice({
         state.isLoadingRepayments = false
         state.repayments = action.payload.repayments
         state.totalPaid = action.payload.totalPaid
+        state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
         state.additionalAmountPaid = action.payload.additionalAmountPaid || 0
         // Store minimal loan info if available (from repayments response)
         state.loanInfo = action.payload.loanInfo || null
@@ -70,6 +74,7 @@ const repaymentRecordsSlice = createSlice({
         // Clear repayments on error to prevent showing stale data
         state.repayments = []
         state.totalPaid = 0
+        state.totalLateFeePaid = 0
         state.additionalAmountPaid = 0
         state.loanInfo = null
       })

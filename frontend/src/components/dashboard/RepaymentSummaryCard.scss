@@ -1,0 +1,86 @@
+@use '../../styles/main.scss' as *;
+
+.repayment-summary-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 1.6rem;
+  border: 1px solid #e5e7eb;
+
+  .summary-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1.2rem 0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+
+      .summary-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-family: 'Poppins', sans-serif;
+
+        .summary-info-icon {
+          font-size: 0.85rem;
+          color: #9ca3af;
+          cursor: help;
+          line-height: 1;
+          flex-shrink: 0;
+          border-radius: 50%;
+          transition: color 0.15s ease;
+
+          &:hover {
+            color: var(--primary-color);
+          }
+        }
+      }
+
+      .summary-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-family: 'Poppins', sans-serif;
+
+        &.total-paid {
+          color: #059669;
+        }
+
+        &.late-fee-paid {
+          color: #b45309;
+        }
+
+        &.remaining {
+          color: #dc2626;
+        }
+
+        &.paid-full {
+          color: #059669;
+        }
+
+        &.additional-paid {
+          color: #7c3aed;
+        }
+      }
+    }
+  }
+}

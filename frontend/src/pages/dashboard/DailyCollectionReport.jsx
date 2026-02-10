@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Tooltip from '@mui/material/Tooltip'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchDailyCollections, downloadDailyCollectionPDF, clearDailyCollection, setError } from '../../store/slices/dailyCollectionSlice'
 import Snackbar from '../../components/Snackbar'
@@ -41,7 +42,7 @@ const getDateLimits = () => {
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { collections, totalCollection, collectionByMethod, isLoading, isDownloading, error, date } = useAppSelector((state) => state.dailyCollection)
+  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, isLoading, isDownloading, error, date } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
   const dateLimits = getDateLimits()
@@ -165,16 +166,49 @@ const DailyCollectionReport = () => {
               <h3>Collection Summary</h3>
               <div className="summary-grid">
                 <div className="summary-item">
-                  <span className="summary-label">Date</span>
+                  <span className="summary-label">
+                    Date
+                    <Tooltip title="The date for which this collection report is generated." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
                   <span className="summary-value">{formatDate(date)}</span>
                 </div>
                 <div className="summary-item">
-                  <span className="summary-label">Total Collections</span>
-                  <span className="summary-value total">{formatCurrency(totalCollection)}</span>
+                  <span className="summary-label">
+                    Total Transactions
+                    <Tooltip title="Number of repayment transactions recorded on this date." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
+                  <span className="summary-value">{collections.length}</span>
                 </div>
                 <div className="summary-item">
-                  <span className="summary-label">Total Transactions</span>
-                  <span className="summary-value">{collections.length}</span>
+                  <span className="summary-label">
+                    EMI Collection
+                    <Tooltip title="Total principal/EMI collected (excludes late fee payments)." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
+                  <span className="summary-value emi">{formatCurrency(emiCollection)}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">
+                    Total Late Fee
+                    <Tooltip title="Total amount collected as late fees on this date." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
+                  <span className="summary-value late-fee">{formatCurrency(totalLateFee)}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">
+                    Total Collection
+                    <Tooltip title="Total amount collected (EMI Collection + Total Late Fee)." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
+                  <span className="summary-value total">{formatCurrency(totalCollection)}</span>
                 </div>
               </div>
             </div>
