@@ -123,7 +123,7 @@ const Contact = () => {
                   <Icon src={LocationIcon} className="info-icon" alt="Location" />
                 </div>
                 <h3>Address</h3>
-                <p>Colony Bazar, Barpeta<br />Assam 781314</p>
+                <p>Sonkuchi Colony Bazar, Barpeta<br />Assam 781314</p>
               </div>
               <div className="info-card">
                 <div className="info-icon-wrapper">

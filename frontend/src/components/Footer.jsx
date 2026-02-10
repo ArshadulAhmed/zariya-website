@@ -46,7 +46,7 @@ const Footer = () => {
             <ul className="footer-contact">
               <li>
                 <LocationIcon className="footer-icon" />
-                <span>Colony Bazar, Barpeta, Assam</span>
+                <span>Sonkuchi Colony Bazar, Barpeta, Assam</span>
               </li>
               <li>
                 <PhoneIcon className="footer-icon" />
