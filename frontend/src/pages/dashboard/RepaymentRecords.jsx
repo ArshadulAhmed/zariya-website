@@ -103,6 +103,7 @@ const RepaymentRecords = () => {
           paymentDate: new Date().toISOString().split('T')[0],
           paymentMethod: 'cash',
           remarks: '',
+          isLateFee: false,
         }
       } else {
         forms[loanId] = repaymentForms[loanId]
@@ -169,6 +170,16 @@ const RepaymentRecords = () => {
       }
     }))
   }
+
+  const handleLateFeeChange = (loanId, checked) => {
+    setRepaymentForms(prev => ({
+      ...prev,
+      [loanId]: {
+        ...prev[loanId],
+        isLateFee: checked,
+      }
+    }))
+  }
   
   const validateRepaymentForm = (loanId) => {
     const form = repaymentForms[loanId]
@@ -231,6 +242,7 @@ const RepaymentRecords = () => {
         paymentDate: paymentDateWithTime,
         paymentMethod: form.paymentMethod || 'cash',
         remarks: form.remarks?.trim() || undefined,
+        isLateFee: Boolean(form.isLateFee),
       })
       
       if (response.success) {
@@ -248,6 +260,7 @@ const RepaymentRecords = () => {
             paymentDate: new Date().toISOString().split('T')[0],
             paymentMethod: 'cash',
             remarks: '',
+            isLateFee: false,
           }
         }))
         setErrors(prev => {
@@ -288,6 +301,7 @@ const RepaymentRecords = () => {
         paymentDate: new Date().toISOString().split('T')[0],
         paymentMethod: 'cash',
         remarks: '',
+        isLateFee: false,
       }
       return {
         ...loan,
@@ -299,29 +313,29 @@ const RepaymentRecords = () => {
     })
   }, [activeLoans, repaymentForms, submittingLoanId, errors])
 
-  // Define columns for DataTable
+  // Define columns for DataTable (tightened widths)
   const columns = useMemo(() => [
     {
       key: 'loanAccountNumber',
-      header: 'Loan Account Number',
-      width: '180px',
+      header: 'Loan Number',
+      width: '140px',
     },
     {
       key: 'memberName',
       header: 'Member Name',
-      width: '200px',
+      width: '150px',
       render: (value, row) => row.membership?.fullName || row.memberName || 'N/A',
     },
     {
       key: 'loanAmount',
       header: 'Loan Amount',
-      width: '150px',
+      width: '110px',
       render: (value) => <span className="amount-cell">{formatCurrency(value || 0)}</span>,
     },
     {
       key: 'remainingAmount',
       header: 'Remaining Amount',
-      width: '150px',
+      width: '110px',
       render: (value, row) => (
         <span className={`amount-cell ${(value || 0) > 0 ? 'remaining-amount' : 'paid-full'}`}>
           {formatCurrency(value || 0)}
@@ -331,7 +345,7 @@ const RepaymentRecords = () => {
     {
       key: 'repaymentAmount',
       header: 'Repayment Amount',
-      width: '150px',
+      width: '110px',
       render: (value, row) => (
         <input
           type="number"
@@ -349,7 +363,7 @@ const RepaymentRecords = () => {
     {
       key: 'repaymentDate',
       header: 'Repayment Date',
-      width: '150px',
+      width: '112px',
       render: (value, row) => (
         <input
           type="date"
@@ -366,7 +380,7 @@ const RepaymentRecords = () => {
     {
       key: 'paymentMethod',
       header: 'Payment Method',
-      width: '150px',
+      width: '110px',
       render: (value, row) => (
         <select
           className="repayment-method-select"
@@ -381,14 +395,31 @@ const RepaymentRecords = () => {
       ),
     },
     {
+      key: 'isLateFee',
+      header: 'Late Fee',
+      width: '72px',
+      render: (value, row) => (
+        <label className="late-fee-checkbox-label">
+          <input
+            type="checkbox"
+            className="late-fee-checkbox"
+            checked={Boolean(row.form.isLateFee)}
+            onChange={(e) => handleLateFeeChange(row.loanId, e.target.checked)}
+            disabled={row.isSubmitting}
+          />
+          <span className="late-fee-label-text">Late fee</span>
+        </label>
+      ),
+    },
+    {
       key: 'remarks',
       header: 'Remarks',
-      width: '200px',
+      width: '140px',
       render: (value, row) => (
         <input
           type="text"
           className="repayment-remarks-input"
-          placeholder="Enter remarks (optional)"
+          placeholder="Remarks (optional)"
           value={row.form.remarks || ''}
           onChange={(e) => handleRemarksChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
@@ -396,7 +427,7 @@ const RepaymentRecords = () => {
         />
       ),
     },
-  ], [repaymentForms, submittingLoanId, errors, handlePaymentMethodChange])
+  ], [repaymentForms, submittingLoanId, errors, dateLimits.min, dateLimits.max])
 
   // Define actions for DataTable
   const handleActions = (row) => {

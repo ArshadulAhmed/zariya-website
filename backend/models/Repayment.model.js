@@ -27,6 +27,10 @@ const repaymentSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  isLateFee: {
+    type: Boolean,
+    default: false
+  },
   // Who recorded this payment
   recordedBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -39,6 +39,7 @@ const RepaymentHistory = memo(() => {
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Method</th>
+                <th>Late Fee</th>
                 <th>Recorded By</th>
                 <th>Remarks</th>
               </tr>
@@ -56,6 +57,7 @@ const RepaymentHistory = memo(() => {
                        repayment.paymentMethod === 'upi' ? 'UPI' : 'Other'}
                     </span>
                   </td>
+                  <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
                   <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                   <td className="remarks-cell">{repayment.remarks || '-'}</td>
                 </tr>

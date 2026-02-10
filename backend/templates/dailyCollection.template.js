@@ -166,13 +166,14 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
   // Table column widths (adjusted to fit within PAGE_WIDTH)
   // Total should equal PAGE_WIDTH to match top summary section
   const colWidths = {
-    sno: 30,
-    loanAccount: 85,
-    memberName: 95,
-    amount: 80,
-    method: 60,
-    recordedBy: 80,
-    remarks: 65,
+    sno: 28,
+    loanAccount: 78,
+    memberName: 88,
+    amount: 72,
+    method: 52,
+    lateFee: 40,
+    recordedBy: 72,
+    remarks: 85,
   };
 
   // Calculate current total and scale to match PAGE_WIDTH exactly
@@ -207,8 +208,8 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
   // Header cells with borders (centered vertically and horizontally)
   doc.fillColor('#000000');
   
-  const headerTexts = ['S.No', 'Loan Account', 'Member Name', 'Amount', 'Method', 'Recorded By', 'Remarks'];
-  const headerWidths = [colWidths.sno, colWidths.loanAccount, colWidths.memberName, colWidths.amount, colWidths.method, colWidths.recordedBy, colWidths.remarks];
+  const headerTexts = ['S.No', 'Loan Account', 'Member Name', 'Amount', 'Method', 'Late Fee', 'Recorded By', 'Remarks'];
+  const headerWidths = [colWidths.sno, colWidths.loanAccount, colWidths.memberName, colWidths.amount, colWidths.method, colWidths.lateFee, colWidths.recordedBy, colWidths.remarks];
   
   headerTexts.forEach((text, idx) => {
     const cellWidth = headerWidths[idx];
@@ -227,8 +228,8 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
 
   y += 20;
 
-  // Table rows with dynamic height
-  doc.fontSize(FONT_SIZE).font('Helvetica');
+  // Table rows with dynamic height (text centered in each cell)
+  doc.fontSize(FONT_SIZE).font('Helvetica').lineGap(0);
   const cellPadding = 5;
   const minRowHeight = 20;
   
@@ -239,7 +240,7 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
       y = 50;
     }
 
-    // Calculate cell heights for this row
+    // Calculate cell heights for this row (fluid: height from content)
     const cellTexts = {
       sno: String(index + 1),
       loanAccount: repayment.loan?.loanAccountNumber || 'N/A',
@@ -248,49 +249,41 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
       method: repayment.paymentMethod === 'cash' ? 'Cash' :
               repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
               repayment.paymentMethod === 'upi' ? 'UPI' : 'Other',
+      lateFee: repayment.isLateFee ? 'Yes' : 'No',
       recordedBy: repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A',
       remarks: repayment.remarks || '-',
     };
 
-    // Calculate height for each cell (with text wrapping)
     const cellHeights = {
       sno: doc.heightOfString(cellTexts.sno, { width: colWidths.sno - cellPadding * 2 }) + cellPadding * 2,
       loanAccount: doc.heightOfString(cellTexts.loanAccount, { width: colWidths.loanAccount - cellPadding * 2 }) + cellPadding * 2,
       memberName: doc.heightOfString(cellTexts.memberName, { width: colWidths.memberName - cellPadding * 2 }) + cellPadding * 2,
       amount: doc.heightOfString(cellTexts.amount, { width: colWidths.amount - cellPadding * 2 }) + cellPadding * 2,
       method: doc.heightOfString(cellTexts.method, { width: colWidths.method - cellPadding * 2 }) + cellPadding * 2,
+      lateFee: doc.heightOfString(cellTexts.lateFee, { width: colWidths.lateFee - cellPadding * 2 }) + cellPadding * 2,
       recordedBy: doc.heightOfString(cellTexts.recordedBy, { width: colWidths.recordedBy - cellPadding * 2 }) + cellPadding * 2,
       remarks: doc.heightOfString(cellTexts.remarks, { width: colWidths.remarks - cellPadding * 2 }) + cellPadding * 2,
     };
 
-    // Row height is the maximum of all cell heights
     const rowHeight = Math.max(...Object.values(cellHeights), minRowHeight);
     const baseY = y;
     x = START_X;
 
-    // Draw all cells with centered content (both horizontally and vertically)
-    const cellKeys = ['sno', 'loanAccount', 'memberName', 'amount', 'method', 'recordedBy', 'remarks'];
-    const cellWidths = [colWidths.sno, colWidths.loanAccount, colWidths.memberName, colWidths.amount, colWidths.method, colWidths.recordedBy, colWidths.remarks];
+    const cellKeys = ['sno', 'loanAccount', 'memberName', 'amount', 'method', 'lateFee', 'recordedBy', 'remarks'];
+    const cellWidths = [colWidths.sno, colWidths.loanAccount, colWidths.memberName, colWidths.amount, colWidths.method, colWidths.lateFee, colWidths.recordedBy, colWidths.remarks];
     
     cellKeys.forEach((key, idx) => {
       const cellWidth = cellWidths[idx];
       const cellText = cellTexts[key];
-      
-      // Calculate actual text height for this cell
-      const actualTextHeight = doc.heightOfString(cellText, { width: cellWidth - cellPadding * 2 });
-      
-      // Draw cell border
+      const textBoxWidth = cellWidth - cellPadding * 2;
+      const actualTextHeight = doc.heightOfString(cellText, { width: textBoxWidth });
+
       doc.rect(x, baseY, cellWidth, rowHeight).lineWidth(0.5).stroke(BORDER_COLOR);
-      
-      // Calculate vertical offset for centering
       const verticalOffset = (rowHeight - actualTextHeight) / 2;
-      
-      // Draw text centered both horizontally and vertically
-      doc.text(cellText, x + cellPadding, baseY + verticalOffset, { 
-        width: cellWidth - cellPadding * 2, 
-        align: 'center' 
+      doc.text(cellText, x + cellPadding, baseY + verticalOffset, {
+        width: textBoxWidth,
+        align: 'center',
       });
-      
       x += cellWidth;
     });
 

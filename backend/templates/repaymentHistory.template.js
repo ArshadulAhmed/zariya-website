@@ -181,85 +181,101 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
     return;
   }
 
-  // Table column widths (removed recordedBy and recordedAt)
+  // Table column widths: S.No, Date, Amount, Method, Late Fee, Remarks (total = PAGE_WIDTH)
   const colWidths = {
-    sno: 50,
-    date: 150,
-    amount: 150,
-    method: 165,
+    sno: 35,
+    date: 95,
+    amount: 85,
+    method: 85,
+    lateFee: 45,
+    remarks: 170,
   };
+  const tableWidth = PAGE_WIDTH;
 
-  const tableWidth = Object.values(colWidths).reduce((sum, w) => sum + w, 0);
-
-  // Table header
+  // Table header with cell borders
+  const headerHeight = 20;
+  const headerPadding = 5;
   doc.fontSize(TABLE_HEADER_FONT_SIZE).font('Helvetica-Bold');
   let x = START_X;
-  
-  // Draw header background
-  doc.rect(START_X, y, tableWidth, 20)
-     .fill('#f0f0f0');
+  const headerY = y;
 
-  // Header cells
+  doc.rect(START_X, headerY, tableWidth, headerHeight).fill('#f0f0f0');
   doc.fillColor('#000000');
-  doc.text('S.No', x + 5, y + 6);
-  x += colWidths.sno;
 
-  doc.text('Date', x + 5, y + 6);
-  x += colWidths.date;
+  const headerTexts = ['S.No', 'Date', 'Amount', 'Payment Method', 'Late Fee', 'Remarks'];
+  const headerWidths = [colWidths.sno, colWidths.date, colWidths.amount, colWidths.method, colWidths.lateFee, colWidths.remarks];
 
-  doc.text('Amount', x + 5, y + 6);
-  x += colWidths.amount;
+  headerTexts.forEach((text, idx) => {
+    const cellWidth = headerWidths[idx];
+    doc.rect(x, headerY, cellWidth, headerHeight).lineWidth(0.7).stroke(BORDER_COLOR);
+    const textHeight = doc.heightOfString(text, { width: cellWidth - headerPadding * 2 });
+    const verticalOffset = (headerHeight - textHeight) / 2;
+    doc.text(text, x + headerPadding, headerY + verticalOffset, {
+      width: cellWidth - headerPadding * 2,
+      align: 'center',
+    });
+    x += cellWidth;
+  });
 
-  doc.text('Payment Method', x + 5, y + 6);
+  y += headerHeight;
 
-  // Draw header border
-  doc.rect(START_X, y, tableWidth, 20)
-     .lineWidth(0.7)
-     .stroke(BORDER_COLOR);
+  // Table rows with fluid height (text centered in each cell)
+  doc.fontSize(FONT_SIZE).font('Helvetica').lineGap(0);
+  const cellPadding = 5;
+  const minRowHeight = 20;
 
-  y += 20;
-
-  // Table rows
-  doc.fontSize(FONT_SIZE).font('Helvetica');
   repayments.forEach((repayment, index) => {
-    // Check if we need a new page
     if (y > doc.page.height - 100) {
       doc.addPage();
       y = 50;
     }
 
-    const rowHeight = 25;
-    x = START_X;
-
-    // Draw row border
-    doc.rect(START_X, y, tableWidth, rowHeight)
-       .lineWidth(0.5)
-       .stroke(BORDER_COLOR);
-
-    // S.No
-    doc.text(String(index + 1), x + 5, y + 8);
-    x += colWidths.sno;
-
-    // Date
-    doc.text(formatDate(repayment.paymentDate), x + 5, y + 8);
-    x += colWidths.date;
-
-    // Amount
-    doc.text(formatCurrency(repayment.amount), x + 5, y + 8);
-    x += colWidths.amount;
-
-    // Method
     const method = repayment.paymentMethod === 'cash' ? 'Cash' :
                    repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
                    repayment.paymentMethod === 'upi' ? 'UPI' : 'Other';
-    doc.text(method, x + 5, y + 8);
+
+    const cellTexts = {
+      sno: String(index + 1),
+      date: formatDate(repayment.paymentDate),
+      amount: formatCurrency(repayment.amount),
+      method,
+      lateFee: repayment.isLateFee ? 'Yes' : 'No',
+      remarks: repayment.remarks || '-',
+    };
+
+    const cellHeights = {
+      sno: doc.heightOfString(cellTexts.sno, { width: colWidths.sno - cellPadding * 2 }) + cellPadding * 2,
+      date: doc.heightOfString(cellTexts.date, { width: colWidths.date - cellPadding * 2 }) + cellPadding * 2,
+      amount: doc.heightOfString(cellTexts.amount, { width: colWidths.amount - cellPadding * 2 }) + cellPadding * 2,
+      method: doc.heightOfString(cellTexts.method, { width: colWidths.method - cellPadding * 2 }) + cellPadding * 2,
+      lateFee: doc.heightOfString(cellTexts.lateFee, { width: colWidths.lateFee - cellPadding * 2 }) + cellPadding * 2,
+      remarks: doc.heightOfString(cellTexts.remarks, { width: colWidths.remarks - cellPadding * 2 }) + cellPadding * 2,
+    };
+
+    const rowHeight = Math.max(...Object.values(cellHeights), minRowHeight);
+    const baseY = y;
+    x = START_X;
+
+    const cellKeys = ['sno', 'date', 'amount', 'method', 'lateFee', 'remarks'];
+    const cellWidths = [colWidths.sno, colWidths.date, colWidths.amount, colWidths.method, colWidths.lateFee, colWidths.remarks];
+
+    cellKeys.forEach((key, idx) => {
+      const cellWidth = cellWidths[idx];
+      const cellText = cellTexts[key];
+      const textBoxWidth = cellWidth - cellPadding * 2;
+      const actualTextHeight = doc.heightOfString(cellText, { width: textBoxWidth });
+      doc.rect(x, baseY, cellWidth, rowHeight).lineWidth(0.5).stroke(BORDER_COLOR);
+      const verticalOffset = (rowHeight - actualTextHeight) / 2;
+      doc.text(cellText, x + cellPadding, baseY + verticalOffset, {
+        width: textBoxWidth,
+        align: 'center',
+      });
+      x += cellWidth;
+    });
 
     y += rowHeight;
   });
 
-  // Draw final bottom border
-  doc.rect(START_X, y, tableWidth, 0)
-     .lineWidth(0.7)
-     .stroke(BORDER_COLOR);
+  doc.rect(START_X, y, tableWidth, 0).lineWidth(0.7).stroke(BORDER_COLOR);
 };
 

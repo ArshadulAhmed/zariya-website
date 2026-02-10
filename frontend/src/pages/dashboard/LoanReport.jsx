@@ -430,6 +430,7 @@ const LoanReport = () => {
                             <th>Payment Date</th>
                             <th>Amount</th>
                             <th>Payment Method</th>
+                            <th>Late Fee</th>
                             <th>Recorded By</th>
                             <th>Recorded At</th>
                           </tr>
@@ -447,6 +448,7 @@ const LoanReport = () => {
                                    repayment.paymentMethod || 'N/A'}
                                 </span>
                               </td>
+                              <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
                               <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                               <td>{formatDate(repayment.createdAt)}</td>
                             </tr>

@@ -19,7 +19,7 @@ export const createRepayment = async (req, res) => {
       });
     }
 
-    const { loan, amount, paymentDate, paymentMethod, remarks } = req.body;
+    const { loan, amount, paymentDate, paymentMethod, remarks, isLateFee } = req.body;
 
     // Verify loan exists and is active/approved
     const loanDoc = await Loan.findById(loan);
@@ -43,6 +43,7 @@ export const createRepayment = async (req, res) => {
       paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
       paymentMethod: paymentMethod || 'cash',
       remarks: remarks?.trim() || '',
+      isLateFee: Boolean(isLateFee),
       recordedBy: req.user.id
     };
 
@@ -209,12 +210,13 @@ export const updateRepayment = async (req, res) => {
       });
     }
 
-    const { amount, paymentDate, paymentMethod, remarks } = req.body;
+    const { amount, paymentDate, paymentMethod, remarks, isLateFee } = req.body;
 
     if (amount !== undefined) repayment.amount = parseFloat(amount);
     if (paymentDate !== undefined) repayment.paymentDate = new Date(paymentDate);
     if (paymentMethod !== undefined) repayment.paymentMethod = paymentMethod;
     if (remarks !== undefined) repayment.remarks = remarks?.trim() || '';
+    if (isLateFee !== undefined) repayment.isLateFee = Boolean(isLateFee);
 
     await repayment.save();
 

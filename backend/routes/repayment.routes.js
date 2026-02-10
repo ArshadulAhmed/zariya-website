@@ -37,7 +37,11 @@ const createRepaymentValidation = [
     .withMessage('Invalid payment method'),
   body('remarks')
     .optional()
-    .trim()
+    .trim(),
+  body('isLateFee')
+    .optional()
+    .isBoolean()
+    .withMessage('isLateFee must be true or false')
 ];
 
 const updateRepaymentValidation = [
@@ -56,7 +60,11 @@ const updateRepaymentValidation = [
     .withMessage('Invalid payment method'),
   body('remarks')
     .optional()
-    .trim()
+    .trim(),
+  body('isLateFee')
+    .optional()
+    .isBoolean()
+    .withMessage('isLateFee must be true or false')
 ];
 
 // Routes

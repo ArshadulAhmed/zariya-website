@@ -78,7 +78,7 @@
 
           .amount-cell {
             font-weight: 500;
-            font-family: 'Courier New', monospace;
+            font-family: 'Poppins', sans-serif;
 
             &.remaining-amount {
               color: #dc2626;
@@ -96,8 +96,8 @@
           .repayment-method-select,
           .repayment-remarks-input {
             width: 100%;
-            max-width: 150px;
-            padding: 0.5rem 0.6rem;
+            max-width: 100%;
+            padding: 0.4rem 0.5rem;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             font-size: 0.76rem;
@@ -129,11 +129,40 @@
 
           .repayment-method-select {
             width: 100%;
-            min-width: 120px;
+            min-width: 0;
           }
 
           .repayment-remarks-input {
-            max-width: 200px;
+            max-width: 100%;
+          }
+
+          .late-fee-checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-primary);
+            user-select: none;
+          }
+
+          .late-fee-checkbox {
+            width: 1rem;
+            height: 1rem;
+            margin: 0;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+            flex-shrink: 0;
+
+            &:disabled {
+              cursor: not-allowed;
+              opacity: 0.6;
+            }
+          }
+
+          .late-fee-label-text {
+            white-space: nowrap;
           }
         }
       }

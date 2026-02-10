@@ -34,6 +34,7 @@ const RepaymentForm = () => {
     paymentDate: new Date().toISOString().split('T')[0],
     paymentMethod: 'cash',
     remarks: '',
+    isLateFee: false,
   })
   const [repaymentErrors, setRepaymentErrors] = useState({})
   const [isSubmittingRepayment, setIsSubmittingRepayment] = useState(false)
@@ -97,6 +98,7 @@ const RepaymentForm = () => {
         paymentDate: paymentDateWithTime,
         paymentMethod: repaymentForm.paymentMethod,
         remarks: repaymentForm.remarks.trim() || undefined,
+        isLateFee: Boolean(repaymentForm.isLateFee),
       })
 
       if (response.success) {
@@ -106,6 +108,7 @@ const RepaymentForm = () => {
           paymentDate: new Date().toISOString().split('T')[0],
           paymentMethod: 'cash',
           remarks: '',
+          isLateFee: false,
         })
         setRepaymentErrors({})
         // Refresh loan and repayments
@@ -187,6 +190,18 @@ const RepaymentForm = () => {
             multiline
             rows={2}
           />
+
+          <div className="form-field checkbox-field">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="isLateFee"
+                checked={Boolean(repaymentForm.isLateFee)}
+                onChange={(e) => setRepaymentForm((prev) => ({ ...prev, isLateFee: e.target.checked }))}
+              />
+              <span>Late fee payment</span>
+            </label>
+          </div>
         </div>
 
         {repaymentErrors.submit && (
