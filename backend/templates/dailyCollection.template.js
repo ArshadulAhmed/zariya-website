@@ -1,11 +1,23 @@
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 import { drawPDFHeader } from './pdfHeader.template.js';
+
+const DEBUG_LOG = path.resolve(process.cwd(), '..', '.cursor', 'debug.log');
+const debugLog = (message, data, hypothesisId) => {
+  try {
+    fs.appendFileSync(DEBUG_LOG, JSON.stringify({ timestamp: Date.now(), location: 'dailyCollection.template.js', message, data: data || {}, hypothesisId }) + '\n');
+  } catch (e) {}
+};
 
 /**
  * Daily Collection PDF – Table Layout with Same Header as NOC
  * totalCollection = totalLateFee + emiCollection
  */
 export const generateDailyCollectionPDF = (doc, date, repayments, totalCollection, totalLateFee, emiCollection, collectionByMethod, logoPath) => {
+  // #region agent log
+  debugLog('generateDailyCollectionPDF start', { repaymentsCount: repayments?.length, pageHeight: doc?.page?.height }, 'H4');
+  // #endregion
 
   /* -------------------- Helpers -------------------- */
 
@@ -92,6 +104,23 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
     y += h;
   };
 
+  const FOOTER_HEIGHT = 35;
+  const BOTTOM_MARGIN = 50;
+  const drawPageFooter = (pageNum, totalPages) => {
+    doc.save();
+    doc.fontSize(8).font('Helvetica');
+    const footerText = totalPages != null ? `Page ${pageNum}/${totalPages}` : `Page ${pageNum}`;
+    const pageHeight = doc.page.height;
+    const contentBottom = pageHeight - BOTTOM_MARGIN;
+    const footerY = contentBottom - 15;
+    const textWidth = doc.widthOfString(footerText);
+    const centerX = START_X + (PAGE_WIDTH - textWidth) / 2;
+    doc.text(footerText, centerX, footerY);
+    doc.restore();
+  };
+
+  let pageNum = 1;
+
   /* -------------------- HEADER -------------------- */
   y = drawPDFHeader(doc, {
     logoPath,
@@ -165,6 +194,7 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
   if (repayments.length === 0) {
     doc.fontSize(FONT_SIZE).font('Helvetica');
     doc.text('No collections found for the selected date.', START_X, y);
+    drawPageFooter(pageNum);
     return;
   }
 
@@ -237,15 +267,61 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
   doc.fontSize(FONT_SIZE).font('Helvetica').lineGap(0);
   const cellPadding = 5;
   const minRowHeight = 20;
-  
+  const threshold = doc.page.height - 100 - FOOTER_HEIGHT;
+
+  // Precompute all row heights once (same font/layout as draw loop)
+  const rowHeights = repayments.map((repayment, index) => {
+    const cellTexts = {
+      sno: String(index + 1),
+      loanAccount: repayment.loan?.loanAccountNumber || 'N/A',
+      memberName: repayment.loan?.membership?.fullName || 'N/A',
+      amount: formatCurrency(repayment.amount),
+      method: repayment.paymentMethod === 'cash' ? 'Cash' : repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : repayment.paymentMethod === 'upi' ? 'UPI' : 'Other',
+      lateFee: repayment.isLateFee ? 'Yes' : 'No',
+      recordedBy: repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A',
+      remarks: repayment.remarks || '-',
+    };
+    const cellHeights = {
+      sno: doc.heightOfString(cellTexts.sno, { width: colWidths.sno - cellPadding * 2 }) + cellPadding * 2,
+      loanAccount: doc.heightOfString(cellTexts.loanAccount, { width: colWidths.loanAccount - cellPadding * 2 }) + cellPadding * 2,
+      memberName: doc.heightOfString(cellTexts.memberName, { width: colWidths.memberName - cellPadding * 2 }) + cellPadding * 2,
+      amount: doc.heightOfString(cellTexts.amount, { width: colWidths.amount - cellPadding * 2 }) + cellPadding * 2,
+      method: doc.heightOfString(cellTexts.method, { width: colWidths.method - cellPadding * 2 }) + cellPadding * 2,
+      lateFee: doc.heightOfString(cellTexts.lateFee, { width: colWidths.lateFee - cellPadding * 2 }) + cellPadding * 2,
+      recordedBy: doc.heightOfString(cellTexts.recordedBy, { width: colWidths.recordedBy - cellPadding * 2 }) + cellPadding * 2,
+      remarks: doc.heightOfString(cellTexts.remarks, { width: colWidths.remarks - cellPadding * 2 }) + cellPadding * 2,
+    };
+    return Math.max(...Object.values(cellHeights), minRowHeight);
+  });
+
+  // Simulate layout with precomputed heights so totalPages matches actual page count
+  let simY = y;
+  let simPageNum = 1;
+  for (let i = 0; i < rowHeights.length; i++) {
+    if (simY > threshold) {
+      simPageNum += 1;
+      simY = 50;
+    }
+    simY += rowHeights[i];
+  }
+  const totalPages = simPageNum;
+
   repayments.forEach((repayment, index) => {
-    // Check if we need a new page
-    if (y > doc.page.height - 100) {
+    const willBreak = y > threshold;
+    // #region agent log
+    debugLog('loop check', { index, total: repayments.length, y, threshold, willBreak, pageNum, isLastRow: index === repayments.length - 1 }, 'H2');
+    // #endregion
+    // Reserve FOOTER_HEIGHT at bottom so footer stays on same page; trigger new page earlier
+    if (willBreak) {
+      drawPageFooter(pageNum, totalPages);
+      pageNum += 1;
       doc.addPage();
+      // #region agent log
+      debugLog('addPage called', { pageNumAfter: pageNum, index }, 'H2');
+      // #endregion
       y = 50;
     }
 
-    // Calculate cell heights for this row (fluid: height from content)
     const cellTexts = {
       sno: String(index + 1),
       loanAccount: repayment.loan?.loanAccountNumber || 'N/A',
@@ -259,18 +335,7 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
       remarks: repayment.remarks || '-',
     };
 
-    const cellHeights = {
-      sno: doc.heightOfString(cellTexts.sno, { width: colWidths.sno - cellPadding * 2 }) + cellPadding * 2,
-      loanAccount: doc.heightOfString(cellTexts.loanAccount, { width: colWidths.loanAccount - cellPadding * 2 }) + cellPadding * 2,
-      memberName: doc.heightOfString(cellTexts.memberName, { width: colWidths.memberName - cellPadding * 2 }) + cellPadding * 2,
-      amount: doc.heightOfString(cellTexts.amount, { width: colWidths.amount - cellPadding * 2 }) + cellPadding * 2,
-      method: doc.heightOfString(cellTexts.method, { width: colWidths.method - cellPadding * 2 }) + cellPadding * 2,
-      lateFee: doc.heightOfString(cellTexts.lateFee, { width: colWidths.lateFee - cellPadding * 2 }) + cellPadding * 2,
-      recordedBy: doc.heightOfString(cellTexts.recordedBy, { width: colWidths.recordedBy - cellPadding * 2 }) + cellPadding * 2,
-      remarks: doc.heightOfString(cellTexts.remarks, { width: colWidths.remarks - cellPadding * 2 }) + cellPadding * 2,
-    };
-
-    const rowHeight = Math.max(...Object.values(cellHeights), minRowHeight);
+    const rowHeight = rowHeights[index];
     const baseY = y;
     x = START_X;
 
@@ -293,19 +358,28 @@ export const generateDailyCollectionPDF = (doc, date, repayments, totalCollectio
     });
 
     y += rowHeight;
+
+    // #region agent log
+    if (index === repayments.length - 1) {
+      debugLog('last row drawn', { index, y, pageNum, docY: typeof doc.y === 'number' ? doc.y : undefined }, 'H3');
+    }
+    // #endregion
+    if (index === repayments.length - 1) {
+      drawPageFooter(pageNum, totalPages);
+    }
   });
 
   y += 10;
 
-  // Summary section
+  // #region agent log
+  debugLog('template end', { pageNum, y, docY: typeof doc.y === 'number' ? doc.y : undefined }, 'H4');
+  // #endregion
+
+  // Summary section (commented)
   // doc.fontSize(FONT_SIZE).font('Helvetica-Bold');
   // doc.text('Summary:', START_X, y);
-  // y += 15;
-
   // doc.font('Helvetica');
   // doc.text(`Total Transactions: ${repayments.length}`, START_X, y);
-  // y += 12;
-
   // doc.text(`Total Collection: ${formatCurrency(totalCollection)}`, START_X, y);
 };
 

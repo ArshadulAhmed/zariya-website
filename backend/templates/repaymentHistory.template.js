@@ -91,6 +91,21 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
     y += h;
   };
 
+  const FOOTER_HEIGHT = 35;
+  const BOTTOM_MARGIN = 50;
+  const drawPageFooter = (pageNum, totalPages) => {
+    doc.save();
+    doc.fontSize(8).font('Helvetica');
+    const footerText = totalPages != null ? `Page ${pageNum}/${totalPages}` : `Page ${pageNum}`;
+    const pageHeight = doc.page.height;
+    const contentBottom = pageHeight - BOTTOM_MARGIN;
+    const footerY = contentBottom - 15;
+    const textWidth = doc.widthOfString(footerText);
+    const centerX = START_X + (PAGE_WIDTH - textWidth) / 2;
+    doc.text(footerText, centerX, footerY);
+    doc.restore();
+  };
+
   /* -------------------- HEADER -------------------- */
   y = drawPDFHeader(doc, {
     logoPath,
@@ -178,6 +193,7 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
   if (repayments.length === 0) {
     doc.fontSize(FONT_SIZE).font('Helvetica');
     doc.text('No repayment records found.', START_X, y);
+    drawPageFooter(1, 1);
     return;
   }
 
@@ -223,9 +239,45 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
   doc.fontSize(FONT_SIZE).font('Helvetica').lineGap(0);
   const cellPadding = 5;
   const minRowHeight = 20;
+  const threshold = doc.page.height - 100 - FOOTER_HEIGHT;
+  let pageNum = 1;
+
+  // Simulate layout to get total page count for "Page X/Y" footer
+  let simY = y;
+  let simPageNum = 1;
+  repayments.forEach((repayment, index) => {
+    if (simY > threshold) {
+      simPageNum += 1;
+      simY = 50;
+    }
+    const method = repayment.paymentMethod === 'cash' ? 'Cash' :
+                   repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
+                   repayment.paymentMethod === 'upi' ? 'UPI' : 'Other';
+    const cellTexts = {
+      sno: String(index + 1),
+      date: formatDate(repayment.paymentDate),
+      amount: formatCurrency(repayment.amount),
+      method,
+      lateFee: repayment.isLateFee ? 'Yes' : 'No',
+      remarks: repayment.remarks || '-',
+    };
+    const cellHeights = {
+      sno: doc.heightOfString(cellTexts.sno, { width: colWidths.sno - cellPadding * 2 }) + cellPadding * 2,
+      date: doc.heightOfString(cellTexts.date, { width: colWidths.date - cellPadding * 2 }) + cellPadding * 2,
+      amount: doc.heightOfString(cellTexts.amount, { width: colWidths.amount - cellPadding * 2 }) + cellPadding * 2,
+      method: doc.heightOfString(cellTexts.method, { width: colWidths.method - cellPadding * 2 }) + cellPadding * 2,
+      lateFee: doc.heightOfString(cellTexts.lateFee, { width: colWidths.lateFee - cellPadding * 2 }) + cellPadding * 2,
+      remarks: doc.heightOfString(cellTexts.remarks, { width: colWidths.remarks - cellPadding * 2 }) + cellPadding * 2,
+    };
+    const rowHeight = Math.max(...Object.values(cellHeights), minRowHeight);
+    simY += rowHeight;
+  });
+  const totalPages = simPageNum;
 
   repayments.forEach((repayment, index) => {
-    if (y > doc.page.height - 100) {
+    if (y > threshold) {
+      drawPageFooter(pageNum, totalPages);
+      pageNum += 1;
       doc.addPage();
       y = 50;
     }
@@ -274,6 +326,10 @@ export const generateRepaymentHistoryPDF = (doc, loan, repayments, totalPaid, lo
     });
 
     y += rowHeight;
+
+    if (index === repayments.length - 1) {
+      drawPageFooter(pageNum, totalPages);
+    }
   });
 
   doc.rect(START_X, y, tableWidth, 0).lineWidth(0.7).stroke(BORDER_COLOR);

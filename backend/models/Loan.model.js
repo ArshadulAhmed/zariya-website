@@ -238,9 +238,11 @@ loanSchema.pre('save', async function(next) {
   if (!this.loanAccountNumber) {
     try {
       // Generate format: ZLID202500001 (ZLID + Year + 5 digit sequential)
-      const date = new Date();
-      const year = date.getFullYear();
-      
+      // Original formula - restore when last year loans are manually entered in system:
+      // const date = new Date();
+      // const year = date.getFullYear();
+      const year = 2025; // Hardcoded for now; change back to formula above when ready.
+
       // Use atomic counter to get next sequence number for the year
       // This ensures thread-safe sequence generation
       const sequence = await getNextSequence(`loan-${year}`);

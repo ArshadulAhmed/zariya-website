@@ -186,3 +186,9 @@ section {
   }
 }
 
+// MUI Tooltip – match app font (Poppins)
+.MuiTooltip-tooltip {
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 0.8125rem;
+}
+
