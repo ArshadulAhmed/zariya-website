@@ -107,7 +107,9 @@ const loanApplicationSchema = new mongoose.Schema({
 loanApplicationSchema.pre('save', async function(next) {
   if (!this.applicationNumber && this.isNew) {
     try {
-      const year = new Date().getFullYear();
+      // Original formula - restore when last year applications are manually entered in system:
+      // const year = new Date().getFullYear();
+      const year = 2025; // Hardcoded for now; change back to formula above when ready.
       const sequence = await getNextSequence(`loan-application-${year}`);
       this.applicationNumber = `ZLAP-${year}${String(sequence).padStart(5, '0')}`;
     } catch (error) {
