@@ -1,0 +1,125 @@
+@use '../../styles/main.scss' as *;
+
+.loan-applications-page {
+  padding: 26px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 8px 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .page-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 15px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
+
+      &:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 95, 63, 0.3);
+      }
+    }
+  }
+
+  .page-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+
+    .search-input-group {
+      min-width: 20%;
+
+      .search-input {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s ease;
+        line-height: 1.4375em;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+        }
+      }
+    }
+
+    .filter-select-group {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  .status-under-review {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .status-approved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .loan-applications-page {
+    padding: 20px 16px;
+
+    .page-header {
+      flex-direction: column;
+      gap: 16px;
+
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    .page-filters {
+      flex-direction: column;
+
+      .search-input-group,
+      .filter-select-group {
+        width: 100%;
+      }
+    }
+  }
+}

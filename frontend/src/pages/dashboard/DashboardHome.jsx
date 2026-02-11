@@ -108,19 +108,38 @@ const DashboardHome = memo(() => {
               <ActivitySkeleton itemCount={5} />
             ) : activities.length > 0 ? (
               <div className="activity-list">
-                {activities.map((activity) => (
-                  <div key={`${activity.type}-${activity.id}`} className="activity-item">
-                    <div className="activity-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                {activities.map((activity) => {
+                  const handleActivityClick = () => {
+                    if (activity.type === 'membership' && activity.userId) {
+                      navigate(`/dashboard/memberships/${activity.userId}`)
+                    } else if (activity.type === 'loan_application') {
+                      navigate(`/dashboard/loan-applications/${activity.applicationNumber || activity.id}`)
+                    } else if (activity.type === 'loan') {
+                      navigate(`/dashboard/loans/${activity.loanAccountNumber || activity.id}`)
+                    }
+                  }
+                  const clickable = (activity.type === 'membership' && activity.userId) || activity.type === 'loan_application' || activity.type === 'loan'
+                  return (
+                    <div
+                      key={`${activity.type}-${activity.id}`}
+                      className={`activity-item ${clickable ? 'clickable' : ''}`}
+                      onClick={clickable ? handleActivityClick : undefined}
+                      onKeyDown={clickable ? (e) => e.key === 'Enter' && handleActivityClick() : undefined}
+                      role={clickable ? 'button' : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                    >
+                      <div className="activity-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                      <div className="activity-content">
+                        <div className="activity-text">{activity.title}</div>
+                        <div className="activity-time">{getTimeAgo(activity.timestamp)}</div>
+                      </div>
                     </div>
-                    <div className="activity-content">
-                      <div className="activity-text">{activity.title}</div>
-                      <div className="activity-time">{getTimeAgo(activity.timestamp)}</div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="empty-state">
@@ -148,7 +167,16 @@ const DashboardHome = memo(() => {
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span>New Loan</span>
+                <span>New Loan Application</span>
+              </button>
+              <button className="action-btn" onClick={() => navigate('/dashboard/loan-applications')}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Loan Applications</span>
               </button>
               <button className="action-btn" onClick={() => navigate('/dashboard/memberships')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

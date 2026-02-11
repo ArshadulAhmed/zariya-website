@@ -16,7 +16,7 @@ const columns = [
   },
   {
     key: 'memberUserId',
-    header: 'User ID',
+    header: 'Member ID',
     width: '180px',
   },
   {
@@ -140,7 +140,7 @@ const Loans = memo(() => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Loans</h1>
-          <p className="page-subtitle">Manage loan applications and approvals</p>
+          <p className="page-subtitle">Manage disbursed loans (active, closed, defaulted)</p>
         </div>
         <button 
           className="btn-primary"
@@ -171,10 +171,10 @@ const Loans = memo(() => {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             placeholder="All Status"
             options={[
-              { value: 'pending', label: 'Pending' },
+              { value: '', label: 'All Status' },
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
-              { value: 'rejected', label: 'Rejected' }
+              { value: 'defaulted', label: 'Defaulted' }
             ]}
           />
         </div>

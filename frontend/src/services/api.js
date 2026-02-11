@@ -286,32 +286,6 @@ export const loansAPI = {
     }
   },
 
-  createLoan: async (loanData) => {
-    try {
-      const data = await apiRequest('/loans', {
-        method: 'POST',
-        body: JSON.stringify(loanData),
-      })
-      return data
-    } catch (error) {
-      console.error('Loans API createLoan error:', error)
-      throw error
-    }
-  },
-
-  reviewLoan: async (id, reviewData) => {
-    try {
-      const data = await apiRequest(`/loans/${id}/review`, {
-        method: 'PUT',
-        body: JSON.stringify(reviewData),
-      })
-      return data
-    } catch (error) {
-      console.error('Loans API reviewLoan error:', error)
-      throw error
-    }
-  },
-
   updateLoan: async (id, loanData) => {
     try {
       const data = await apiRequest(`/loans/${id}`, {
@@ -450,6 +424,57 @@ export const loansAPI = {
       return { success: true, message: 'Repayment history downloaded successfully' }
     } catch (error) {
       console.error('Loans API downloadRepaymentHistory error:', error)
+      throw error
+    }
+  },
+}
+
+// Loan Applications API (submit application; review creates Loan when approved)
+export const loanApplicationsAPI = {
+  createApplication: async (applicationData) => {
+    try {
+      const data = await apiRequest('/loan-applications', {
+        method: 'POST',
+        body: JSON.stringify(applicationData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Applications API createApplication error:', error)
+      throw error
+    }
+  },
+
+  getApplications: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/loan-applications${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan Applications API getApplications error:', error)
+      throw error
+    }
+  },
+
+  getApplication: async (id) => {
+    try {
+      const data = await apiRequest(`/loan-applications/${id}`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan Applications API getApplication error:', error)
+      throw error
+    }
+  },
+
+  reviewApplication: async (id, reviewData) => {
+    try {
+      const data = await apiRequest(`/loan-applications/${id}/review`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Applications API reviewApplication error:', error)
       throw error
     }
   },

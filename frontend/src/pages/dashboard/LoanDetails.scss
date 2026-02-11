@@ -218,7 +218,6 @@
         .id-value {
           font-size: 1rem;
           font-weight: 700;
-          font-family: 'Courier New', monospace;
           letter-spacing: 0.1em;
         }
 
@@ -258,14 +257,14 @@
     }
   }
 
+  /* Same design as Membership / Loan Application Details: single-column sections, member-info-grid */
   .details-grid {
     padding: 1.6rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1.6rem;
 
     @media (max-width: 768px) {
-      grid-template-columns: 1fr;
       padding: 1.2rem;
       gap: 1.2rem;
     }
@@ -282,92 +281,94 @@
     }
   }
 
-  .detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0.6rem 0;
-    gap: 0.8rem;
-    border-bottom: 1px solid #f3f4f6;
+  .member-info-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.8rem 1.6rem;
+    margin-bottom: 1.2rem;
 
-    &:last-child {
-      border-bottom: none;
+    @media (max-width: 1400px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: 1024px) {
+      grid-template-columns: repeat(2, 1fr);
     }
 
     @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+    }
+
+    .info-row {
+      display: flex;
       flex-direction: column;
+      align-items: flex-start;
       gap: 0.2rem;
-    }
+      padding: 0.6rem 0;
 
-    .detail-label {
-      font-size: 0.76rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-      flex-shrink: 0;
-      min-width: 120px;
-
-      @media (max-width: 768px) {
-        min-width: auto;
-      }
-    }
-
-    .detail-value {
-      font-size: 0.76rem;
-      color: var(--text-primary);
-      font-weight: 400;
-      text-align: right;
-      word-break: break-word;
-
-      @media (max-width: 768px) {
-        text-align: left;
-      }
-
-      &.rejection-reason {
-        color: #dc2626;
-        font-style: italic;
-      }
-
-      &.remaining-amount {
-        color: #dc2626;
+      .info-label {
+        font-size: 0.7rem;
         font-weight: 600;
+        color: var(--text-secondary);
+        min-width: 112px;
+        flex-shrink: 0;
       }
 
-      &.paid-full {
-        color: #059669;
+      .info-value {
+        font-size: 0.76rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        flex: 1;
+        word-break: break-word;
+
+        &.rejection-reason {
+          color: #dc2626;
+          font-style: italic;
+        }
+
+        &.remaining-amount {
+          color: #dc2626;
+          font-weight: 600;
+        }
+
+        &.paid-full {
+          color: #059669;
+          font-weight: 600;
+        }
+
+        .member-id-link {
+          color: var(--primary-color, #2563eb);
+          text-decoration: none;
+          font-weight: 600;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
         font-weight: 600;
-      }
-    }
 
-    .status-badge {
-      display: inline-block;
-      padding: 0.2rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: 600;
+        &.status-active {
+          background: #dbeafe;
+          color: #1e40af;
+        }
 
-      &.status-pending {
-        background: #fef3c7;
-        color: #92400e;
-      }
+        &.status-closed {
+          background: #e5e7eb;
+          color: #374151;
+        }
 
-      &.status-approved {
-        background: #d1fae5;
-        color: #065f46;
-      }
-
-      &.status-active {
-        background: #dbeafe;
-        color: #1e40af;
-      }
-
-      &.status-rejected {
-        background: #fee2e2;
-        color: #991b1b;
-      }
-
-      &.status-closed {
-        background: #e5e7eb;
-        color: #374151;
+        &.status-defaulted {
+          background: #fee2e2;
+          color: #991b1b;
+        }
       }
     }
   }

@@ -1,12 +1,10 @@
 import express from 'express';
 import { body } from 'express-validator';
 import {
-  createLoan,
   getLoans,
   getOngoingLoans,
   getLoan,
   getLoanByAccountNumber,
-  reviewLoan,
   updateLoan,
   downloadLoanContract,
   downloadLoanNOC,
@@ -20,217 +18,12 @@ const router = express.Router();
 router.use(protect);
 
 // Validation rules
-const createLoanValidation = [
-  body('membership')
-    .notEmpty()
-    .withMessage('Membership ID is required')
-    .isMongoId()
-    .withMessage('Invalid membership ID'),
-  body('mobileNumber')
-    .matches(/^\d{10}$/)
-    .withMessage('Mobile number must be 10 digits'),
-  body('email')
-    .optional()
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email'),
-  body('loanAmount')
-    .isFloat({ min: 1 })
-    .withMessage('Loan amount must be greater than 0'),
-  body('loanTenure')
-    .isInt({ min: 1 })
-    .withMessage('Loan tenure must be at least 1 day'),
-  body('purpose')
-    .trim()
-    .notEmpty()
-    .withMessage('Purpose of loan is required'),
-  body('installmentAmount')
-    .isFloat({ min: 1 })
-    .withMessage('Installment amount must be greater than 0'),
-  body('bankAccountNumber')
-    .optional()
-    .trim(),
-  body('nominee.name')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee name is required'),
-  body('nominee.relationship')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee relationship is required'),
-  body('nominee.bankAccountNumber')
-    .optional()
-    .trim(),
-  body('nominee.address.village')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee village is required'),
-  body('nominee.address.postOffice')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee post office is required'),
-  body('nominee.address.policeStation')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee police station is required'),
-  body('nominee.address.district')
-    .trim()
-    .notEmpty()
-    .withMessage('Nominee district is required'),
-  body('nominee.address.pinCode')
-    .matches(/^\d{6}$/)
-    .withMessage('Nominee PIN code must be 6 digits'),
-  body('guarantor.name')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor name is required'),
-  body('guarantor.fatherOrHusbandName')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor father\'s/husband\'s name is required'),
-  body('guarantor.relationship')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor relationship is required'),
-  body('guarantor.mobileNumber')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor mobile number is required')
-    .matches(/^\d{10}$/)
-    .withMessage('Guarantor mobile number must be 10 digits'),
-  body('guarantor.bankAccountNumber')
-    .optional()
-    .trim(),
-  body('guarantor.address.village')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor village is required'),
-  body('guarantor.address.postOffice')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor post office is required'),
-  body('guarantor.address.policeStation')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor police station is required'),
-  body('guarantor.address.district')
-    .trim()
-    .notEmpty()
-    .withMessage('Guarantor district is required'),
-  body('guarantor.address.pinCode')
-    .matches(/^\d{6}$/)
-    .withMessage('Guarantor PIN code must be 6 digits'),
-  // Co-Applicant validation (optional, but if provided, all fields are required)
-  body('coApplicant')
-    .optional()
-    .custom((value) => {
-      // If coApplicant is provided, it should be an object
-      if (value !== null && value !== undefined && typeof value !== 'object') {
-        throw new Error('Co-applicant must be an object');
-      }
-      return true;
-    }),
-  body('coApplicant.fullName')
-    .optional()
-    .custom((value, { req }) => {
-      // If coApplicant object exists, fullName is required
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant full name is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.fatherOrHusbandName')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant father\'s/husband\'s name is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.mobileNumber')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant) {
-        if (!value || value.trim() === '') {
-          throw new Error('Co-applicant mobile number is required when co-applicant is provided');
-        }
-        if (!/^\d{10}$/.test(value)) {
-          throw new Error('Co-applicant mobile number must be 10 digits');
-        }
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.email')
-    .optional()
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email for co-applicant'),
-  body('coApplicant.address.village')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant village is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.address.postOffice')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant post office is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.address.policeStation')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant police station is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.address.district')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant && (!value || value.trim() === '')) {
-        throw new Error('Co-applicant district is required when co-applicant is provided');
-      }
-      return true;
-    })
-    .trim(),
-  body('coApplicant.address.pinCode')
-    .optional()
-    .custom((value, { req }) => {
-      if (req.body.coApplicant) {
-        if (!value || value.trim() === '') {
-          throw new Error('Co-applicant PIN code is required when co-applicant is provided');
-        }
-        if (!/^\d{6}$/.test(value)) {
-          throw new Error('Co-applicant PIN code must be 6 digits');
-        }
-      }
-      return true;
-    })
-    .trim()
-];
-
 const updateLoanValidation = [
-  // Allow status change to 'closed' only (for admin when loan is fully paid)
-  // Other status changes should use /review endpoint
+  // Allow status change to 'closed' or 'defaulted' (admin)
   body('status')
     .optional()
-    .custom((value) => {
-      if (value !== undefined && value !== 'closed') {
-        throw new Error('Cannot change loan status through update endpoint. Use /review endpoint for approval/rejection, or set status to "closed" when loan is fully paid.');
-      }
-      return true;
-    }),
+    .isIn(['closed', 'defaulted'])
+    .withMessage('Status can only be changed to closed or defaulted'),
   // Allow updating loan details
   body('mobileNumber')
     .optional()
@@ -274,22 +67,8 @@ const updateLoanValidation = [
     })
 ];
 
-const reviewLoanValidation = [
-  body('status')
-    .isIn(['active', 'rejected'])
-    .withMessage('Status must be either active or rejected'),
-  body('rejectionReason')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Rejection reason cannot be empty if provided')
-];
-
 // Routes
-// Create loan - Admin or Employee
-router.post('/', isAdminOrEmployee, createLoanValidation, createLoan);
-
-// Get loans - Admin or Employee
+// Get loans - Admin or Employee (only disbursed loans: active, closed, defaulted)
 router.get('/', isAdminOrEmployee, getLoans);
 // Get ongoing loans (active only) for repayment records - Admin or Employee
 router.get('/ongoing', isAdminOrEmployee, getOngoingLoans);
@@ -310,11 +89,8 @@ router.get('/:id/repayment-history', isAdminOrEmployee, downloadRepaymentHistory
 // Get single loan - Must be after specific routes
 router.get('/:id', isAdminOrEmployee, getLoan);
 
-// Update loan - Admin only for active loans, Admin/Employee for pending/rejected
+// Update loan - Admin only for active/closed/defaulted loans (e.g. status to closed or defaulted)
 router.put('/:id', isAdminOrEmployee, updateLoanValidation, updateLoan);
-
-// Review loan - Admin only
-router.put('/:id/review', isAdmin, reviewLoanValidation, reviewLoan);
 
 export default router;
 

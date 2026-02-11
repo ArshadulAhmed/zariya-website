@@ -15,6 +15,8 @@ const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
 const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
+const LoanApplications = lazy(() => import('./pages/dashboard/LoanApplications'))
+const LoanApplicationDetails = lazy(() => import('./pages/dashboard/LoanApplicationDetails'))
 const NewLoan = lazy(() => import('./pages/dashboard/NewLoan'))
 const RepaymentRecords = lazy(() => import('./pages/dashboard/RepaymentRecords'))
 const RepaymentDetails = lazy(() => import('./pages/dashboard/RepaymentDetails'))
@@ -163,6 +165,22 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <MembershipDetails />
+            </Suspense>
+          }
+        />
+        <Route
+          path="loan-applications"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <LoanApplications />
+            </Suspense>
+          }
+        />
+        <Route
+          path="loan-applications/:id"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <LoanApplicationDetails />
             </Suspense>
           }
         />

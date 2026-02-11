@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import authReducer from './slices/authSlice'
 import loanReducer from './slices/loanSlice'
 import loansReducer from './slices/loansSlice'
+import loanApplicationsReducer from './slices/loanApplicationsSlice'
 import newLoanReducer from './slices/newLoanSlice'
 import membershipReducer from './slices/membershipSlice'
 import membershipsReducer from './slices/membershipsSlice'
@@ -16,6 +17,7 @@ export const store = configureStore({
     auth: authReducer,
     loan: loanReducer,
     loans: loansReducer,
+    loanApplications: loanApplicationsReducer,
     newLoan: newLoanReducer,
     membership: membershipReducer,
     memberships: membershipsReducer,
@@ -38,8 +40,8 @@ export const store = configureStore({
           'memberships/reviewMembership/fulfilled',
           'loans/fetchLoans/fulfilled',
           'loans/fetchLoan/fulfilled',
-          'loans/createLoan/fulfilled',
-          'loans/reviewLoan/fulfilled',
+          'loanApplications/createApplication/fulfilled',
+          'loanApplications/reviewApplication/fulfilled',
           'membership/updateFormData', // Ignore file upload actions
         ],
         // Ignore these paths in state (File objects)

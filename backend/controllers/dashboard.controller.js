@@ -1,5 +1,6 @@
 import Membership from '../models/Membership.model.js';
 import Loan from '../models/Loan.model.js';
+import LoanApplication from '../models/LoanApplication.model.js';
 import Repayment from '../models/Repayment.model.js';
 
 // @desc    Get dashboard statistics
@@ -26,7 +27,7 @@ export const getDashboardStats = async (req, res) => {
       ? ((totalMembers - lastMonthMembers) / lastMonthMembers * 100).toFixed(1)
       : 0;
 
-    // Total Loans
+    // Total Loans (disbursed only: active, closed, defaulted)
     const totalLoans = await Loan.countDocuments();
     const lastMonthLoans = await Loan.countDocuments({
       createdAt: { $lt: lastMonth }
@@ -35,33 +36,31 @@ export const getDashboardStats = async (req, res) => {
       ? ((totalLoans - lastMonthLoans) / lastMonthLoans * 100).toFixed(1)
       : 0;
 
-    // Pending Approvals (memberships + loans)
+    // Pending Approvals (memberships + loan applications under_review)
     const pendingMemberships = await Membership.countDocuments({ status: 'pending' });
-    const pendingLoans = await Loan.countDocuments({ status: 'pending' });
-    const totalPending = pendingMemberships + pendingLoans;
+    const pendingLoanApplications = await LoanApplication.countDocuments({ status: 'under_review' });
+    const totalPending = pendingMemberships + pendingLoanApplications;
     
-    // Pending from yesterday
     const yesterdayPending = await Membership.countDocuments({
       status: 'pending',
       createdAt: { $lt: today, $gte: yesterday }
-    }) + await Loan.countDocuments({
-      status: 'pending',
+    }) + await LoanApplication.countDocuments({
+      status: 'under_review',
       createdAt: { $lt: today, $gte: yesterday }
     });
     const pendingChange = totalPending - yesterdayPending;
 
-    // Total Disbursed (sum of all approved/active/closed loan amounts)
+    // Total Disbursed (sum of active/closed/defaulted loan amounts)
     const disbursedLoans = await Loan.find({
-      status: { $in: ['approved', 'active', 'closed'] }
+      status: { $in: ['active', 'closed', 'defaulted'] }
     }).select('loanAmount');
     
     const totalDisbursed = disbursedLoans.reduce((sum, loan) => {
       return sum + (loan.loanAmount || 0);
     }, 0);
 
-    // Last month disbursed
     const lastMonthDisbursedLoans = await Loan.find({
-      status: { $in: ['approved', 'active', 'closed'] },
+      status: { $in: ['active', 'closed', 'defaulted'] },
       createdAt: { $lt: lastMonth }
     }).select('loanAmount');
     
@@ -118,14 +117,19 @@ export const getRecentActivity = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
     
-    // Get recent memberships
     const recentMemberships = await Membership.find()
       .sort({ createdAt: -1 })
       .limit(limit)
       .select('userId fullName status createdAt')
       .lean();
 
-    // Get recent loans
+    const recentApplications = await LoanApplication.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('membership', 'userId fullName')
+      .select('applicationNumber status createdAt membership')
+      .lean();
+
     const recentLoans = await Loan.find()
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -133,21 +137,32 @@ export const getRecentActivity = async (req, res) => {
       .select('loanAccountNumber status createdAt membership')
       .lean();
 
-    // Combine and sort by date
     const activities = [
       ...recentMemberships.map(m => ({
         type: 'membership',
         id: m._id,
+        userId: m.userId,
         title: `New membership application received${m.userId ? ` - ${m.userId}` : ''}`,
         description: m.fullName || 'N/A',
         status: m.status,
         createdAt: m.createdAt,
         timestamp: m.createdAt
       })),
+      ...recentApplications.map(a => ({
+        type: 'loan_application',
+        id: a._id,
+        applicationNumber: a.applicationNumber,
+        title: `Loan application${a.applicationNumber ? ` - ${a.applicationNumber}` : ''}`,
+        description: a.membership?.fullName || 'N/A',
+        status: a.status,
+        createdAt: a.createdAt,
+        timestamp: a.createdAt
+      })),
       ...recentLoans.map(l => ({
         type: 'loan',
         id: l._id,
-        title: `New loan application received${l.loanAccountNumber ? ` - ${l.loanAccountNumber}` : ''}`,
+        loanAccountNumber: l.loanAccountNumber,
+        title: `Loan disbursed${l.loanAccountNumber ? ` - ${l.loanAccountNumber}` : ''}`,
         description: l.membership?.fullName || 'N/A',
         status: l.status,
         createdAt: l.createdAt,

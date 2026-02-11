@@ -20,8 +20,6 @@ const LoanDetails = () => {
   const hasFetchedRef = useRef(false)
   const lastLoanIdRef = useRef('')
 
-  console.log('selectedLoan', selectedLoan)
-
   useEffect(() => {
     if (id) {
       // Only fetch if loan ID has changed (prevents duplicate calls from StrictMode)

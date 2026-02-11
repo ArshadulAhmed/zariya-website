@@ -1,6 +1,7 @@
 import { Snackbar as MUISnackbar, Alert } from '@mui/material'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { closeSnackbar } from '../store/slices/loansSlice'
+import { closeSnackbar as closeLoanApplicationsSnackbar } from '../store/slices/loanApplicationsSlice'
 import './Snackbar.scss'
 
 const Snackbar = ({
@@ -12,17 +13,17 @@ const Snackbar = ({
   onClose = () => {},
 }) => {
   const dispatch = useAppDispatch()
-  // Use specific selector to prevent unnecessary re-renders
-  const snackbar = useAppSelector((state) => state.loans.snackbar)
+  const loansSnackbar = useAppSelector((state) => state.loans?.snackbar)
+  const appSnackbar = useAppSelector((state) => state.loanApplications?.snackbar)
+  const snackbar = (appSnackbar?.open ? appSnackbar : loansSnackbar) || {}
 
-  console.log("snackbar", snackbar)
-  
   const handleClose = () => {
     dispatch(closeSnackbar())
+    dispatch(closeLoanApplicationsSnackbar())
     onClose()
   }
 
-  if (!snackbar && !open ) return null
+  if (!snackbar?.open && !open) return null
 
   return (
     <MUISnackbar

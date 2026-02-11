@@ -16,6 +16,40 @@ const formatDate = (dateString) => {
     }
   }
 
+const addressToItems = (a) => {
+  if (!a) return [
+    { label: 'Village', value: 'N/A' },
+    { label: 'Post office', value: 'N/A' },
+    { label: 'Police station', value: 'N/A' },
+    { label: 'District', value: 'N/A' },
+    { label: 'PIN code', value: 'N/A' },
+    { label: 'Landmark', value: 'N/A' },
+  ]
+  return [
+    { label: 'Village', value: a.village || 'N/A' },
+    { label: 'Post office', value: a.postOffice || 'N/A' },
+    { label: 'Police station', value: a.policeStation || 'N/A' },
+    { label: 'District', value: a.district || 'N/A' },
+    { label: 'PIN code', value: a.pinCode || 'N/A' },
+    { label: 'Landmark', value: a.landmark || 'N/A' },
+  ]
+}
+
+const InfoRow = ({ label, value }) => (
+  <div className="info-row">
+    <span className="info-label">{label}</span>
+    <span className="info-value">{value}</span>
+  </div>
+)
+
+const MemberInfoGrid = ({ items }) => (
+  <div className="member-info-grid">
+    {items.map(({ label, value }, i) => (
+      <InfoRow key={`${i}-${label}`} label={label} value={value} />
+    ))}
+  </div>
+)
+
 const AdditionalInfo = () => {
   const loan = useAppSelector((state) => state.loans.selectedLoan)
   const nominee = useAppSelector((state) => state.loans.selectedLoan?.nominee)
@@ -116,67 +150,18 @@ const AdditionalInfo = () => {
           {membership && (
             <div className="detail-section">
               <h3>Additional Membership Details</h3>
-              <div className="detail-row">
-                <span className="detail-label">Father/Husband Name</span>
-                <span className="detail-value">{membership.fatherOrHusbandName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Age</span>
-                <span className="detail-value">{membership.age ? `${membership.age} years` : 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Date of Birth</span>
-                <span className="detail-value">{formatDate(membership.dateOfBirth)}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Occupation</span>
-                <span className="detail-value">{membership.occupation || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Aadhar Number</span>
-                <span className="detail-value">{membership.aadhar || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">PAN Number</span>
-                <span className="detail-value">{membership.pan || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Bank Account Number</span>
-                <span className="detail-value">{loan?.bankAccountNumber || 'N/A'}</span>
-              </div>
-              {membership.address ? (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">
-                      {[
-                        membership.address.village,
-                        membership.address.postOffice,
-                        membership.address.policeStation,
-                        membership.address.district,
-                        membership.address.pinCode,
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">{membership.address.landmark || 'N/A'}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                </>
-              )}
+              <MemberInfoGrid
+                items={[
+                  { label: 'Father/Husband name', value: membership.fatherOrHusbandName || 'N/A' },
+                  { label: 'Age', value: membership.age ? `${membership.age} years` : 'N/A' },
+                  { label: 'Date of birth', value: formatDate(membership.dateOfBirth) },
+                  { label: 'Occupation', value: membership.occupation || 'N/A' },
+                  { label: 'Aadhar number', value: membership.aadhar || 'N/A' },
+                  { label: 'PAN number', value: membership.pan || 'N/A' },
+                  { label: 'Bank account number', value: loan?.bankAccountNumber || 'N/A' },
+                  ...addressToItems(membership.address),
+                ]}
+              />
             </div>
           )}
 
@@ -184,55 +169,15 @@ const AdditionalInfo = () => {
           {nominee && (
             <div className="detail-section">
               <h3>Nominee Information</h3>
-              <div className="detail-row">
-                <span className="detail-label">Name</span>
-                <span className="detail-value">{nominee.name || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Relationship</span>
-                <span className="detail-value">{nominee.relationship || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Mobile Number</span>
-                <span className="detail-value">{nominee.mobileNumber || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Bank Account Number</span>
-                <span className="detail-value">{nominee.bankAccountNumber || 'N/A'}</span>
-              </div>
-              {nominee.address ? (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">
-                      {[
-                        nominee.address.village,
-                        nominee.address.postOffice,
-                        nominee.address.policeStation,
-                        nominee.address.district,
-                        nominee.address.pinCode,
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">{nominee.address.landmark || 'N/A'}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                </>
-              )}
+              <MemberInfoGrid
+                items={[
+                  { label: 'Name', value: nominee.name || 'N/A' },
+                  { label: 'Relationship', value: nominee.relationship || 'N/A' },
+                  { label: 'Mobile number', value: nominee.mobileNumber || 'N/A' },
+                  { label: 'Bank account number', value: nominee.bankAccountNumber || 'N/A' },
+                  ...addressToItems(nominee.address),
+                ]}
+              />
             </div>
           )}
 
@@ -240,61 +185,16 @@ const AdditionalInfo = () => {
           {guarantor && (
             <div className="detail-section">
               <h3>Guarantor Information</h3>
-              <div className="detail-row">
-                <span className="detail-label">Name</span>
-                <span className="detail-value">{guarantor.name || 'N/A'}</span>
-              </div>
-              {guarantor.fatherOrHusbandName && (
-                <div className="detail-row">
-                  <span className="detail-label">Father/Husband Name</span>
-                  <span className="detail-value">{guarantor.fatherOrHusbandName}</span>
-                </div>
-              )}
-              <div className="detail-row">
-                <span className="detail-label">Relationship</span>
-                <span className="detail-value">{guarantor.relationship || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Mobile Number</span>
-                <span className="detail-value">{guarantor.mobileNumber || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Bank Account Number</span>
-                <span className="detail-value">{guarantor.bankAccountNumber || 'N/A'}</span>
-              </div>
-              {guarantor.address ? (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">
-                      {[
-                        guarantor.address.village,
-                        guarantor.address.postOffice,
-                        guarantor.address.policeStation,
-                        guarantor.address.district,
-                        guarantor.address.pinCode,
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">{guarantor.address.landmark || 'N/A'}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                </>
-              )}
+              <MemberInfoGrid
+                items={[
+                  { label: 'Name', value: guarantor.name || 'N/A' },
+                  ...(guarantor.fatherOrHusbandName ? [{ label: 'Father/Husband name', value: guarantor.fatherOrHusbandName }] : []),
+                  { label: 'Relationship', value: guarantor.relationship || 'N/A' },
+                  { label: 'Mobile number', value: guarantor.mobileNumber || 'N/A' },
+                  { label: 'Bank account number', value: guarantor.bankAccountNumber || 'N/A' },
+                  ...addressToItems(guarantor.address),
+                ]}
+              />
             </div>
           )}
 
@@ -302,55 +202,15 @@ const AdditionalInfo = () => {
           {coApplicant && (
             <div className="detail-section">
               <h3>Co-Applicant Information</h3>
-              <div className="detail-row">
-                <span className="detail-label">Full Name</span>
-                <span className="detail-value">{coApplicant.fullName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Father/Husband Name</span>
-                <span className="detail-value">{coApplicant.fatherOrHusbandName || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Mobile Number</span>
-                <span className="detail-value">{coApplicant.mobileNumber || 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Email</span>
-                <span className="detail-value">{coApplicant.email || 'N/A'}</span>
-              </div>
-              {coApplicant.address ? (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">
-                      {[
-                        coApplicant.address.village,
-                        coApplicant.address.postOffice,
-                        coApplicant.address.policeStation,
-                        coApplicant.address.district,
-                        coApplicant.address.pinCode,
-                      ]
-                        .filter(Boolean)
-                        .join(', ') || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">{coApplicant.address.landmark || 'N/A'}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="detail-row">
-                    <span className="detail-label">Address</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Landmark</span>
-                    <span className="detail-value">N/A</span>
-                  </div>
-                </>
-              )}
+              <MemberInfoGrid
+                items={[
+                  { label: 'Full name', value: coApplicant.fullName || 'N/A' },
+                  { label: 'Father/Husband name', value: coApplicant.fatherOrHusbandName || 'N/A' },
+                  { label: 'Mobile number', value: coApplicant.mobileNumber || 'N/A' },
+                  { label: 'Email', value: coApplicant.email || 'N/A' },
+                  ...addressToItems(coApplicant.address),
+                ]}
+              />
             </div>
           )}
         </div>

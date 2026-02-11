@@ -1,130 +1,10 @@
 import mongoose from 'mongoose';
 import { getNextSequence } from './Counter.model.js';
-
-const addressSchema = new mongoose.Schema({
-  village: {
-    type: String,
-    required: [true, 'Village is required'],
-    trim: true
-  },
-  postOffice: {
-    type: String,
-    required: [true, 'Post office is required'],
-    trim: true
-  },
-  policeStation: {
-    type: String,
-    required: [true, 'Police station is required'],
-    trim: true
-  },
-  district: {
-    type: String,
-    required: [true, 'District is required'],
-    trim: true
-  },
-  pinCode: {
-    type: String,
-    required: [true, 'PIN code is required'],
-    trim: true,
-    match: [/^\d{6}$/, 'PIN code must be 6 digits']
-  },
-  landmark: {
-    type: String,
-    trim: true,
-    default: ''
-  }
-}, { _id: false });
-
-const nomineeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Nominee name is required'],
-    trim: true
-  },
-  relationship: {
-    type: String,
-    required: [true, 'Relationship is required'],
-    trim: true
-  },
-  mobileNumber: {
-    type: String,
-    required: [true, 'Nominee mobile number is required'],
-    trim: true,
-    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
-  },
-  bankAccountNumber: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  address: {
-    type: addressSchema,
-    required: true
-  }
-}, { _id: false });
-
-const guarantorSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Guarantor name is required'],
-    trim: true
-  },
-  fatherOrHusbandName: {
-    type: String,
-    required: [true, 'Father\'s/Husband\'s name is required'],
-    trim: true
-  },
-  relationship: {
-    type: String,
-    required: [true, 'Relationship is required'],
-    trim: true
-  },
-  mobileNumber: {
-    type: String,
-    required: [true, 'Guarantor mobile number is required'],
-    trim: true,
-    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
-  },
-  bankAccountNumber: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  address: {
-    type: addressSchema,
-    required: true
-  }
-}, { _id: false });
-
-const coApplicantSchema = new mongoose.Schema({
-  fullName: {
-    type: String,
-    required: [true, 'Co-applicant full name is required'],
-    trim: true
-  },
-  fatherOrHusbandName: {
-    type: String,
-    required: [true, 'Co-applicant father\'s/husband\'s name is required'],
-    trim: true
-  },
-  mobileNumber: {
-    type: String,
-    required: [true, 'Co-applicant mobile number is required'],
-    trim: true,
-    match: [/^\d{10}$/, 'Mobile number must be 10 digits']
-  },
-  email: {
-    type: String,
-    trim: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
-    default: ''
-  },
-  address: {
-    type: addressSchema,
-    required: true
-  }
-}, { _id: false });
+import {
+  nomineeSchema,
+  guarantorSchema,
+  coApplicantSchema
+} from './schemas/sharedSchemas.js';
 
 const loanSchema = new mongoose.Schema({
   loanAccountNumber: {
@@ -194,11 +74,17 @@ const loanSchema = new mongoose.Schema({
     required: false,
     default: null
   },
-  // Status
+  // Status (Loan is only created when application is approved)
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'active', 'closed'],
-    default: 'pending'
+    enum: ['active', 'closed', 'defaulted'],
+    default: 'active'
+  },
+  // Link to source application when created from approval
+  application: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LoanApplication',
+    default: null
   },
   // Metadata
   createdBy: {
@@ -206,22 +92,7 @@ const loanSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  reviewedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
-  reviewedAt: {
-    type: Date
-  },
-  approvedAt: {
-    type: Date
-  },
-  rejectionReason: {
-    type: String,
-    trim: true
-  },
-  // Loan account details (set after approval)
+  // Loan account details
   startDate: {
     type: Date
   },
@@ -253,8 +124,8 @@ loanSchema.pre('save', async function(next) {
     }
   }
   
-  // Set start and end dates when approved
-  if (this.status === 'approved') {
+  // Set start and end dates when Loan is first created (disbursed)
+  if (this.isNew) {
     if (!this.startDate) {
       this.startDate = new Date();
     }
@@ -263,14 +134,15 @@ loanSchema.pre('save', async function(next) {
       this.endDate.setDate(this.endDate.getDate() + this.loanTenure);
     }
   }
-  
+
   next();
 });
 
 // Indexes for better query performance
-loanSchema.index({ loanAccountNumber: 1 });
+loanSchema.index({ loanAccountNumber: 1 }, { unique: true });
 loanSchema.index({ membership: 1 });
 loanSchema.index({ status: 1 });
+loanSchema.index({ application: 1 });
 loanSchema.index({ createdAt: -1 });
 
 const Loan = mongoose.model('Loan', loanSchema);

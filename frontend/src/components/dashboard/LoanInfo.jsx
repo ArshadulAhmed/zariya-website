@@ -1,4 +1,5 @@
 import { memo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAppSelector } from '../../store/hooks'
 import { loansAPI } from '../../services/api'
 import AdditionalInfo from './AdditionalInfo'
@@ -68,6 +69,40 @@ const LoanInfo = memo(() => {
     }
   }
 
+  const membershipId = loan.membership?.userId
+  const memberDisplay = membershipId ? (
+    <>
+      {loan.membership?.fullName || 'N/A'} (
+      <Link to={`/dashboard/memberships/${membershipId}`} className="member-id-link">
+        {membershipId}
+      </Link>
+      )
+    </>
+  ) : (
+    `${loan.membership?.fullName || 'N/A'} (N/A)`
+  )
+
+  const InfoRow = ({ label, value, valueClassName }) => (
+    <div className="info-row">
+      <span className="info-label">{label}</span>
+      <span className={`info-value ${valueClassName || ''}`}>{value}</span>
+    </div>
+  )
+
+  const MemberInfoGrid = ({ items }) => (
+    <div className="member-info-grid">
+      {items.map(({ label, value, valueClassName }, i) => (
+        <InfoRow key={`${i}-${label}`} label={label} value={value} valueClassName={valueClassName} />
+      ))}
+    </div>
+  )
+
+  const statusBadge = (
+    <span className={`status-badge status-${loan.status}`}>
+      {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+    </span>
+  )
+
   return (
     <div className="details-card">
       <div className="card-header">
@@ -126,81 +161,43 @@ const LoanInfo = memo(() => {
       <div className="details-grid">
         <div className="detail-section">
           <h3>Member Information</h3>
-          <div className="detail-row">
-            <span className="detail-label">User ID</span>
-            <span className="detail-value">{loan.membership?.userId || 'N/A'}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Member Name</span>
-            <span className="detail-value">{loan.membership?.fullName || 'N/A'}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Mobile Number</span>
-            <span className="detail-value">{loan.mobileNumber || 'N/A'}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Email</span>
-            <span className="detail-value">{loan.email || 'N/A'}</span>
-          </div>
-          
+          <MemberInfoGrid
+            items={[
+              { label: 'Member', value: memberDisplay },
+              { label: 'Mobile', value: loan.mobileNumber || 'N/A' },
+              { label: 'Email', value: loan.email || 'N/A' },
+            ]}
+          />
         </div>
 
         <div className="detail-section">
           <h3>Loan Information</h3>
-          <div className="detail-row">
-            <span className="detail-label">Loan Amount</span>
-            <span className="detail-value">{formatCurrency(loan.loanAmount)}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Loan Tenure</span>
-            <span className="detail-value">{loan.loanTenure || 'N/A'} days</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Purpose</span>
-            <span className="detail-value">{loan.purpose || 'N/A'}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Installment Amount</span>
-            <span className="detail-value">{formatCurrency(loan.installmentAmount)}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Bank Account Number</span>
-            <span className="detail-value">{loan.bankAccountNumber || 'N/A'}</span>
-          </div>
+          <MemberInfoGrid
+            items={[
+              { label: 'Loan amount', value: formatCurrency(loan.loanAmount) },
+              { label: 'Tenure', value: `${loan.loanTenure || 'N/A'} days` },
+              { label: 'Purpose', value: loan.purpose || 'N/A' },
+              { label: 'Installment amount', value: formatCurrency(loan.installmentAmount) },
+              { label: 'Bank account', value: loan.bankAccountNumber || 'N/A' },
+            ]}
+          />
         </div>
 
         <div className="detail-section">
           <h3>Application Details</h3>
-          <div className="detail-row">
-            <span className="detail-label">Status</span>
-            <span className={`status-badge status-${loan.status}`}>
-              {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
-            </span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Created At</span>
-            <span className="detail-value">{formatDate(loan.createdAt)}</span>
-          </div>
-          {loan.reviewedBy && (
-            <>
-              <div className="detail-row">
-                <span className="detail-label">Reviewed By</span>
-                <span className="detail-value">
-                  {loan.reviewedBy?.fullName || loan.reviewedBy?.username || 'N/A'}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Reviewed At</span>
-                <span className="detail-value">{formatDate(loan.reviewedAt)}</span>
-              </div>
-            </>
-          )}
-          {loan.rejectionReason && (
-            <div className="detail-row">
-              <span className="detail-label">Rejection Reason</span>
-              <span className="detail-value rejection-reason">{loan.rejectionReason}</span>
-            </div>
-          )}
+          <MemberInfoGrid
+            items={[
+              { label: 'Status', value: statusBadge },
+              { label: 'Created at', value: formatDate(loan.createdAt) },
+              ...(loan.reviewedBy
+                ? [
+                    { label: 'Reviewed by', value: loan.reviewedBy?.fullName || loan.reviewedBy?.username || 'N/A' },
+                    { label: 'Reviewed at', value: formatDate(loan.reviewedAt) },
+                  ]
+                : []),
+              ...(loan.rejectionReason ? [{ label: 'Rejection reason', value: loan.rejectionReason, valueClassName: 'rejection-reason' }] : []),
+            ]}
+          />
         </div>
       </div>
 

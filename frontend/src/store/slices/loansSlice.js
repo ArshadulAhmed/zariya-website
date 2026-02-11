@@ -93,36 +93,6 @@ export const fetchLoan = createAsyncThunk(
   }
 )
 
-export const createLoan = createAsyncThunk(
-  'loans/createLoan',
-  async (loanData, { rejectWithValue }) => {
-    try {
-      const response = await loansAPI.createLoan(loanData)
-      if (response.success) {
-        return response.data.loan
-      }
-      return rejectWithValue(response.message || 'Failed to create loan')
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to create loan')
-    }
-  }
-)
-
-export const reviewLoan = createAsyncThunk(
-  'loans/reviewLoan',
-  async ({ id, reviewData }, { rejectWithValue }) => {
-    try {
-      const response = await loansAPI.reviewLoan(id, reviewData)
-      if (response.success) {
-        return response.data.loan
-      }
-      return rejectWithValue(response.message || 'Failed to review loan')
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to review loan')
-    }
-  }
-)
-
 export const updateLoan = createAsyncThunk(
   'loans/updateLoan',
   async ({ id, loanData }, { rejectWithValue }) => {
@@ -324,60 +294,6 @@ const loansSlice = createSlice({
         state.selectedLoan = null
         state.repayments = []
         state.totalPaid = 0
-      })
-      // Create loan
-      .addCase(createLoan.pending, (state) => {
-        state.isLoading = true
-        state.error = null
-      })
-      .addCase(createLoan.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.snackbar = {
-          open: true,
-          message: 'Loan application created successfully',
-          severity: 'success',
-        }
-      })
-      .addCase(createLoan.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload || 'Failed to create loan'
-        state.snackbar = {
-          open: true,
-          message: action.payload || 'Failed to create loan',
-          severity: 'error',
-        }
-      })
-      // Review loan
-      .addCase(reviewLoan.pending, (state) => {
-        state.isLoading = true
-        state.error = null
-      })
-      .addCase(reviewLoan.fulfilled, (state, action) => {
-        state.isLoading = false
-        const updatedLoan = action.payload
-        const loanId = safeToString(updatedLoan._id) || safeToString(updatedLoan.id) || ''
-        const index = state.loans.findIndex((l) => l.id === String(loanId))
-        if (index !== -1) {
-          state.loans[index] = {
-            ...state.loans[index],
-            status: String(updatedLoan.status || state.loans[index].status),
-            loanAccountNumber: String(updatedLoan.loanAccountNumber || state.loans[index].loanAccountNumber),
-          }
-        }
-        state.snackbar = {
-          open: true,
-          message: `Loan ${updatedLoan.status} successfully`,
-          severity: 'success',
-        }
-      })
-      .addCase(reviewLoan.rejected, (state, action) => {
-        state.isLoading = false
-        state.error = action.payload || 'Failed to review loan'
-        state.snackbar = {
-          open: true,
-          message: action.payload || 'Failed to review loan',
-          severity: 'error',
-        }
       })
       // Update loan
       .addCase(updateLoan.pending, (state) => {

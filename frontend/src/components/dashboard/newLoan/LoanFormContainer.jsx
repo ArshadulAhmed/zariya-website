@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { createLoan } from '../../../store/slices/loansSlice'
+import { createApplication } from '../../../store/slices/loanApplicationsSlice'
 import { setErrors, setSearchError } from '../../../store/slices/newLoanSlice'
 import LoanDetailsForm from './LoanDetailsForm'
 import NomineeForm from './NomineeForm'
@@ -11,7 +11,7 @@ import { validateLoanForm } from './validateLoanForm'
 const LoanFormContainer = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const isLoading = useAppSelector((state) => state.loans?.isLoading)
+  const isLoading = useAppSelector((state) => state.loanApplications?.isLoading)
   const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
   const formData = useAppSelector((state) => state.newLoan.formData)
   const hasCoApplicant = useAppSelector((state) => state.newLoan.hasCoApplicant)
@@ -87,9 +87,10 @@ const LoanFormContainer = () => {
       }
     }
 
-    const result = await dispatch(createLoan(loanData))
-    if (createLoan.fulfilled.match(result)) {
-      navigate('/dashboard/loans')
+    const result = await dispatch(createApplication(loanData))
+    if (createApplication.fulfilled.match(result)) {
+      const app = result.payload
+      navigate(app?.applicationNumber ? `/dashboard/loan-applications/${app.applicationNumber}` : '/dashboard/loan-applications')
     }
   }
 
