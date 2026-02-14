@@ -103,3 +103,42 @@ However, the script is **recommended** as it:
 - Verify `MONGODB_URI` is set correctly
 - Check MongoDB Atlas IP whitelist
 
+---
+
+## Sync production data to local (syncProdToLocal.js)
+
+Use this script to copy data from the **production** MongoDB into your **local/test** database so you can test with real-like data without touching prod. Images in the app still point to Cloudinary (prod or test folder depending on env).
+
+### Requirements
+
+- **MONGODB_URI_SOURCE** – Production MongoDB connection string (read-only user recommended).
+- **MONGODB_URI_TARGET** – Local/test MongoDB (e.g. `mongodb://localhost:27017/zariya-test`).
+
+### Usage
+
+```bash
+# From backend directory
+export MONGODB_URI_SOURCE="mongodb+srv://user:pass@cluster.mongodb.net/zariya?retryWrites=true"
+export MONGODB_URI_TARGET="mongodb://localhost:27017/zariya-test"
+
+npm run sync-prod-to-local
+```
+
+Or one-off without changing `.env`:
+
+```bash
+MONGODB_URI_SOURCE="mongodb+srv://..." MONGODB_URI_TARGET="mongodb://localhost:27017/zariya-test" npm run sync-prod-to-local
+```
+
+### Optional env
+
+| Variable | Description |
+|----------|-------------|
+| `SYNC_COLLECTIONS` | Comma-separated list, e.g. `users,memberships,loans`. Default: all (users, counters, memberships, loanapplications, loans, repayments). |
+| `SYNC_DROP_FIRST` | Set to `0` or `false` to **not** drop target collections before insert (default: drop then insert). |
+
+### Safe use
+
+- Use a **read-only** MongoDB user for `MONGODB_URI_SOURCE` in production so the script never writes to prod.
+- Run the script only from your machine or a CI job that has access to prod URI; do not set prod URI in shared or committed env files.
+

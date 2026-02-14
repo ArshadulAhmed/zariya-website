@@ -3,6 +3,25 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * Cloudinary folder prefix. In production uses 'zariya'. In development/test use
+ * CLOUDINARY_UPLOAD_PREFIX or default 'zariya-test' so uploads never go to prod storage.
+ */
+export const getCloudinaryFolderPrefix = () => {
+  if (process.env.CLOUDINARY_UPLOAD_PREFIX) {
+    return process.env.CLOUDINARY_UPLOAD_PREFIX.replace(/\/$/, '');
+  }
+  return process.env.NODE_ENV === 'production' ? 'zariya' : 'zariya-test';
+};
+
+/**
+ * Public ID prefix for file names. Local/test uploads use 'TEST-' so they are
+ * distinguishable in Cloudinary (e.g. TEST-ZMID-0000003_passportPhoto). Prod uses no prefix.
+ */
+export const getCloudinaryPublicIdPrefix = () => {
+  return process.env.NODE_ENV === 'production' ? '' : 'TEST-';
+};
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,17 +30,24 @@ cloudinary.config({
 });
 
 /**
- * Upload file to Cloudinary
+ * Sensitive documents (Aadhar, PAN, etc.) are uploaded as authenticated so they are
+ * only accessible via time-bound signed URLs; direct Cloudinary URLs do not work.
+ */
+const DEFAULT_UPLOAD_TYPE = 'authenticated';
+
+/**
+ * Upload file to Cloudinary (authenticated by default so assets are not publicly accessible).
  * @param {Buffer|string} file - File buffer or file path
- * @param {string} folder - Cloudinary folder path (e.g., 'users/{userId}/documents')
- * @param {Object} options - Additional upload options
+ * @param {string} folder - Cloudinary folder path
+ * @param {Object} options - Additional upload options (type defaults to 'authenticated')
  * @returns {Promise<Object>} - Cloudinary upload result with metadata
  */
 export const uploadToCloudinary = async (file, folder, options = {}) => {
   try {
     const uploadOptions = {
       folder: folder,
-      resource_type: 'auto', // Auto-detect image, video, or raw
+      resource_type: 'auto',
+      type: DEFAULT_UPLOAD_TYPE, // Only signed URLs can access; no direct public URL
       ...options,
     };
 
@@ -142,6 +168,27 @@ export const checkResourceExists = async (publicId) => {
     }
     throw error;
   }
+};
+
+/**
+ * Generate a signed URL for a document. Frontend never gets permanent URLs or public_id.
+ * Use the same delivery type and version as the stored asset when available (e.g. from secure_url),
+ * otherwise defaults to authenticated. Assets stored under "upload" must be requested with type 'upload' and their version.
+ * @param {string} publicId - Full public_id (e.g. zariya/members/ZMID-0000001/aadharUpload)
+ * @param {Object} options - { resource_type, type: 'upload'|'authenticated', version, expiresInSeconds }
+ * @returns {{ url: string, expiresIn: number }}
+ */
+export const getSignedDocumentUrl = (publicId, options = {}) => {
+  const { resource_type = 'image', type = 'authenticated', version, expiresInSeconds = 300 } = options;
+  const urlOptions = {
+    resource_type,
+    type,
+    sign_url: true,
+    secure: true,
+  };
+  if (version != null) urlOptions.version = version;
+  const url = cloudinary.url(publicId, urlOptions);
+  return { url, expiresIn: expiresInSeconds };
 };
 
 export default cloudinary;

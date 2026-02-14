@@ -1,6 +1,9 @@
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
 import { uploadImagesWithRollback, uploadImagesIndividually, calculateImageUploadStatus } from '../utils/imageUpload.utils.js';
+import { getSignedDocumentUrl } from '../config/cloudinary.config.js';
+import { sanitizeMembership } from '../utils/sanitizeMembershipDocuments.js';
+import { parsePublicIdFromCloudinaryUrl } from '../utils/parseCloudinaryUrl.js';
 
 // @desc    Create membership (Normal user registration)
 // @route   POST /api/memberships
@@ -300,7 +303,7 @@ export const getMemberships = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        memberships,
+        memberships: memberships.map((m) => sanitizeMembership(m)),
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -336,13 +339,143 @@ export const getMembership = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        membership
+        membership: sanitizeMembership(membership)
       }
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching membership'
+    });
+  }
+};
+
+const ALLOWED_DOCUMENT_TYPES = ['aadharUpload', 'aadharUploadBack', 'panUpload', 'passportPhoto'];
+
+// @desc    Stream membership document image through backend (proxy). No Cloudinary URL or asset ID
+//          is ever sent to the client; access and caching are fully server-controlled.
+// @route   GET /api/memberships/:id/documents/:documentType/image
+// @access  Private/Admin or Employee (authorization enforced by route middleware)
+export const getMembershipDocumentImage = async (req, res) => {
+  try {
+    const { id, documentType } = req.params;
+    if (!ALLOWED_DOCUMENT_TYPES.includes(documentType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid document type. Allowed: ${ALLOWED_DOCUMENT_TYPES.join(', ')}`
+      });
+    }
+
+    const membership = await Membership.findById(id).select(`_id userId ${documentType}`);
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+
+    const doc = membership[documentType];
+    if (!doc) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    let publicId = doc.public_id;
+    let resourceType = doc.resource_type || 'image';
+    let deliveryType = 'authenticated';
+    let version;
+    if (doc.secure_url) {
+      const parsed = parsePublicIdFromCloudinaryUrl(doc.secure_url);
+      if (parsed) {
+        if (!publicId) {
+          publicId = parsed.publicId;
+          resourceType = parsed.resourceType || 'image';
+        }
+        deliveryType = parsed.type || deliveryType;
+        version = parsed.version;
+      }
+    }
+    if (!publicId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    const { url: signedUrl } = getSignedDocumentUrl(publicId, {
+      resource_type: resourceType,
+      type: deliveryType,
+      version,
+      expiresInSeconds: 300
+    });
+
+    const cloudinaryResponse = await fetch(signedUrl);
+    if (!cloudinaryResponse.ok) {
+      return res.status(502).json({
+        success: false,
+        message: 'Failed to fetch document from storage'
+      });
+    }
+
+    const contentType = cloudinaryResponse.headers.get('content-type') || 'image/png';
+    const buffer = Buffer.from(await cloudinaryResponse.arrayBuffer());
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'private, max-age=60'); // short cache, not shared
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error streaming document'
+    });
+  }
+};
+
+// @desc    Get time-bound signed URL for a membership document (no permanent URLs or public_id exposed)
+// @route   GET /api/memberships/:id/documents/:documentType/url
+// @access  Private/Admin or Employee (authorization enforced by route middleware)
+export const getMembershipDocumentUrl = async (req, res) => {
+  try {
+    const { id, documentType } = req.params;
+    if (!ALLOWED_DOCUMENT_TYPES.includes(documentType)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid document type. Allowed: ${ALLOWED_DOCUMENT_TYPES.join(', ')}`
+      });
+    }
+
+    const membership = await Membership.findById(id).select(`_id userId ${documentType}`);
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+
+    const doc = membership[documentType];
+    if (!doc || !doc.public_id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    const expiresInSeconds = Math.min(Number(req.query.expiresIn) || 300, 900); // 5 min default, max 15 min
+    const { url, expiresIn } = getSignedDocumentUrl(doc.public_id, {
+      resource_type: doc.resource_type || 'image',
+      expiresInSeconds
+    });
+
+    res.status(200).json({
+      success: true,
+      data: { url, expiresIn }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error getting document URL'
     });
   }
 };
@@ -366,7 +499,7 @@ export const getMembershipByUserId = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        membership
+        membership: sanitizeMembership(membership)
       }
     });
   } catch (error) {

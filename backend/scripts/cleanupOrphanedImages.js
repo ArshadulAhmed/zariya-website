@@ -54,3 +54,4 @@ const cleanup = async () => {
 
 cleanup();
 
+// npm run cleanup-images

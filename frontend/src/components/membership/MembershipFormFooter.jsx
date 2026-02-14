@@ -12,6 +12,40 @@ import { validateMembershipForm, createMembershipFormData } from '../../utils/me
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
+// Map validation error field keys to section id (without "membership-section-" prefix)
+const FIELD_TO_SECTION = {
+  fullName: 'personal',
+  fatherOrHusbandName: 'personal',
+  age: 'personal',
+  dateOfBirth: 'personal',
+  occupation: 'personal',
+  mobileNumber: 'personal',
+  email: 'personal',
+  aadhar: 'personal',
+  pan: 'personal',
+  'address.village': 'address',
+  'address.postOffice': 'address',
+  'address.policeStation': 'address',
+  'address.district': 'address',
+  'address.pinCode': 'address',
+  aadharUpload: 'documents',
+  aadharUploadBack: 'documents',
+  panUpload: 'documents',
+  passportPhoto: 'documents',
+}
+
+function scrollToFirstValidationError(errors) {
+  const firstKey = Object.keys(errors)[0]
+  if (!firstKey) return
+  const section = FIELD_TO_SECTION[firstKey] || 'personal'
+  const el = document.getElementById(`membership-section-${section}`)
+  if (el) {
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
+}
+
 const MembershipFormFooter = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +70,7 @@ const MembershipFormFooter = () => {
     const errors = validateMembershipForm(formData)
     if (Object.keys(errors).length > 0) {
       dispatch(setValidationErrors(errors))
+      scrollToFirstValidationError(errors)
       return
     }
 
@@ -75,19 +110,28 @@ const MembershipFormFooter = () => {
 
       if (!response.ok || !data.success) {
         let errorMessage = 'Failed to submit membership application'
-        
+        let fieldErrors = {}
+
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          data.errors.forEach((err) => {
+            const field = err.path || err.param || err.field
+            const msg = err.msg || err.message
+            if (field && msg) fieldErrors[field] = msg
+          })
+          errorMessage = data.errors.map(err => err.msg || err.message || JSON.stringify(err)).join(', ')
+        }
         if (data.message) {
           errorMessage = data.message
-        } else if (data.errors && Array.isArray(data.errors)) {
-          errorMessage = data.errors.map(err => err.msg || err.message || JSON.stringify(err)).join(', ')
-        } else if (response.status === 400) {
-          errorMessage = 'Validation error. Please check all fields.'
-        } else if (response.status === 401) {
-          errorMessage = 'Authentication failed. Please login again.'
-        } else if (response.status === 500) {
-          errorMessage = 'Server error. Please try again later.'
+        } else if (Object.keys(fieldErrors).length === 0) {
+          if (response.status === 400) errorMessage = 'Validation error. Please check all fields.'
+          else if (response.status === 401) errorMessage = 'Authentication failed. Please login again.'
+          else if (response.status === 500) errorMessage = 'Server error. Please try again later.'
         }
-        
+
+        if (Object.keys(fieldErrors).length > 0) {
+          dispatch(setValidationErrors(fieldErrors))
+          scrollToFirstValidationError(fieldErrors)
+        }
         dispatch(submitMembershipFailure(errorMessage))
         dispatch(setSnackbar({ open: true, message: errorMessage, severity: 'error' }))
         return

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppSelector } from '../../../store/hooks'
+import SecureDocumentImage from '../../SecureDocumentImage'
 import './MemberDetailsCard.scss'
 
 const MemberDetailsCard = () => {
@@ -46,10 +47,9 @@ const MemberDetailsCard = () => {
     return false
   }
 
-  const handleImageClick = (urlOrMetadata) => {
-    if (urlOrMetadata && !isPdf(urlOrMetadata)) {
-      setEnlargedImage(getDocumentUrl(urlOrMetadata))
-    }
+  const hasDocument = (doc) => doc && (doc.hasDocument === true || doc.secure_url)
+  const handleImageClick = (url) => {
+    if (url && !(typeof url === 'string' && url.toLowerCase?.().includes?.('.pdf'))) setEnlargedImage(url)
   }
 
   const closeEnlargedImage = () => {
@@ -129,125 +129,69 @@ const MemberDetailsCard = () => {
           )}
         </div>
 
-        {(membership.aadharUpload || membership.aadharUploadBack || membership.panUpload || membership.passportPhoto) && (
+        {(hasDocument(membership.aadharUpload) || hasDocument(membership.aadharUploadBack) || hasDocument(membership.panUpload) || hasDocument(membership.passportPhoto)) && (
           <div className="documents-section">
             <h3 className="documents-title">Documents</h3>
             <div className="documents-grid">
-              {membership.aadharUpload && (
+              {hasDocument(membership.aadharUpload) && (
                 <div className="document-item">
                   <span className="document-label">Aadhar Card (Front)</span>
                   <div className="document-preview-container">
-                    {isPdf(membership.aadharUpload) ? (
-                      <a
-                        href={getDocumentUrl(membership.aadharUpload)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="document-link"
-                      >
-                        <div className="document-icon">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>View PDF</span>
-                        </div>
-                      </a>
-                    ) : (
-                      <img 
-                        src={getDocumentUrl(membership.aadharUpload)} 
-                        alt="Aadhar Card" 
-                        className="document-image"
-                        onClick={() => handleImageClick(membership.aadharUpload)}
-                        style={{ cursor: 'pointer' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                    )}
+                    <SecureDocumentImage
+                      membershipId={membership._id ?? membership.id}
+                      documentType="aadharUpload"
+                      doc={membership.aadharUpload}
+                      alt="Aadhar Card"
+                      className="document-image"
+                      asLink={isPdf(membership.aadharUpload)}
+                      onClick={handleImageClick}
+                    />
                   </div>
                 </div>
               )}
-              {membership.aadharUploadBack && (
+              {hasDocument(membership.aadharUploadBack) && (
                 <div className="document-item">
                   <span className="document-label">Aadhar Card (Back)</span>
                   <div className="document-preview-container">
-                    {isPdf(membership.aadharUploadBack) ? (
-                      <a
-                        href={getDocumentUrl(membership.aadharUploadBack)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="document-link"
-                      >
-                        <div className="document-icon">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>View PDF</span>
-                        </div>
-                      </a>
-                    ) : (
-                      <img 
-                        src={getDocumentUrl(membership.aadharUploadBack)} 
-                        alt="Aadhar Card (Back)" 
-                        className="document-image"
-                        onClick={() => handleImageClick(membership.aadharUploadBack)}
-                        style={{ cursor: 'pointer' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                    )}
+                    <SecureDocumentImage
+                      membershipId={membership._id ?? membership.id}
+                      documentType="aadharUploadBack"
+                      doc={membership.aadharUploadBack}
+                      alt="Aadhar Card (Back)"
+                      className="document-image"
+                      asLink={isPdf(membership.aadharUploadBack)}
+                      onClick={handleImageClick}
+                    />
                   </div>
                 </div>
               )}
-              {membership.panUpload && (
+              {hasDocument(membership.panUpload) && (
                 <div className="document-item">
                   <span className="document-label">PAN Card</span>
                   <div className="document-preview-container">
-                    {isPdf(membership.panUpload) ? (
-                      <a
-                        href={getDocumentUrl(membership.panUpload)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="document-link"
-                      >
-                        <div className="document-icon">
-                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span>View PDF</span>
-                        </div>
-                      </a>
-                    ) : (
-                      <img 
-                        src={getDocumentUrl(membership.panUpload)} 
-                        alt="PAN Card" 
-                        className="document-image"
-                        onClick={() => handleImageClick(membership.panUpload)}
-                        style={{ cursor: 'pointer' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none'
-                        }}
-                      />
-                    )}
+                    <SecureDocumentImage
+                      membershipId={membership._id ?? membership.id}
+                      documentType="panUpload"
+                      doc={membership.panUpload}
+                      alt="PAN Card"
+                      className="document-image"
+                      asLink={isPdf(membership.panUpload)}
+                      onClick={handleImageClick}
+                    />
                   </div>
                 </div>
               )}
-              {membership.passportPhoto && (
+              {hasDocument(membership.passportPhoto) && (
                 <div className="document-item">
                   <span className="document-label">Passport Size Photo</span>
                   <div className="document-preview-container">
-                    <img 
-                      src={getDocumentUrl(membership.passportPhoto)} 
-                      alt="Passport Size Photo" 
+                    <SecureDocumentImage
+                      membershipId={membership._id ?? membership.id}
+                      documentType="passportPhoto"
+                      doc={membership.passportPhoto}
+                      alt="Passport Size Photo"
                       className="document-image passport-photo"
-                      onClick={() => handleImageClick(membership.passportPhoto)}
-                      style={{ cursor: 'pointer' }}
-                      onError={(e) => {
-                        e.target.style.display = 'none'
-                      }}
+                      onClick={handleImageClick}
                     />
                   </div>
                 </div>

@@ -21,7 +21,7 @@ const AddressInfoSection = () => {
   }
 
   return (
-    <div className="form-section">
+    <div id="membership-section-address" className="form-section">
       <div className="section-header-inline">
         <div className="section-number">02</div>
         <div className="section-title-group">

@@ -70,8 +70,6 @@ export const fetchMembership = createAsyncThunk(
   'memberships/fetchMembership',
   async (id, { rejectWithValue }) => {
     try {
-      // Try to fetch by userId first (if it looks like a userId format)
-      // Otherwise fetch by database ID
       let response
       if (id.startsWith('ZMID-')) {
         response = await membershipsAPI.getMembershipByUserId(id)
@@ -252,17 +250,17 @@ const membershipsSlice = createSlice({
           email: membership.email ? String(membership.email) : null,
           aadhar: String(membership.aadhar || ''),
           pan: String(membership.pan || ''),
-          // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)
-          aadharUpload: (membership.aadharUpload && typeof membership.aadharUpload === 'object' && membership.aadharUpload.secure_url) 
+          // Preserve document refs: legacy { secure_url } or secure { hasDocument: true } (signed URL fetched separately)
+          aadharUpload: (membership.aadharUpload && typeof membership.aadharUpload === 'object') 
             ? membership.aadharUpload 
             : (typeof membership.aadharUpload === 'string' ? membership.aadharUpload : null),
-          aadharUploadBack: (membership.aadharUploadBack && typeof membership.aadharUploadBack === 'object' && membership.aadharUploadBack.secure_url) 
+          aadharUploadBack: (membership.aadharUploadBack && typeof membership.aadharUploadBack === 'object') 
             ? membership.aadharUploadBack 
             : (typeof membership.aadharUploadBack === 'string' ? membership.aadharUploadBack : null),
-          panUpload: (membership.panUpload && typeof membership.panUpload === 'object' && membership.panUpload.secure_url) 
+          panUpload: (membership.panUpload && typeof membership.panUpload === 'object') 
             ? membership.panUpload 
             : (typeof membership.panUpload === 'string' ? membership.panUpload : null),
-          passportPhoto: (membership.passportPhoto && typeof membership.passportPhoto === 'object' && membership.passportPhoto.secure_url) 
+          passportPhoto: (membership.passportPhoto && typeof membership.passportPhoto === 'object') 
             ? membership.passportPhoto 
             : (typeof membership.passportPhoto === 'string' ? membership.passportPhoto : null),
           address: {

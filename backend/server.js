@@ -1,12 +1,9 @@
+import './loadEnv.js';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
-
-// Load environment variables
-dotenv.config();
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
@@ -18,6 +15,7 @@ import repaymentRoutes from './routes/repayment.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import contactRoutes from './routes/contact.routes.js';
+import { getMongoUri } from './config/database.js';
 
 const app = express();
 
@@ -110,8 +108,9 @@ app.use((req, res) => {
 });
 
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = getMongoUri();
 if (!MONGODB_URI) {
+  console.error('MONGODB_URI (or MONGODB_URI_LOCAL for non-production) is required.');
   process.exit(1);
 }
 

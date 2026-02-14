@@ -6,6 +6,8 @@ import {
   getMemberships,
   getMembership,
   getMembershipByUserId,
+  getMembershipDocumentImage,
+  getMembershipDocumentUrl,
   reviewMembership,
   retryImageUploads,
   updateMembershipImages
@@ -147,6 +149,8 @@ router.use(protect);
 router.use(isAdminOrEmployee);
 
 router.get('/', getMemberships);
+router.get('/:id/documents/:documentType/image', getMembershipDocumentImage);
+router.get('/:id/documents/:documentType/url', getMembershipDocumentUrl);
 router.get('/:id', getMembership);
 router.get('/user/:userId', getMembershipByUserId);
 router.put('/:id/review', reviewMembershipValidation, reviewMembership);

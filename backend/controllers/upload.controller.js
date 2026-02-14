@@ -1,5 +1,4 @@
-import { uploadToCloudinary, checkResourceExists } from '../config/cloudinary.config.js';
-import { extractCloudinaryMetadata } from '../config/cloudinary.config.js';
+import { uploadToCloudinary, checkResourceExists, extractCloudinaryMetadata, getCloudinaryFolderPrefix, getCloudinaryPublicIdPrefix } from '../config/cloudinary.config.js';
 
 /**
  * Upload document to Cloudinary via backend
@@ -34,11 +33,11 @@ export const uploadDocument = async (req, res) => {
       });
     }
 
-    // Generate public_id with format: memberId_imageType
-    // Example: ZMID-0000001_aadharUpload
-    const publicId = `${memberId}_${imageType}`;
-    // Full public_id includes folder: zariya/members/{memberId}/{publicId}
-    const fullPublicId = `zariya/members/${memberId}/${publicId}`;
+    // public_id: prod = ZMID-0000001_passportPhoto, local = TEST-ZMID-0000001_passportPhoto
+    const idPrefix = getCloudinaryPublicIdPrefix();
+    const publicId = `${idPrefix}${memberId}_${imageType}`;
+    const folderPrefix = getCloudinaryFolderPrefix();
+    const fullPublicId = `${folderPrefix}/members/${memberId}/${publicId}`;
 
     // Idempotency check: If image already exists, return existing metadata
     try {
@@ -67,12 +66,11 @@ export const uploadDocument = async (req, res) => {
       }
     }
 
-    // Upload to Cloudinary with custom public_id
     const uploadResult = await uploadToCloudinary(
-      req.file.buffer, // File buffer from multer memory storage
-      `zariya/members/${memberId}`, // Folder structure
+      req.file.buffer,
+      `${folderPrefix}/members/${memberId}`,
       {
-        public_id: publicId, // Custom naming: memberId_imageType
+        public_id: publicId,
         overwrite: true, // Allow overwrite for retries
         invalidate: true, // Invalidate CDN cache
       }

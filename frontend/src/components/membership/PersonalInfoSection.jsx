@@ -29,7 +29,7 @@ const PersonalInfoSection = () => {
   }
 
   return (
-    <div className="form-section">
+    <div id="membership-section-personal" className="form-section">
       <div className="section-header-inline">
         <div className="section-number">01</div>
         <div className="section-title-group">

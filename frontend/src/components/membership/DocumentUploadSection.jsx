@@ -23,7 +23,7 @@ const DocumentUploadSection = () => {
   }
 
   return (
-    <div className="form-section">
+    <div id="membership-section-documents" className="form-section">
       <div className="section-header-inline">
         <div className="section-number">03</div>
         <div className="section-title-group">

@@ -6,11 +6,11 @@ dotenv.config();
 
 const createAdmin = async () => {
   try {
-    if (!process.env.MONGODB_URI) {
+    if (!process.env.MONGODB_URI_LOCAL) {
       process.exit(1);
     }
 
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI_LOCAL);
     console.log('✅');
 
     const existingAdmin = await User.findOne({ role: 'admin' });
@@ -19,10 +19,10 @@ const createAdmin = async () => {
       process.exit(0);
     }
 
-    const adminUsername = process.env.ADMIN_USERNAME;
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const adminFullName = process.env.ADMIN_FULL_NAME;
+    const adminUsername = process.env.ADMIN_USERNAME_LOCAL;
+    const adminEmail = process.env.ADMIN_EMAIL_LOCAL;
+    const adminPassword = process.env.ADMIN_PASSWORD_LOCAL;
+    const adminFullName = process.env.ADMIN_FULL_NAME_LOCAL;
 
     if (!adminPassword) {
         await mongoose.connection.close();
@@ -52,3 +52,4 @@ const createAdmin = async () => {
 
 createAdmin();
 
+// npm run create-admin

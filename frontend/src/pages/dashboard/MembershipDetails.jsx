@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
@@ -6,7 +6,12 @@ import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import SecureDocumentImage from '../../components/SecureDocumentImage'
 import './MembershipDetails.scss'
+
+// Guard so Strict Mode's double effect doesn't trigger two membership fetches
+let lastMembershipFetchId = ''
+let lastMembershipFetchAt = 0
 
 const MembershipDetails = () => {
   const { id } = useParams()
@@ -19,10 +24,19 @@ const MembershipDetails = () => {
   const [rejectionReason, setRejectionReason] = useState('')
   const [copied, setCopied] = useState(false)
   const [enlargedImage, setEnlargedImage] = useState(null)
+  const hasFetchedRef = useRef(false)
+  const lastIdRef = useRef('')
 
   useEffect(() => {
-    if (id) {
-      // Clear previous membership data when navigating to a new membership
+    if (!id) return
+    // Skip if we already started a fetch for this id very recently (React Strict Mode runs effect twice)
+    const now = Date.now()
+    if (lastMembershipFetchId === id && now - lastMembershipFetchAt < 500) return
+    lastMembershipFetchId = id
+    lastMembershipFetchAt = now
+    if (!hasFetchedRef.current || lastIdRef.current !== id) {
+      hasFetchedRef.current = true
+      lastIdRef.current = id
       dispatch(clearSelectedMembership())
       dispatch(fetchMembership(id))
     }
@@ -104,25 +118,16 @@ const MembershipDetails = () => {
     }
   }
 
-  // Handle both Cloudinary metadata objects and legacy URL strings
+  // Legacy: resolve URL from old API shape (secure_url); new shape uses SecureDocumentImage + signed URLs
   const getDocumentUrl = (urlOrMetadata) => {
     if (!urlOrMetadata) return null
-    
-    // If it's a Cloudinary metadata object
-    if (typeof urlOrMetadata === 'object' && urlOrMetadata.secure_url) {
-      return urlOrMetadata.secure_url
-    }
-    
-    // Legacy: if it's a string URL
-    if (typeof urlOrMetadata === 'string') {
-      if (urlOrMetadata.startsWith('http://') || urlOrMetadata.startsWith('https://')) {
-        return urlOrMetadata
-      }
-      return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${urlOrMetadata.startsWith('/') ? '' : '/'}${urlOrMetadata}`
-    }
-    
+    if (typeof urlOrMetadata === 'object' && urlOrMetadata.secure_url) return urlOrMetadata.secure_url
+    if (typeof urlOrMetadata === 'string' && (urlOrMetadata.startsWith('http://') || urlOrMetadata.startsWith('https://'))) return urlOrMetadata
+    if (typeof urlOrMetadata === 'string') return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${urlOrMetadata.startsWith('/') ? '' : '/'}${urlOrMetadata}`
     return null
   }
+
+  const hasDocument = (doc) => doc && (doc.hasDocument === true || doc.secure_url)
 
   const isPdf = (urlOrMetadata) => {
     if (!urlOrMetadata) return false
@@ -140,10 +145,8 @@ const MembershipDetails = () => {
     return false
   }
 
-  const handleImageClick = (urlOrMetadata) => {
-    if (urlOrMetadata && !isPdf(urlOrMetadata)) {
-      setEnlargedImage(getDocumentUrl(urlOrMetadata))
-    }
+  const handleImageClick = (url) => {
+    if (url && !(typeof url === 'string' && url.toLowerCase?.().includes?.('.pdf'))) setEnlargedImage(url)
   }
 
   const closeEnlargedImage = () => {
@@ -401,120 +404,69 @@ const MembershipDetails = () => {
             </div>
           </div>
 
-          {(membership.aadharUpload || membership.aadharUploadBack || membership.panUpload || membership.passportPhoto) && (
+          {(hasDocument(membership.aadharUpload) || hasDocument(membership.aadharUploadBack) || hasDocument(membership.panUpload) || hasDocument(membership.passportPhoto)) && (
             <div className="documents-section">
               <h3>Uploaded Documents</h3>
               <div className="documents-grid">
-                  {membership.aadharUpload && (
+                  {hasDocument(membership.aadharUpload) && (
                     <div className="document-item">
                       <span className="document-label">Aadhar Card (Front)</span>
-                      <div className="document-preview-container" onClick={() => handleImageClick(membership.aadharUpload)}>
-                        {isPdf(membership.aadharUpload) ? (
-                          <a
-                            href={getDocumentUrl(membership.aadharUpload)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="document-link"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="document-icon">
-                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span>View PDF</span>
-                            </div>
-                          </a>
-                        ) : (
-                          <img 
-                            src={getDocumentUrl(membership.aadharUpload)} 
-                            alt="Aadhar Card" 
-                            className="document-image"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                            }}
-                          />
-                        )}
+                      <div className="document-preview-container">
+                        <SecureDocumentImage
+                          membershipId={membership.id}
+                          documentType="aadharUpload"
+                          doc={membership.aadharUpload}
+                          alt="Aadhar Card"
+                          className="document-image"
+                          asLink={isPdf(membership.aadharUpload)}
+                          onClick={handleImageClick}
+                        />
                       </div>
                     </div>
                   )}
-                  {membership.aadharUploadBack && (
+                  {hasDocument(membership.aadharUploadBack) && (
                     <div className="document-item">
                       <span className="document-label">Aadhar Card (Back)</span>
-                      <div className="document-preview-container" onClick={() => handleImageClick(membership.aadharUploadBack)}>
-                        {isPdf(membership.aadharUploadBack) ? (
-                          <a
-                            href={getDocumentUrl(membership.aadharUploadBack)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="document-link"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="document-icon">
-                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span>View PDF</span>
-                            </div>
-                          </a>
-                        ) : (
-                          <img 
-                            src={getDocumentUrl(membership.aadharUploadBack)} 
-                            alt="Aadhar Card (Back)" 
-                            className="document-image"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                            }}
-                          />
-                        )}
+                      <div className="document-preview-container">
+                        <SecureDocumentImage
+                          membershipId={membership.id}
+                          documentType="aadharUploadBack"
+                          doc={membership.aadharUploadBack}
+                          alt="Aadhar Card (Back)"
+                          className="document-image"
+                          asLink={isPdf(membership.aadharUploadBack)}
+                          onClick={handleImageClick}
+                        />
                       </div>
                     </div>
                   )}
-                  {membership.panUpload && (
+                  {hasDocument(membership.panUpload) && (
                     <div className="document-item">
                       <span className="document-label">PAN Card</span>
-                      <div className="document-preview-container" onClick={() => handleImageClick(membership.panUpload)}>
-                        {isPdf(membership.panUpload) ? (
-                          <a
-                            href={getDocumentUrl(membership.panUpload)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="document-link"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="document-icon">
-                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 2H6C5.46957 2 4.96086 2.21071 3.58579 2.58579C3.21071 2.96086 3 3.46957 3 4V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M14 2V8H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              <span>View PDF</span>
-                            </div>
-                          </a>
-                        ) : (
-                          <img 
-                            src={getDocumentUrl(membership.panUpload)} 
-                            alt="PAN Card" 
-                            className="document-image"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                            }}
-                          />
-                        )}
+                      <div className="document-preview-container">
+                        <SecureDocumentImage
+                          membershipId={membership.id}
+                          documentType="panUpload"
+                          doc={membership.panUpload}
+                          alt="PAN Card"
+                          className="document-image"
+                          asLink={isPdf(membership.panUpload)}
+                          onClick={handleImageClick}
+                        />
                       </div>
                     </div>
                   )}
-                  {membership.passportPhoto && (
+                  {hasDocument(membership.passportPhoto) && (
                     <div className="document-item">
                       <span className="document-label">Passport Size Photo</span>
-                      <div className="document-preview-container" onClick={() => handleImageClick(membership.passportPhoto)}>
-                        <img 
-                          src={getDocumentUrl(membership.passportPhoto)} 
-                          alt="Passport Size Photo" 
+                      <div className="document-preview-container">
+                        <SecureDocumentImage
+                          membershipId={membership.id}
+                          documentType="passportPhoto"
+                          doc={membership.passportPhoto}
+                          alt="Passport Size Photo"
                           className="document-image passport-photo"
-                          onError={(e) => {
-                            e.target.style.display = 'none'
-                          }}
+                          onClick={handleImageClick}
                         />
                       </div>
                     </div>

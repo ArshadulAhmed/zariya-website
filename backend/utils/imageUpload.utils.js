@@ -1,4 +1,4 @@
-import { uploadToCloudinary, deleteMultipleFromCloudinary, extractCloudinaryMetadata } from '../config/cloudinary.config.js';
+import { uploadToCloudinary, deleteMultipleFromCloudinary, extractCloudinaryMetadata, getCloudinaryFolderPrefix, getCloudinaryPublicIdPrefix } from '../config/cloudinary.config.js';
 
 /**
  * Upload multiple images with transaction-like behavior
@@ -18,10 +18,12 @@ export const uploadImagesWithRollback = async (imageUploads) => {
     }
 
     try {
-      const publicId = `${memberId}_${key}`;
+      const idPrefix = getCloudinaryPublicIdPrefix();
+      const folderPrefix = getCloudinaryFolderPrefix();
+      const publicId = `${idPrefix}${memberId}_${key}`;
       const uploadResult = await uploadToCloudinary(
         file.buffer,
-        `zariya/members/${memberId}`,
+        `${folderPrefix}/members/${memberId}`,
         {
           public_id: publicId,
           overwrite: false,
@@ -85,10 +87,12 @@ export const uploadImagesIndividually = async (imageUploads) => {
     }
 
     try {
-      const publicId = `${memberId}_${key}`;
+      const idPrefix = getCloudinaryPublicIdPrefix();
+      const folderPrefix = getCloudinaryFolderPrefix();
+      const publicId = `${idPrefix}${memberId}_${key}`;
       const uploadResult = await uploadToCloudinary(
         file.buffer,
-        `zariya/members/${memberId}`,
+        `${folderPrefix}/members/${memberId}`,
         {
           public_id: publicId,
           overwrite: true, // Allow overwrite for retries

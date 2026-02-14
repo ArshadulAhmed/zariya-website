@@ -1,6 +1,9 @@
 import Loan from '../models/Loan.model.js';
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
+import { sanitizeMembershipInLoan } from '../utils/sanitizeMembershipDocuments.js';
+import { getSignedDocumentUrl } from '../config/cloudinary.config.js';
+import { parsePublicIdFromCloudinaryUrl } from '../utils/parseCloudinaryUrl.js';
 import PDFDocument from 'pdfkit';
 import { generateLoanContractPDF } from '../templates/loanContract.template.js';
 import { generateLoanNOCPDF } from '../templates/loanNOC.template.js';
@@ -69,7 +72,7 @@ export const getLoans = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        loans: loansWithRemaining,
+        loans: loansWithRemaining.map((loan) => sanitizeMembershipInLoan(loan)),
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -154,7 +157,7 @@ export const getOngoingLoans = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        loans: loansWithRemaining
+        loans: loansWithRemaining.map((loan) => sanitizeMembershipInLoan(loan))
       }
     });
   } catch (error) {
@@ -194,7 +197,7 @@ export const getLoan = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        loan
+        loan: sanitizeMembershipInLoan(loan)
       }
     });
   } catch (error) {
@@ -224,7 +227,7 @@ export const getLoanByAccountNumber = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        loan
+        loan: sanitizeMembershipInLoan(loan)
       }
     });
   } catch (error) {
@@ -316,7 +319,7 @@ export const updateLoan = async (req, res) => {
         success: true,
         message: `Loan ${status} successfully`,
         data: {
-          loan: updatedLoan
+          loan: sanitizeMembershipInLoan(updatedLoan)
         }
       });
     }
@@ -362,7 +365,7 @@ export const updateLoan = async (req, res) => {
       success: true,
       message: 'Loan updated successfully',
       data: {
-        loan
+        loan: sanitizeMembershipInLoan(loan)
       }
     });
   } catch (error) {
@@ -399,10 +402,32 @@ export const downloadLoanContract = async (req, res) => {
       });
     }
     
-    // Debug: Log membership passportPhoto
-    if (loan.membership) {
-      console.log('Membership passportPhoto:', loan.membership.passportPhoto);
-      console.log('Membership passportPhoto secure_url:', loan.membership.passportPhoto?.secure_url);
+    // For PDF we need a fetchable URL for the passport photo. Build signed URL with same type/version as stored asset so Cloudinary returns 200.
+    const photo = loan.membership?.passportPhoto;
+    if (photo && (photo.public_id || photo.secure_url)) {
+      let publicId = photo.public_id;
+      let resourceType = photo.resource_type || 'image';
+      let deliveryType = 'authenticated';
+      let version;
+      if (photo.secure_url) {
+        const parsed = parsePublicIdFromCloudinaryUrl(photo.secure_url);
+        if (parsed) {
+          if (!publicId) publicId = parsed.publicId;
+          resourceType = parsed.resourceType || 'image';
+          deliveryType = parsed.type || deliveryType;
+          version = parsed.version;
+        }
+      }
+      if (publicId) {
+        const { url } = getSignedDocumentUrl(publicId, {
+          resource_type: resourceType,
+          type: deliveryType,
+          version,
+          expiresInSeconds: 60
+        });
+        const photoPlain = photo.toObject ? photo.toObject() : { ...photo };
+        loan.membership.passportPhoto = { ...photoPlain, secure_url: url };
+      }
     }
 
     // Only allow contract download for active loans

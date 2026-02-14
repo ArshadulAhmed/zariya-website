@@ -269,17 +269,17 @@ const loansSlice = createSlice({
         if (loan.membership) {
           loan.membership = {
             ...loan.membership,
-            // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)
-            aadharUpload: (loan.membership.aadharUpload && typeof loan.membership.aadharUpload === 'object' && loan.membership.aadharUpload.secure_url) 
+            // Preserve document refs: legacy { secure_url } or secure { hasDocument: true }
+            aadharUpload: (loan.membership.aadharUpload && typeof loan.membership.aadharUpload === 'object') 
               ? loan.membership.aadharUpload 
               : (typeof loan.membership.aadharUpload === 'string' ? loan.membership.aadharUpload : null),
-            aadharUploadBack: (loan.membership.aadharUploadBack && typeof loan.membership.aadharUploadBack === 'object' && loan.membership.aadharUploadBack.secure_url) 
+            aadharUploadBack: (loan.membership.aadharUploadBack && typeof loan.membership.aadharUploadBack === 'object') 
               ? loan.membership.aadharUploadBack 
               : (typeof loan.membership.aadharUploadBack === 'string' ? loan.membership.aadharUploadBack : null),
-            panUpload: (loan.membership.panUpload && typeof loan.membership.panUpload === 'object' && loan.membership.panUpload.secure_url) 
+            panUpload: (loan.membership.panUpload && typeof loan.membership.panUpload === 'object') 
               ? loan.membership.panUpload 
               : (typeof loan.membership.panUpload === 'string' ? loan.membership.panUpload : null),
-            passportPhoto: (loan.membership.passportPhoto && typeof loan.membership.passportPhoto === 'object' && loan.membership.passportPhoto.secure_url) 
+            passportPhoto: (loan.membership.passportPhoto && typeof loan.membership.passportPhoto === 'object') 
               ? loan.membership.passportPhoto 
               : (typeof loan.membership.passportPhoto === 'string' ? loan.membership.passportPhoto : null),
           }
@@ -308,17 +308,17 @@ const loansSlice = createSlice({
         if (updatedLoan.membership) {
           updatedLoan.membership = {
             ...updatedLoan.membership,
-            // Preserve Cloudinary metadata objects (check for secure_url to ensure it's a valid Cloudinary object)
-            aadharUpload: (updatedLoan.membership.aadharUpload && typeof updatedLoan.membership.aadharUpload === 'object' && updatedLoan.membership.aadharUpload.secure_url) 
+            // Preserve document refs: legacy { secure_url } or secure { hasDocument: true }
+            aadharUpload: (updatedLoan.membership.aadharUpload && typeof updatedLoan.membership.aadharUpload === 'object') 
               ? updatedLoan.membership.aadharUpload 
               : (typeof updatedLoan.membership.aadharUpload === 'string' ? updatedLoan.membership.aadharUpload : null),
-            aadharUploadBack: (updatedLoan.membership.aadharUploadBack && typeof updatedLoan.membership.aadharUploadBack === 'object' && updatedLoan.membership.aadharUploadBack.secure_url) 
+            aadharUploadBack: (updatedLoan.membership.aadharUploadBack && typeof updatedLoan.membership.aadharUploadBack === 'object') 
               ? updatedLoan.membership.aadharUploadBack 
               : (typeof updatedLoan.membership.aadharUploadBack === 'string' ? updatedLoan.membership.aadharUploadBack : null),
-            panUpload: (updatedLoan.membership.panUpload && typeof updatedLoan.membership.panUpload === 'object' && updatedLoan.membership.panUpload.secure_url) 
+            panUpload: (updatedLoan.membership.panUpload && typeof updatedLoan.membership.panUpload === 'object') 
               ? updatedLoan.membership.panUpload 
               : (typeof updatedLoan.membership.panUpload === 'string' ? updatedLoan.membership.panUpload : null),
-            passportPhoto: (updatedLoan.membership.passportPhoto && typeof updatedLoan.membership.passportPhoto === 'object' && updatedLoan.membership.passportPhoto.secure_url) 
+            passportPhoto: (updatedLoan.membership.passportPhoto && typeof updatedLoan.membership.passportPhoto === 'object') 
               ? updatedLoan.membership.passportPhoto 
               : (typeof updatedLoan.membership.passportPhoto === 'string' ? updatedLoan.membership.passportPhoto : null),
           }

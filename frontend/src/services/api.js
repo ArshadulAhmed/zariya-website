@@ -34,6 +34,7 @@ const apiRequest = async (endpoint, options = {}) => {
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
+    ...(options.signal && { signal: options.signal }),
   }
 
   // Add body if provided
@@ -196,9 +197,7 @@ export const membershipsAPI = {
 
   getMembership: async (id) => {
     try {
-      const data = await apiRequest(`/memberships/${id}`, {
-        method: 'GET',
-      })
+      const data = await apiRequest(`/memberships/${id}`, { method: 'GET' })
       return data
     } catch (error) {
       console.error('Memberships API getMembership error:', error)
@@ -208,14 +207,30 @@ export const membershipsAPI = {
 
   getMembershipByUserId: async (userId) => {
     try {
-      const data = await apiRequest(`/memberships/user/${userId}`, {
-        method: 'GET',
-      })
+      const data = await apiRequest(`/memberships/user/${userId}`, { method: 'GET' })
       return data
     } catch (error) {
       console.error('Memberships API getMembershipByUserId error:', error)
       throw error
     }
+  },
+
+  /**
+   * Fetch document image (or PDF) via backend proxy. Returns blob for use with createObjectURL.
+   * No Cloudinary URL is ever exposed; backend streams the file after auth check.
+   */
+  getDocumentImageBlob: async (membershipId, documentType) => {
+    const token = getToken()
+    const url = `${API_BASE_URL}/memberships/${membershipId}/documents/${documentType}/image`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Failed to load document')
+    }
+    return res.blob()
   },
 
   reviewMembership: async (id, reviewData) => {
