@@ -90,7 +90,7 @@ router.get('/:id/repayment-history', isAdminOrEmployee, downloadRepaymentHistory
 router.get('/:id', isAdminOrEmployee, getLoan);
 
 // Update loan - Admin only for active/closed/defaulted loans (e.g. status to closed or defaulted)
-router.put('/:id', isAdminOrEmployee, updateLoanValidation, updateLoan);
+router.put('/:id', isAdmin, updateLoanValidation, updateLoan);
 
 export default router;
 

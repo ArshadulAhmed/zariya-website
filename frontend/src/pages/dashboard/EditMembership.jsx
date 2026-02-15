@@ -15,7 +15,15 @@ const EditMembership = () => {
   const selectedMembership = useAppSelector((state) => state.memberships.selectedMembership)
   const isLoading = useAppSelector((state) => state.memberships.isLoading)
   const error = useAppSelector((state) => state.memberships.error)
+  const user = useAppSelector((state) => state.auth?.user)
   const formPopulatedRef = useRef(false)
+
+  // Edit membership is admin-only; redirect non-admin to view
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      navigate(id ? `/dashboard/memberships/${id}` : '/dashboard/memberships', { replace: true })
+    }
+  }, [user, id, navigate])
 
   useEffect(() => {
     if (id) {
@@ -34,6 +42,11 @@ const EditMembership = () => {
   }, [id, selectedMembership, dispatch])
 
   const detailPath = `/dashboard/memberships/${id}`
+
+  // Don't render edit form for non-admin (redirect will run)
+  if (user && user.role !== 'admin') {
+    return null
+  }
 
   const pageHeader = (
     <div className="page-header">

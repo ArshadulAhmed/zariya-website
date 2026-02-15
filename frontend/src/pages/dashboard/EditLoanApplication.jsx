@@ -15,8 +15,16 @@ const EditLoanApplication = () => {
   const application = useAppSelector((state) => state.loanApplications.selectedApplication)
   const isLoading = useAppSelector((state) => state.loanApplications.isLoading)
   const error = useAppSelector((state) => state.loanApplications.error)
+  const user = useAppSelector((state) => state.auth?.user)
   const formPopulatedRef = useRef(false)
   const detailPath = `/dashboard/loan-applications/${id}`
+
+  // Edit application is admin-only; redirect non-admin to view
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      navigate(id ? `/dashboard/loan-applications/${id}` : '/dashboard/loan-applications', { replace: true })
+    }
+  }, [user, id, navigate])
 
   useEffect(() => {
     if (id) dispatch(fetchApplication(id))
@@ -27,6 +35,14 @@ const EditLoanApplication = () => {
     dispatch(setFormDataFromApplication(application))
     formPopulatedRef.current = true
   }, [application, dispatch])
+
+  // Don't render until auth is known; never show edit form to non-admin (redirect in useEffect)
+  if (user == null) {
+    return null // auth still loading – avoid flashing edit form
+  }
+  if (user.role !== 'admin') {
+    return null
+  }
 
   if (isLoading && !application) {
     return (

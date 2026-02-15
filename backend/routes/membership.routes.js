@@ -13,7 +13,7 @@ import {
   updateMembership,
   updateMembershipImages
 } from '../controllers/membership.controller.js';
-import { protect, isAdminOrEmployee } from '../middleware/auth.middleware.js';
+import { protect, isAdminOrEmployee, isAdmin } from '../middleware/auth.middleware.js';
 import { APP_CONFIG } from '../config/app.config.js';
 import { parseFormDataAddress } from '../middleware/parseFormData.middleware.js';
 
@@ -173,7 +173,7 @@ router.get('/:id/documents/:documentType/image', getMembershipDocumentImage);
 router.get('/:id/documents/:documentType/url', getMembershipDocumentUrl);
 router.get('/:id', getMembership);
 router.get('/user/:userId', getMembershipByUserId);
-router.put('/:id', updateMembershipValidation, updateMembership);
+router.put('/:id', isAdmin, updateMembershipValidation, updateMembership);
 router.put('/:id/review', reviewMembershipValidation, reviewMembership);
 router.post('/:id/retry-uploads', 
   upload.fields([

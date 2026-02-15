@@ -179,7 +179,7 @@ const LoanApplicationDetails = () => {
           <p className="page-subtitle">View and manage application</p>
         </div>
         <div className="header-actions">
-          {application?.status === 'under_review' && (
+          {application?.status === 'under_review' && isAdmin && (
             <button
               type="button"
               className="btn-secondary"

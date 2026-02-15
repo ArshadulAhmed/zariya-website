@@ -16,7 +16,8 @@ const LoanDetails = () => {
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
   const error = useAppSelector((state) => state.loans.error)
-  
+  const user = useAppSelector((state) => state.auth?.user)
+  const isAdmin = user?.role === 'admin'
   const hasFetchedRef = useRef(false)
   const lastLoanIdRef = useRef('')
 
@@ -59,7 +60,7 @@ const LoanDetails = () => {
           <p className="page-subtitle">View and manage loan application</p>
         </div>
         <div className="header-actions">
-          {!isLoading && selectedLoan && (
+          {!isLoading && selectedLoan && isAdmin && (
             <button
               type="button"
               className="btn-edit-loan"

@@ -83,9 +83,17 @@ const EditLoan = () => {
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
   const error = useAppSelector((state) => state.loans.error)
+  const user = useAppSelector((state) => state.auth?.user)
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [formErrors, setFormErrors] = useState({})
+
+  // Edit loan is admin-only; redirect non-admin to view
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      navigate(id ? `/dashboard/loans/${id}` : '/dashboard/loans', { replace: true })
+    }
+  }, [user, id, navigate])
 
   useEffect(() => {
     if (id) dispatch(fetchLoan(id))
@@ -96,6 +104,11 @@ const EditLoan = () => {
   }, [selectedLoan, form])
 
   const detailPath = `/dashboard/loans/${id}`
+
+  // Don't render for non-admin (redirect will run)
+  if (user && user.role !== 'admin') {
+    return null
+  }
 
   const set = (path, value) => {
     setForm((prev) => {

@@ -18,6 +18,8 @@ const MembershipDetails = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { selectedMembership, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
+  const user = useAppSelector((state) => state.auth?.user)
+  const isAdmin = user?.role === 'admin'
 
   const [approveConfirm, setApproveConfirm] = useState({ open: false })
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
@@ -175,7 +177,7 @@ const MembershipDetails = () => {
           <p className="page-subtitle">View and manage membership application</p>
         </div>
         <div className="action-buttons">
-          {!isLoading && hasMembership && (
+          {!isLoading && hasMembership && isAdmin && (
             <button
               type="button"
               className="btn-edit-membership"

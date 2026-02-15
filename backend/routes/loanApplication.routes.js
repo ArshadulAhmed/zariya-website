@@ -364,7 +364,7 @@ const updateApplicationValidation = [
 router.post('/', isAdminOrEmployee, createApplicationValidation, createApplication);
 router.get('/', isAdminOrEmployee, getApplications);
 router.get('/:id', isAdminOrEmployee, getApplication);
-router.put('/:id', isAdminOrEmployee, updateApplicationValidation, updateApplication);
+router.put('/:id', isAdmin, updateApplicationValidation, updateApplication);
 router.put('/:id/review', isAdmin, reviewApplicationValidation, reviewApplication);
 
 export default router;

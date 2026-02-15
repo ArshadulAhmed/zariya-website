@@ -76,6 +76,13 @@ const RepaymentEdit = () => {
   const [deletingId, setDeletingId] = useState(null)
   const [repaymentToDelete, setRepaymentToDelete] = useState(null)
 
+  // Repayment edit is admin-only; redirect non-admin to repayment details view
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      navigate(id ? `/dashboard/repayment-records/${id}` : '/dashboard/repayment-records', { replace: true })
+    }
+  }, [user, id, navigate])
+
   useEffect(() => {
     if (!id) {
       dispatch(clearRepayments())
@@ -97,6 +104,11 @@ const RepaymentEdit = () => {
   const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
+
+  // Don't render for non-admin (redirect will run)
+  if (user && user.role !== 'admin') {
+    return null
+  }
 
   const openEditModal = (repayment) => {
     const d = repayment.paymentDate ? new Date(repayment.paymentDate) : new Date()
