@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Membership from '../models/Membership.model.js';
 import { validationResult } from 'express-validator';
 import { uploadImagesWithRollback, uploadImagesIndividually, calculateImageUploadStatus } from '../utils/imageUpload.utils.js';
@@ -320,12 +321,20 @@ export const getMemberships = async (req, res) => {
   }
 };
 
+// Resolve membership by MongoDB _id or by userId (e.g. ZMID-0000003)
+const findMembershipByIdOrUserId = async (id) => {
+  if (mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id) {
+    return Membership.findById(id);
+  }
+  return Membership.findOne({ userId: id });
+};
+
 // @desc    Get single membership
 // @route   GET /api/memberships/:id
 // @access  Private/Admin or Employee
 export const getMembership = async (req, res) => {
   try {
-    const membership = await Membership.findById(req.params.id)
+    const membership = await findMembershipByIdOrUserId(req.params.id)
       .populate('createdBy', 'username fullName')
       .populate('reviewedBy', 'username fullName');
 
@@ -350,6 +359,57 @@ export const getMembership = async (req, res) => {
   }
 };
 
+// @desc    Update membership details (admin/employee). Does not change userId, status, or document uploads.
+// @route   PUT /api/memberships/:id
+// @access  Private/Admin or Employee
+const ALLOWED_UPDATE_FIELDS = [
+  'fullName', 'fatherOrHusbandName', 'age', 'dateOfBirth', 'occupation',
+  'mobileNumber', 'email', 'aadhar', 'pan', 'address'
+];
+export const updateMembership = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+    const membership = await findMembershipByIdOrUserId(req.params.id);
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership not found'
+      });
+    }
+    for (const key of ALLOWED_UPDATE_FIELDS) {
+      if (req.body[key] !== undefined) {
+        if (key === 'address' && req.body.address && typeof req.body.address === 'object') {
+          membership.address = { ...membership.address, ...req.body.address };
+        } else if (key === 'email' && (req.body[key] === '' || req.body[key] == null)) {
+          membership.email = null;
+        } else {
+          membership[key] = req.body[key];
+        }
+      }
+    }
+    await membership.save();
+    const updated = await Membership.findById(membership._id)
+      .populate('createdBy', 'username fullName')
+      .populate('reviewedBy', 'username fullName');
+    res.status(200).json({
+      success: true,
+      message: 'Membership updated successfully',
+      data: { membership: sanitizeMembership(updated) }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating membership'
+    });
+  }
+};
+
 const ALLOWED_DOCUMENT_TYPES = ['aadharUpload', 'aadharUploadBack', 'panUpload', 'passportPhoto'];
 
 // @desc    Stream membership document image through backend (proxy). No Cloudinary URL or asset ID
@@ -366,7 +426,7 @@ export const getMembershipDocumentImage = async (req, res) => {
       });
     }
 
-    const membership = await Membership.findById(id).select(`_id userId ${documentType}`);
+    const membership = await findMembershipByIdOrUserId(id);
     if (!membership) {
       return res.status(404).json({
         success: false,
@@ -446,7 +506,7 @@ export const getMembershipDocumentUrl = async (req, res) => {
       });
     }
 
-    const membership = await Membership.findById(id).select(`_id userId ${documentType}`);
+    const membership = await findMembershipByIdOrUserId(id);
     if (!membership) {
       return res.status(404).json({
         success: false,
@@ -515,7 +575,7 @@ export const getMembershipByUserId = async (req, res) => {
 // @access  Private/Admin or Employee
 export const retryImageUploads = async (req, res) => {
   try {
-    const membership = await Membership.findById(req.params.id);
+    const membership = await findMembershipByIdOrUserId(req.params.id);
 
     if (!membership) {
       return res.status(404).json({
@@ -607,7 +667,7 @@ export const retryImageUploads = async (req, res) => {
 // @access  Private/Admin or Employee
 export const updateMembershipImages = async (req, res) => {
   try {
-    const membership = await Membership.findById(req.params.id);
+    const membership = await findMembershipByIdOrUserId(req.params.id);
 
     if (!membership) {
       return res.status(404).json({
@@ -680,7 +740,7 @@ export const reviewMembership = async (req, res) => {
       });
     }
 
-    const membership = await Membership.findById(req.params.id);
+    const membership = await findMembershipByIdOrUserId(req.params.id);
 
     if (!membership) {
       return res.status(404).json({

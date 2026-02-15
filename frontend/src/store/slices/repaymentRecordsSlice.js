@@ -81,6 +81,23 @@ const repaymentRecordsSlice = createSlice({
   },
 })
 
+// Thunks for update/delete (used by RepaymentEdit page); they refetch by loanId after success
+export const updateRepaymentThunk = (repaymentId, loanId, repaymentData) => async (dispatch) => {
+  const response = await repaymentsAPI.updateRepayment(repaymentId, repaymentData)
+  if (response?.success && loanId) {
+    await dispatch(fetchRepayments(loanId))
+  }
+  return response
+}
+
+export const deleteRepaymentThunk = (repaymentId, loanId) => async (dispatch) => {
+  const response = await repaymentsAPI.deleteRepayment(repaymentId)
+  if (response?.success && loanId) {
+    await dispatch(fetchRepayments(loanId))
+  }
+  return response
+}
+
 export const {
   clearRepayments,
   clearError,

@@ -30,7 +30,7 @@ const updateLoanValidation = [
     .matches(/^\d{10}$/)
     .withMessage('Mobile number must be 10 digits'),
   body('email')
-    .optional()
+    .optional({ values: 'falsy' })
     .isEmail()
     .normalizeEmail()
     .withMessage('Please provide a valid email'),

@@ -251,7 +251,13 @@ export const updateLoan = async (req, res) => {
       });
     }
 
-    const loan = await Loan.findById(req.params.id);
+    const { id } = req.params;
+    let loan;
+    if (id.startsWith('ZLID')) {
+      loan = await Loan.findOne({ loanAccountNumber: id });
+    } else {
+      loan = await Loan.findById(id);
+    }
 
     if (!loan) {
       return res.status(404).json({
@@ -302,7 +308,7 @@ export const updateLoan = async (req, res) => {
 
     if (isStatusOnlyUpdate) {
       const updatedLoan = await Loan.findByIdAndUpdate(
-        req.params.id,
+        loan._id,
         { status },
         { new: true, runValidators: false }
       ).populate('membership', 'userId fullName')
@@ -352,7 +358,11 @@ export const updateLoan = async (req, res) => {
 
     for (const field of allowedFields) {
       if (updateData[field] !== undefined) {
-        loan[field] = updateData[field];
+        if (field === 'email' && (updateData[field] === '' || updateData[field] == null)) {
+          loan.email = null;
+        } else {
+          loan[field] = updateData[field];
+        }
       }
     }
 

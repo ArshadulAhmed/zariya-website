@@ -87,18 +87,15 @@ const Memberships = memo(() => {
   }
 
   const handleActions = (row) => (
-    <>
-      <button
-        className="btn-primary"
-        onClick={(e) => {
-          e.stopPropagation()
-          // Navigate using userId instead of DB ID
-          navigate(`/dashboard/memberships/${row.userId}`)
-        }}
-      >
-        View
-      </button>
-    </>
+    <button
+      className="btn-primary"
+      onClick={(e) => {
+        e.stopPropagation()
+        navigate(`/dashboard/memberships/${row.userId}`)
+      }}
+    >
+      View
+    </button>
   )
 
   const handleFilterChange = (key, value) => {

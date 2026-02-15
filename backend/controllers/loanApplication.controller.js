@@ -162,6 +162,73 @@ export const getApplication = async (req, res) => {
   }
 };
 
+// @desc    Update loan application (only when status is under_review)
+// @route   PUT /api/loan-applications/:id
+// @access  Private/Admin or Employee
+export const updateApplication = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { id } = req.params;
+    let application;
+    if (id.startsWith('ZLAP-')) {
+      application = await LoanApplication.findOne({ applicationNumber: id });
+    } else {
+      application = await LoanApplication.findById(id);
+    }
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Loan application not found'
+      });
+    }
+
+    if (application.status !== 'under_review') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only applications under review can be edited. Approved or rejected applications cannot be changed.'
+      });
+    }
+
+    const allowed = [
+      'mobileNumber', 'email', 'loanAmount', 'loanTenure', 'purpose',
+      'installmentAmount', 'bankAccountNumber', 'nominee', 'guarantor', 'coApplicant'
+    ];
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        if (key === 'email' && (req.body[key] === '' || req.body[key] == null)) {
+          application.email = null;
+        } else {
+          application[key] = req.body[key];
+        }
+      }
+    }
+    await application.save();
+
+    await application.populate('membership', 'userId fullName');
+    await application.populate('createdBy', 'username fullName');
+    await application.populate('reviewedBy', 'username fullName');
+
+    res.status(200).json({
+      success: true,
+      message: 'Loan application updated successfully',
+      data: { application }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating loan application'
+    });
+  }
+};
+
 // @desc    Review loan application (Approve/Reject)
 // @route   PUT /api/loan-applications/:id/review
 // @access  Private/Admin

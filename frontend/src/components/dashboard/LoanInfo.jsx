@@ -6,12 +6,10 @@ import AdditionalInfo from './AdditionalInfo'
 import './LoanInfo.scss'
 
 const LoanInfo = memo(() => {
-  // Use specific selectors to prevent unnecessary re-renders
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
 
   const loan = selectedLoan
-  const isActive = loan ? loan.status === 'active' : false
-  
+
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
 

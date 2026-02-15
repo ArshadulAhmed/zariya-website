@@ -131,6 +131,61 @@ const newLoanSlice = createSlice({
     resetForm: (state) => {
       return initialState
     },
+    setFormDataFromApplication: (state, action) => {
+      const app = action.payload
+      if (!app) return
+      const membership = app.membership
+      if (membership) {
+        state.selectedMembership = {
+          ...membership,
+          aadharUpload: (membership.aadharUpload && typeof membership.aadharUpload === 'object') ? membership.aadharUpload : (typeof membership.aadharUpload === 'string' ? membership.aadharUpload : null),
+          aadharUploadBack: (membership.aadharUploadBack && typeof membership.aadharUploadBack === 'object') ? membership.aadharUploadBack : (typeof membership.aadharUploadBack === 'string' ? membership.aadharUploadBack : null),
+          panUpload: (membership.panUpload && typeof membership.panUpload === 'object') ? membership.panUpload : (typeof membership.panUpload === 'string' ? membership.panUpload : null),
+          passportPhoto: (membership.passportPhoto && typeof membership.passportPhoto === 'object') ? membership.passportPhoto : (typeof membership.passportPhoto === 'string' ? membership.passportPhoto : null),
+        }
+      }
+      const addr = (a) => ({
+        village: a?.village ?? '',
+        postOffice: a?.postOffice ?? '',
+        policeStation: a?.policeStation ?? '',
+        district: a?.district ?? '',
+        pinCode: a?.pinCode ?? '',
+        landmark: a?.landmark ?? '',
+      })
+      state.formData = {
+        mobileNumber: app.mobileNumber ?? '',
+        email: app.email ?? '',
+        loanAmount: app.loanAmount ?? '',
+        loanTenure: app.loanTenure ?? '',
+        purpose: app.purpose ?? '',
+        installmentAmount: app.installmentAmount ?? '',
+        bankAccountNumber: app.bankAccountNumber ?? '',
+        nominee: {
+          name: app.nominee?.name ?? '',
+          relationship: app.nominee?.relationship ?? '',
+          mobileNumber: app.nominee?.mobileNumber ?? '',
+          bankAccountNumber: app.nominee?.bankAccountNumber ?? '',
+          address: addr(app.nominee?.address),
+        },
+        guarantor: {
+          name: app.guarantor?.name ?? '',
+          fatherOrHusbandName: app.guarantor?.fatherOrHusbandName ?? '',
+          relationship: app.guarantor?.relationship ?? '',
+          mobileNumber: app.guarantor?.mobileNumber ?? '',
+          bankAccountNumber: app.guarantor?.bankAccountNumber ?? '',
+          address: addr(app.guarantor?.address),
+        },
+        coApplicant: {
+          fullName: app.coApplicant?.fullName ?? '',
+          fatherOrHusbandName: app.coApplicant?.fatherOrHusbandName ?? '',
+          mobileNumber: app.coApplicant?.mobileNumber ?? '',
+          email: app.coApplicant?.email ?? '',
+          address: addr(app.coApplicant?.address),
+        },
+      }
+      state.hasCoApplicant = !!(app.coApplicant && (app.coApplicant.fullName || app.coApplicant.mobileNumber))
+      state.errors = {}
+    },
     copyAddress: (state, action) => {
       const { from, to } = action.payload
       // from and to can be: 'member', 'nominee', 'guarantor', 'coApplicant'
@@ -175,6 +230,7 @@ export const {
   setSelectedMembership,
   updateFormData,
   setFormData,
+  setFormDataFromApplication,
   setHasCoApplicant,
   setErrors,
   clearError,

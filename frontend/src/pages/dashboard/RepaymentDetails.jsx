@@ -21,7 +21,9 @@ const RepaymentDetails = () => {
   const additionalAmountPaid = useAppSelector((state) => state.repaymentRecords?.additionalAmountPaid) || 0
   const loanInfo = useAppSelector((state) => state.repaymentRecords?.loanInfo)
   const error = useAppSelector((state) => state.repaymentRecords?.error)
-  
+  const user = useAppSelector((state) => state.auth?.user)
+  const isAdmin = user?.role === 'admin'
+
   const lastLoanIdRef = useRef('')
   const hasFetchedRef = useRef(false)
 
@@ -87,6 +89,18 @@ const RepaymentDetails = () => {
           <h1 className="page-title">Repayment Details</h1>
           <p className="page-subtitle">View repayment history for this loan</p>
         </div>
+        {id && isAdmin && (
+          <div className="header-actions">
+            <button
+              type="button"
+              className="btn-repayment-edit"
+              onClick={() => navigate(`/dashboard/repayment-records/${id}/edit`)}
+              title="Edit repayment details"
+            >
+              Repayment Edit
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Error State - Only show if not loading and we have an error */}

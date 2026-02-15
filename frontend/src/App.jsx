@@ -13,13 +13,17 @@ import './styles/App.scss'
 // Lazy load other dashboard pages
 const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
 const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
+const EditMembership = lazy(() => import('./pages/dashboard/EditMembership'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
+const EditLoan = lazy(() => import('./pages/dashboard/EditLoan'))
 const LoanApplications = lazy(() => import('./pages/dashboard/LoanApplications'))
 const LoanApplicationDetails = lazy(() => import('./pages/dashboard/LoanApplicationDetails'))
+const EditLoanApplication = lazy(() => import('./pages/dashboard/EditLoanApplication'))
 const NewLoan = lazy(() => import('./pages/dashboard/NewLoan'))
 const RepaymentRecords = lazy(() => import('./pages/dashboard/RepaymentRecords'))
 const RepaymentDetails = lazy(() => import('./pages/dashboard/RepaymentDetails'))
+const RepaymentEdit = lazy(() => import('./pages/dashboard/RepaymentEdit'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
@@ -161,6 +165,14 @@ function App() {
           }
         />
         <Route
+          path="memberships/:id/edit"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <EditMembership />
+            </Suspense>
+          }
+        />
+        <Route
           path="memberships/:id"
           element={
             <Suspense fallback={<PageLoader />}>
@@ -173,6 +185,14 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <LoanApplications />
+            </Suspense>
+          }
+        />
+        <Route
+          path="loan-applications/:id/edit"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <EditLoanApplication />
             </Suspense>
           }
         />
@@ -201,6 +221,14 @@ function App() {
           }
         />
         <Route
+          path="loans/:id/edit"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <EditLoan />
+            </Suspense>
+          }
+        />
+        <Route
           path="loans/:id"
           element={
             <Suspense fallback={<PageLoader />}>
@@ -213,6 +241,14 @@ function App() {
           element={
             <Suspense fallback={<PageLoader />}>
               <RepaymentRecords />
+            </Suspense>
+          }
+        />
+        <Route
+          path="repayment-records/:id/edit"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <RepaymentEdit />
             </Suspense>
           }
         />

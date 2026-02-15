@@ -71,6 +71,9 @@ const membershipSlice = createSlice({
     clearMembershipError: (state) => {
       state.error = null
     },
+    clearSubmitSuccess: (state) => {
+      state.success = false
+    },
     setValidationErrors: (state, action) => {
       state.validationErrors = action.payload
     },
@@ -80,6 +83,35 @@ const membershipSlice = createSlice({
         delete state.validationErrors[fieldName]
       } else {
         state.validationErrors = {}
+      }
+    },
+    setFormDataFromMembership: (state, action) => {
+      const m = action.payload
+      if (!m) return
+      const dateOfBirth = m.dateOfBirth
+        ? (typeof m.dateOfBirth === 'string' && m.dateOfBirth.includes('T')
+            ? m.dateOfBirth.split('T')[0]
+            : m.dateOfBirth)
+        : ''
+      state.formData = {
+        ...state.formData,
+        fullName: m.fullName ?? '',
+        fatherOrHusbandName: m.fatherOrHusbandName ?? '',
+        age: m.age != null ? String(m.age) : '',
+        dateOfBirth,
+        occupation: m.occupation ?? '',
+        mobileNumber: m.mobileNumber ?? '',
+        email: m.email ?? '',
+        aadhar: m.aadhar ?? '',
+        pan: m.pan ?? '',
+        address: {
+          village: m.address?.village ?? '',
+          postOffice: m.address?.postOffice ?? '',
+          policeStation: m.address?.policeStation ?? '',
+          district: m.address?.district ?? state.formData.address.district,
+          pinCode: m.address?.pinCode ?? '',
+          landmark: m.address?.landmark ?? '',
+        },
       }
     },
   },
@@ -92,8 +124,10 @@ export const {
   submitMembershipFailure,
   resetMembershipForm,
   clearMembershipError,
+  clearSubmitSuccess,
   setValidationErrors,
   clearValidationError,
+  setFormDataFromMembership,
 } = membershipSlice.actions
 export default membershipSlice.reducer
 

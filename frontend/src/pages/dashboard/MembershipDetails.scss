@@ -118,6 +118,20 @@
           box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
         }
       }
+
+      .btn-edit-membership {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+        &:hover:not(:disabled) {
+          background: var(--primary-color);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+      }
     }
   }
 

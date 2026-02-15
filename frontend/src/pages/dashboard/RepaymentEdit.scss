@@ -1,0 +1,333 @@
+@use '../../styles/main.scss' as *;
+
+.repayment-edit-page {
+  padding: 1.6rem;
+  min-height: 100vh;
+  background: #f9fafb;
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 0.8rem;
+
+    p {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+    margin-bottom: 1.6rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0.4rem 0;
+      margin-bottom: 0.4rem;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--primary-dark);
+      }
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 0.4rem 0;
+    }
+
+    .page-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+  }
+
+  .details-container {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+
+  .repayment-history-card {
+    .actions-cell {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+
+      .btn-edit-row {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid var(--primary-color);
+        background: white;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s;
+
+        &:hover {
+          background: var(--primary-color);
+          color: white;
+        }
+      }
+
+      .btn-delete-row {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #dc2626;
+        background: white;
+        color: #dc2626;
+        cursor: pointer;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s;
+
+        &:hover:not(:disabled) {
+          background: #dc2626;
+          color: white;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 1.6rem;
+      color: var(--text-secondary);
+      font-size: 0.76rem;
+    }
+  }
+
+  .edit-repayment-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: editModalFadeIn 0.2s ease-in-out;
+  }
+
+  @keyframes editModalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .edit-repayment-modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: editModalSlideUp 0.3s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @keyframes editModalSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .edit-repayment-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+      font-family: 'Poppins', sans-serif;
+    }
+  }
+
+  .edit-repayment-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: color 0.2s;
+
+    &:hover:not(:disabled) {
+      color: #1f2937;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .edit-repayment-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .edit-repayment-modal-body {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .form-field {
+      margin-bottom: 0;
+    }
+
+    .checkbox-field .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .form-error {
+      color: #dc2626;
+      font-size: 0.76rem;
+      padding: 0.5rem;
+      background: #fef2f2;
+      border-radius: 6px;
+      border: 1px solid #fecaca;
+    }
+  }
+
+  .edit-repayment-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+
+    button {
+      min-width: 100px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+
+      &:hover:not(:disabled) {
+        background: #e5e7eb;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 95, 63, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  @media (max-width: 640px) {
+    .edit-repayment-modal-content {
+      max-width: 100%;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    .edit-repayment-modal-header,
+    .edit-repayment-modal-actions {
+      padding: 14px 20px;
+    }
+
+    .edit-repayment-modal-body {
+      padding: 14px 20px;
+    }
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 4px 12px rgba(26, 95, 63, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(26, 95, 63, 0.35);
+    }
+  }
+}

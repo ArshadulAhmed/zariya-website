@@ -117,23 +117,22 @@ const Loans = memo(() => {
     navigate(`/dashboard/loans/${loanId}`)
   }
 
-  const handleActions = (row) => (
-    <>
+  const handleActions = (row) => {
+    const loanId = row.loanAccountNumber && row.loanAccountNumber !== '-'
+      ? row.loanAccountNumber
+      : row.id
+    return (
       <button
         className="btn-primary"
         onClick={(e) => {
           e.stopPropagation()
-          // Use loanAccountNumber instead of DB ID
-          const loanId = row.loanAccountNumber && row.loanAccountNumber !== '-' 
-            ? row.loanAccountNumber 
-            : row.id
           navigate(`/dashboard/loans/${loanId}`)
         }}
       >
         View
       </button>
-    </>
-  )
+    )
+  }
 
   return (
     <div className="loans-page">

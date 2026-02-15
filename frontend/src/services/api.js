@@ -245,6 +245,19 @@ export const membershipsAPI = {
       throw error
     }
   },
+
+  updateMembership: async (id, payload) => {
+    try {
+      const data = await apiRequest(`/memberships/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      })
+      return data
+    } catch (error) {
+      console.error('Memberships API updateMembership error:', error)
+      throw error
+    }
+  },
 }
 
 // Loans API
@@ -477,6 +490,19 @@ export const loanApplicationsAPI = {
       return data
     } catch (error) {
       console.error('Loan Applications API getApplication error:', error)
+      throw error
+    }
+  },
+
+  updateApplication: async (id, applicationData) => {
+    try {
+      const data = await apiRequest(`/loan-applications/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(applicationData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Applications API updateApplication error:', error)
       throw error
     }
   },

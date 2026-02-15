@@ -1,0 +1,184 @@
+@use '../../styles/main.scss' as *;
+
+.edit-loan-page {
+  padding: 1.6rem;
+  min-height: 100vh;
+  background: #f9fafb;
+
+  .page-header {
+    margin-bottom: 1.5rem;
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: none;
+      border: none;
+      color: var(--primary-color);
+      font-size: 0.76rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0.4rem 0;
+      margin-bottom: 0.4rem;
+      transition: color 0.2s;
+      &:hover { color: var(--primary-dark); }
+      svg { flex-shrink: 0; }
+    }
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 0.4rem 0;
+    }
+    .page-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+  }
+
+  .edit-loan-form {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    padding: 2.4rem 2rem;
+    border: 1px solid #e5e7eb;
+
+    @media (max-width: 768px) {
+      padding: 1.6rem 1.2rem;
+    }
+
+    .form-section {
+      margin-bottom: 2.4rem;
+      background: #dddddd40;
+      padding: 18px;
+      border-radius: 12px;
+
+      &:last-of-type {
+        margin-bottom: 0;
+      }
+    }
+
+    .section-header {
+      display: flex;
+      gap: 1.2rem;
+      margin-bottom: 1.6rem;
+      align-items: flex-start;
+
+      .section-number {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(26, 95, 63, 0.2);
+      }
+
+      .section-title-group {
+        flex: 1;
+        padding-top: 0.2rem;
+
+        h2 {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 0.2rem;
+          letter-spacing: -0.01em;
+        }
+
+        .section-description {
+          font-size: 0.76rem;
+          color: var(--text-secondary);
+          margin: 0;
+        }
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+
+      @media (max-width: 1024px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    .form-footer {
+      margin-top: 2.4rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid #e5e7eb;
+
+      .form-actions {
+        display: flex;
+        gap: 0.8rem;
+        justify-content: flex-end;
+
+        @media (max-width: 768px) {
+          flex-direction: column-reverse;
+        }
+
+        button {
+          padding: 0.8rem 2rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: 'Poppins', sans-serif;
+          border: none;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          justify-content: center;
+
+          &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+          }
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(26, 95, 63, 0.25);
+
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 95, 63, 0.35);
+          }
+        }
+
+        .btn-secondary {
+          background: white;
+          color: var(--text-primary);
+          border: 2px solid #e5e7eb;
+          font-weight: 500;
+
+          &:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+          }
+        }
+      }
+    }
+  }
+
+  .error-state {
+    padding: 2rem;
+    text-align: center;
+    p { margin-bottom: 1rem; }
+  }
+}

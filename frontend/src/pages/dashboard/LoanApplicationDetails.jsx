@@ -179,9 +179,15 @@ const LoanApplicationDetails = () => {
           <p className="page-subtitle">View and manage application</p>
         </div>
         <div className="header-actions">
-          {/* <span className={`status-badge status-${(application.status || '').replace(/_/g, '-')}`}>
-            {(application.status || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-          </span> */}
+          {application?.status === 'under_review' && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate(`/dashboard/loan-applications/${id}/edit`)}
+            >
+              Edit
+            </button>
+          )}
           {underReview && isAdmin && (
             <>
               <button className="btn-primary" onClick={handleApprove} disabled={isLoading}>

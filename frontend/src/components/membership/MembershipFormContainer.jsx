@@ -8,17 +8,20 @@ import DocumentUploadSection from './DocumentUploadSection'
 import MembershipFormFooter from './MembershipFormFooter'
 import Snackbar from '../Snackbar'
 
-const MembershipFormContainer = () => {
+const MembershipFormContainer = ({ mode }) => {
   const dispatch = useAppDispatch()
   const success = useAppSelector((state) => state.membership.success)
+  const isEditMode = mode === 'edit'
 
-  // Reset form and clear errors when component mounts (navigating to new membership page)
+  // Reset form only when creating; in edit mode parent loads data into form
   useEffect(() => {
-    dispatch(resetMembershipForm())
+    if (!isEditMode) {
+      dispatch(resetMembershipForm())
+    }
     dispatch(clearValidationError())
     dispatch(clearMembershipError())
     dispatch(closeSnackbar())
-  }, [dispatch])
+  }, [dispatch, isEditMode])
 
   // Clear errors on unmount
   useEffect(() => {
@@ -34,7 +37,7 @@ const MembershipFormContainer = () => {
       <form className="membership-form" noValidate autoComplete="off">
         <PersonalInfoSection />
         <AddressInfoSection />
-        <DocumentUploadSection />
+        {!isEditMode && <DocumentUploadSection />}
         <MembershipFormFooter />
       </form>
       <Snackbar />

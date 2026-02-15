@@ -10,6 +10,7 @@ import {
   getMembershipDocumentUrl,
   reviewMembership,
   retryImageUploads,
+  updateMembership,
   updateMembershipImages
 } from '../controllers/membership.controller.js';
 import { protect, isAdminOrEmployee } from '../middleware/auth.middleware.js';
@@ -129,6 +130,25 @@ const reviewMembershipValidation = [
     .withMessage('Rejection reason cannot be empty if provided')
 ];
 
+// Update membership (all fields optional; same validation as create when provided)
+const updateMembershipValidation = [
+  body('fullName').optional().trim().notEmpty().withMessage('Full name is required'),
+  body('fatherOrHusbandName').optional().trim().notEmpty().withMessage('Father\'s/Husband\'s name is required'),
+  body('age').optional().isInt({ min: 18, max: 100 }).withMessage('Age must be between 18 and 100'),
+  body('dateOfBirth').optional().isISO8601().toDate().withMessage('Valid date of birth is required'),
+  body('occupation').optional().trim().notEmpty().withMessage('Occupation is required'),
+  body('address.village').optional().trim().notEmpty().withMessage('Village is required'),
+  body('address.postOffice').optional().trim().notEmpty().withMessage('Post office is required'),
+  body('address.policeStation').optional().trim().notEmpty().withMessage('Police station is required'),
+  body('address.district').optional().trim().notEmpty().withMessage('District is required'),
+  body('address.pinCode').optional().trim().matches(/^\d{6}$/).withMessage('PIN code must be 6 digits'),
+  body('address.landmark').optional().trim(),
+  body('mobileNumber').optional().trim().matches(/^\d{10}$/).withMessage('Mobile number must be 10 digits'),
+  body('email').optional({ values: 'falsy' }).trim().isEmail().normalizeEmail().withMessage('Valid email required'),
+  body('aadhar').optional().trim().matches(/^\d{12}$/).withMessage('Aadhar number must be 12 digits'),
+  body('pan').optional().trim().matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/).withMessage('PAN must be in format: ABCDE1234F')
+];
+
 // Routes
 // Public route - anyone can create membership
 // Files are sent with form, backend will create membership first, then upload images
@@ -153,6 +173,7 @@ router.get('/:id/documents/:documentType/image', getMembershipDocumentImage);
 router.get('/:id/documents/:documentType/url', getMembershipDocumentUrl);
 router.get('/:id', getMembership);
 router.get('/user/:userId', getMembershipByUserId);
+router.put('/:id', updateMembershipValidation, updateMembership);
 router.put('/:id/review', reviewMembershipValidation, reviewMembership);
 router.post('/:id/retry-uploads', 
   upload.fields([

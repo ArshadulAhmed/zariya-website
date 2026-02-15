@@ -1,0 +1,11 @@
+// Edit page reuses apply-membership-page.dashboard-mode layout (see ApplyMembership.scss).
+// Only error state inside form-wrapper needs local styling.
+.form-wrapper.no-header.edit-membership-error-state {
+  padding: 2.4rem 2rem;
+  text-align: center;
+
+  p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary, #666);
+  }
+}

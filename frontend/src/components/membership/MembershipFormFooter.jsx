@@ -1,14 +1,16 @@
 import { useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { 
   submitMembershipStart, 
   submitMembershipSuccess, 
   submitMembershipFailure,
-  setValidationErrors
+  setValidationErrors,
+  clearSubmitSuccess
 } from '../../store/slices/membershipSlice'
 import { setSnackbar } from '../../store/slices/loansSlice'
-import { validateMembershipForm, createMembershipFormData } from '../../utils/membershipUtils'
+import { validateMembershipForm, validateMembershipFormForEdit, createMembershipFormData, buildMembershipUpdatePayload } from '../../utils/membershipUtils'
+import { membershipsAPI } from '../../services/api'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
 
@@ -49,24 +51,51 @@ function scrollToFirstValidationError(errors) {
 const MembershipFormFooter = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { id } = useParams()
   const dispatch = useAppDispatch()
   const { formData, isLoading, success } = useAppSelector((state) => state.membership)
-  
+
   const isDashboard = location.pathname.includes('/dashboard')
+  const isEditMode = location.pathname.includes('/edit')
   const successRedirectPath = isDashboard ? '/dashboard/memberships' : '/'
+  const detailPath = id ? `/dashboard/memberships/${id}` : '/dashboard/memberships'
   const hideHeader = isDashboard
 
-  // Handle redirect on success
+  // Handle redirect on success (then clear success so revisiting edit page doesn't redirect again)
   useEffect(() => {
     if (success && hideHeader) {
-      navigate(successRedirectPath)
+      navigate(isEditMode ? detailPath : successRedirectPath)
+      dispatch(clearSubmitSuccess())
     }
-  }, [success, hideHeader, navigate, successRedirectPath])
+  }, [success, hideHeader, navigate, successRedirectPath, isEditMode, detailPath, dispatch])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate form
+    if (isEditMode) {
+      const errors = validateMembershipFormForEdit(formData)
+      if (Object.keys(errors).length > 0) {
+        dispatch(setValidationErrors(errors))
+        scrollToFirstValidationError(errors)
+        return
+      }
+      dispatch(submitMembershipStart())
+      try {
+        const payload = buildMembershipUpdatePayload(formData)
+        const data = await membershipsAPI.updateMembership(id, payload)
+        const membership = data?.data?.membership ?? data?.membership ?? data
+        dispatch(submitMembershipSuccess(membership))
+        dispatch(setSnackbar({ open: true, message: 'Membership updated successfully.', severity: 'success' }))
+      } catch (apiError) {
+        console.error('Membership update error:', apiError)
+        const errorMessage = apiError.message || 'Failed to update membership.'
+        dispatch(submitMembershipFailure(errorMessage))
+        dispatch(setSnackbar({ open: true, message: errorMessage, severity: 'error' }))
+      }
+      return
+    }
+
+    // Create flow
     const errors = validateMembershipForm(formData)
     if (Object.keys(errors).length > 0) {
       dispatch(setValidationErrors(errors))
@@ -78,23 +107,21 @@ const MembershipFormFooter = () => {
 
     try {
       const submitData = createMembershipFormData(formData)
-      
+
       let response
       if (hideHeader) {
         const token = localStorage.getItem('token')
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
           headers: {
-            // Don't set Content-Type - browser will set it with boundary for FormData
             'Authorization': `Bearer ${token}`,
           },
-          body: submitData, // FormData, not JSON
+          body: submitData,
         })
       } else {
         response = await fetch(`${API_BASE_URL}/memberships`, {
           method: 'POST',
-          // Don't set Content-Type - browser will set it with boundary for FormData
-          body: submitData, // FormData, not JSON
+          body: submitData,
         })
       }
 
@@ -141,13 +168,8 @@ const MembershipFormFooter = () => {
         dispatch(submitMembershipSuccess(data.data.membership))
       }
     } catch (apiError) {
-      console.error('Membership submission network error:', apiError)
-      let errorMessage = apiError.message || 'Failed to submit membership application. Please check your connection.'
-      
-      if (apiError.name === 'TypeError' && apiError.message.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.'
-      }
-      
+      console.error('Membership submit error:', apiError)
+      const errorMessage = apiError.message || 'Failed to submit membership application. Please check your connection.'
       dispatch(submitMembershipFailure(errorMessage))
       dispatch(setSnackbar({ open: true, message: errorMessage, severity: 'error' }))
     }
@@ -166,7 +188,7 @@ const MembershipFormFooter = () => {
       <div className="form-actions">
         <button 
           type="button" 
-          onClick={() => navigate(successRedirectPath)} 
+          onClick={() => navigate(isEditMode ? detailPath : successRedirectPath)} 
           className="btn-secondary"
         >
           Cancel
@@ -180,11 +202,11 @@ const MembershipFormFooter = () => {
                   <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
                 </circle>
               </svg>
-              Submitting...
+              {isEditMode ? 'Saving...' : 'Submitting...'}
             </>
           ) : (
             <>
-              Submit Application
+              {isEditMode ? 'Save changes' : 'Submit Application'}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

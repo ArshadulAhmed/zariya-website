@@ -50,6 +50,19 @@ export const fetchApplication = createAsyncThunk(
   }
 )
 
+export const updateApplication = createAsyncThunk(
+  'loanApplications/updateApplication',
+  async ({ id, applicationData }, { rejectWithValue }) => {
+    try {
+      const response = await loanApplicationsAPI.updateApplication(id, applicationData)
+      if (response.success) return response.data.application
+      return rejectWithValue(response.message || 'Failed to update application')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update application')
+    }
+  }
+)
+
 export const reviewApplication = createAsyncThunk(
   'loanApplications/reviewApplication',
   async ({ id, reviewData }, { rejectWithValue }) => {
@@ -179,6 +192,20 @@ const loanApplicationsSlice = createSlice({
         state.isLoading = false
         state.error = action.payload
         state.snackbar = { open: true, message: action.payload || 'Failed to review application', severity: 'error' }
+      })
+      .addCase(updateApplication.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(updateApplication.fulfilled, (state, action) => {
+        state.isLoading = false
+        if (action.payload) state.selectedApplication = action.payload
+        state.snackbar = { open: true, message: 'Application updated successfully', severity: 'success' }
+      })
+      .addCase(updateApplication.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload
+        state.snackbar = { open: true, message: action.payload || 'Failed to update application', severity: 'error' }
       })
   },
 })
