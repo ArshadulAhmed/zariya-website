@@ -113,7 +113,7 @@ const RepaymentForm = () => {
         // Refresh loan and repayments
         dispatch(fetchLoan(id))
         if (loanId) {
-          dispatch(fetchRepayments(loanId))
+          dispatch(fetchRepayments({ loanId, page: 1, limit: 50 }))
         }
       }
     } catch (error) {

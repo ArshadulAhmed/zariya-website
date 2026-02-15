@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchOngoingLoans, closeSnackbar, setSnackbar, clearLoans, setFilters } from '../../store/slices/loansSlice'
+import { fetchOngoingLoans, closeSnackbar, setSnackbar, setFilters, setPagination } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import { getLocalDateString } from '../../utils/dashboardUtils'
 import Snackbar from '../../components/Snackbar'
@@ -32,7 +32,9 @@ const RepaymentRecords = () => {
   
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
+  const isLoadingMore = loansState?.isLoadingMore || false
   const filters = loansState?.filters || { search: '' }
+  const pagination = loansState?.pagination || { page: 1, limit: 15, total: 0, pages: 0 }
   const snackbar = loansState?.snackbar || { open: false, message: '', severity: 'success' }
   
   // Loans from ongoing endpoint are already filtered to active
@@ -51,13 +53,10 @@ const RepaymentRecords = () => {
   // Show skeleton if loading OR if we haven't fetched yet (initial load)
   const showSkeleton = isLoading || !hasFetchedRef.current
   
-  // Fetch ongoing loans when filters change
+  // Fetch ongoing loans when filters or pagination page change
   useEffect(() => {
-    // Clear any existing loans data first to prevent showing stale data
-    // This ensures we don't show loans from the Loans page when navigating here
-    dispatch(clearLoans())
-    
-    const params = {}
+    const page = hasFetchedRef.current ? pagination.page : 1
+    const params = { page, limit: pagination.limit }
     if (filters.search) params.search = filters.search
     
     // Create a unique key for these params
@@ -67,17 +66,17 @@ const RepaymentRecords = () => {
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
       lastParamsRef.current = paramsKey
-      // Fetch ongoing loans with filters
       dispatch(fetchOngoingLoans(params))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, filters.search])
+  }, [dispatch, filters.search, pagination.page, pagination.limit])
   
-  // Debounce search
+  // Debounce search; reset to page 1 when search changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchInput !== filters.search) {
         dispatch(setFilters({ search: searchInput }))
+        dispatch(setPagination({ page: 1 }))
       }
     }, 500)
     return () => clearTimeout(timeoutId)
@@ -90,7 +89,14 @@ const RepaymentRecords = () => {
   
   const handleFilterChange = (key, value) => {
     dispatch(setFilters({ [key]: value }))
+    dispatch(setPagination({ page: 1 }))
   }
+
+  const handleLoadMore = useCallback(() => {
+    if (pagination.page < pagination.pages && !isLoadingMore && !isLoading) {
+      dispatch(setPagination({ page: pagination.page + 1 }))
+    }
+  }, [pagination.page, pagination.pages, isLoadingMore, isLoading, dispatch])
   
   // Initialize repayment forms for each loan
   useEffect(() => {
@@ -496,6 +502,9 @@ const RepaymentRecords = () => {
         actions={handleActions}
         emptyMessage="No active loans found"
         skeletonRowCount={5}
+        hasMore={pagination.page < pagination.pages}
+        onLoadMore={handleLoadMore}
+        loadingMore={isLoadingMore}
       />
       
       {snackbar && (

@@ -17,15 +17,19 @@ export const fetchLoanByAccountNumber = createAsyncThunk(
 // Async thunk to fetch repayments for a loan
 export const fetchLoanRepayments = createAsyncThunk(
   'loanReport/fetchLoanRepayments',
-  async (loanId, { rejectWithValue }) => {
+  async ({ loanId, page = 1, limit = 50 }, { rejectWithValue }) => {
     try {
-      const response = await repaymentsAPI.getRepaymentsByLoan(loanId)
-      return {
-        repayments: response.data?.repayments || [],
-        totalPaid: response.data?.totalPaid || 0,
-        totalLateFeePaid: response.data?.totalLateFeePaid ?? 0,
-        additionalAmountPaid: response.data?.additionalAmountPaid ?? 0,
+      const response = await repaymentsAPI.getRepaymentsByLoan(loanId, { page, limit })
+      if (response.success) {
+        return {
+          repayments: response.data?.repayments || [],
+          totalPaid: response.data?.totalPaid || 0,
+          totalLateFeePaid: response.data?.totalLateFeePaid ?? 0,
+          additionalAmountPaid: response.data?.additionalAmountPaid ?? 0,
+          pagination: response.data?.pagination || { page, limit, total: 0, pages: 0 },
+        }
       }
+      return rejectWithValue(response.message || 'Failed to fetch repayments')
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch repayments')
     }
@@ -67,11 +71,13 @@ const initialState = {
   additionalAmountPaid: 0,
   isLoading: false,
   isLoadingRepayments: false,
+  isLoadingMore: false,
   isDownloadingNOC: false,
   isDownloadingRepaymentHistory: false,
   error: null,
   nocError: null,
   repaymentHistoryError: null,
+  pagination: { page: 1, limit: 50, total: 0, pages: 0 },
 }
 
 const loanReportSlice = createSlice({
@@ -91,6 +97,8 @@ const loanReportSlice = createSlice({
       state.nocError = null
       state.isLoading = false
       state.isLoadingRepayments = false
+      state.isLoadingMore = false
+      state.pagination = initialState.pagination
       state.isDownloadingNOC = false
     },
     resetLoanReport: (state) => {
@@ -142,23 +150,39 @@ const loanReportSlice = createSlice({
         state.error = action.payload
         state.loan = null
       })
-      // Fetch repayments
-      .addCase(fetchLoanRepayments.pending, (state) => {
-        state.isLoadingRepayments = true
+      // Fetch repayments (supports pagination)
+      .addCase(fetchLoanRepayments.pending, (state, action) => {
+        const page = action.meta?.arg?.page || 1
+        if (page > 1) {
+          state.isLoadingMore = true
+        } else {
+          state.isLoadingRepayments = true
+        }
       })
       .addCase(fetchLoanRepayments.fulfilled, (state, action) => {
         state.isLoadingRepayments = false
-        state.repayments = action.payload.repayments
+        state.isLoadingMore = false
+        const page = action.payload.pagination?.page || 1
+        state.pagination = action.payload.pagination || initialState.pagination
+        state.repayments = page > 1
+          ? [...state.repayments, ...(action.payload.repayments || [])]
+          : (action.payload.repayments || [])
         state.totalPaid = action.payload.totalPaid
         state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
         state.additionalAmountPaid = action.payload.additionalAmountPaid ?? 0
       })
       .addCase(fetchLoanRepayments.rejected, (state, action) => {
+        const page = action.meta?.arg?.page || 1
         state.isLoadingRepayments = false
-        state.repayments = []
-        state.totalPaid = 0
-        state.totalLateFeePaid = 0
-        state.additionalAmountPaid = 0
+        state.isLoadingMore = false
+        state.repaymentHistoryError = action.payload || 'Failed to fetch repayments'
+        if (page === 1) {
+          state.repayments = []
+          state.totalPaid = 0
+          state.totalLateFeePaid = 0
+          state.additionalAmountPaid = 0
+          state.pagination = initialState.pagination
+        }
       })
       // Download NOC
       .addCase(downloadNOC.pending, (state) => {

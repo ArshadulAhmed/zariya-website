@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
@@ -53,6 +53,8 @@ const LoanReport = () => {
     additionalAmountPaid,
     isLoading,
     isLoadingRepayments,
+    isLoadingMore,
+    pagination,
     isDownloadingNOC,
     isDownloadingRepaymentHistory,
     error,
@@ -62,6 +64,14 @@ const LoanReport = () => {
 
   const userRole = useAppSelector((state) => state.auth.user?.role)
   const isAdmin = userRole === 'admin'
+
+  const handleLoadMoreRepayments = useCallback(() => {
+    if (!loan) return
+    const loanId = loan._id || loan.id
+    if (pagination?.page < pagination?.pages && !isLoadingMore && !isLoadingRepayments) {
+      dispatch(fetchLoanRepayments({ loanId, page: (pagination.page || 1) + 1, limit: pagination.limit || 50 }))
+    }
+  }, [dispatch, loan, pagination, isLoadingMore, isLoadingRepayments])
 
   // Check for loan account number in URL params and auto-load
   useEffect(() => {
@@ -80,7 +90,8 @@ const LoanReport = () => {
           const fetchedLoan = result.payload
           if (fetchedLoan) {
             const loanId = fetchedLoan._id || fetchedLoan.id
-            dispatch(fetchLoanRepayments(loanId))
+            // Fetch first page of repayments
+            dispatch(fetchLoanRepayments({ loanId, page: 1, limit: pagination?.limit || 50 }))
           }
         }
       }
@@ -134,7 +145,7 @@ const LoanReport = () => {
       // Fetch repayments for all loans (to calculate total paid and remaining amount)
       if (fetchedLoan) {
         const loanId = fetchedLoan._id || fetchedLoan.id
-        dispatch(fetchLoanRepayments(loanId))
+        dispatch(fetchLoanRepayments({ loanId, page: 1, limit: pagination?.limit || 50 }))
       }
     }
   }
@@ -418,6 +429,9 @@ const LoanReport = () => {
                     emptyMessage="No repayment records found"
                     showRemarks
                     showSNo
+                    hasMore={pagination?.page < pagination?.pages}
+                    onLoadMore={handleLoadMoreRepayments}
+                    loadingMore={isLoadingMore}
                   />
                 </div>
               </div>

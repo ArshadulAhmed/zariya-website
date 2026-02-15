@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Tooltip from '@mui/material/Tooltip'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
@@ -42,7 +42,7 @@ const getDateLimits = () => {
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, isLoading, isDownloading, error, date } = useAppSelector((state) => state.dailyCollection)
+  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
   const dateLimits = getDateLimits()
@@ -78,7 +78,8 @@ const DailyCollectionReport = () => {
       return
     }
 
-    dispatch(fetchDailyCollections(selectedDate))
+    // Fetch first page
+    dispatch(fetchDailyCollections({ date: selectedDate, page: 1, limit: pagination?.limit || 50 }))
   }
 
   const handlePrint = () => {
@@ -98,6 +99,27 @@ const DailyCollectionReport = () => {
     { header: 'Recorded By', width: '180px' },
     { header: 'Remarks', width: '200px' },
   ]
+
+  const sentinelRef = useRef(null)
+
+  // Infinite scroll sentinel observer
+  useEffect(() => {
+    if (!date || !sentinelRef.current) return
+    if (pagination?.page >= pagination?.pages) return
+    if (isLoadingMore || isLoading) return
+    const el = sentinelRef.current
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          // Load next page
+          dispatch(fetchDailyCollections({ date, page: (pagination.page || 1) + 1, limit: pagination.limit || 50 }))
+        }
+      },
+      { rootMargin: '300px', threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [date, pagination?.page, pagination?.pages, pagination?.limit, isLoadingMore, isLoading, dispatch])
 
   return (
     <div className="daily-collection-report-page">
@@ -281,6 +303,11 @@ const DailyCollectionReport = () => {
               </tbody>
             </table>
           </div>
+          {pagination?.page < pagination?.pages && (
+            <div ref={sentinelRef} className="data-table-sentinel">
+              {isLoadingMore && <div className="data-table-loading-more">Loading more…</div>}
+            </div>
+          )}
         </>
       ) : date && !isLoading ? (
         <div className="empty-state">

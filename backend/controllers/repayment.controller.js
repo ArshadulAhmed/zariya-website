@@ -290,6 +290,7 @@ export const deleteRepayment = async (req, res) => {
 export const getDailyCollections = async (req, res) => {
   try {
     const { date } = req.params;
+    const { page = 1, limit = 50 } = req.query;
 
     if (!date) {
       return res.status(400).json({
@@ -313,6 +314,11 @@ export const getDailyCollections = async (req, res) => {
       }
     };
 
+    // Pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
     const repayments = await Repayment.find(dateMatch)
       .populate({
         path: 'loan',
@@ -323,7 +329,11 @@ export const getDailyCollections = async (req, res) => {
         }
       })
       .populate('recordedBy', 'username fullName')
-      .sort({ paymentDate: 1, createdAt: 1 }); // Oldest first
+      .sort({ paymentDate: 1, createdAt: 1 }) // Oldest first
+      .skip(skip)
+      .limit(limitNum);
+
+    const total = await Repayment.countDocuments(dateMatch);
 
     const totalCollectionResult = await Repayment.aggregate([
       { $match: dateMatch },
@@ -361,7 +371,13 @@ export const getDailyCollections = async (req, res) => {
         totalLateFee,
         emiCollection,
         collectionByMethod,
-        totalCount: repayments.length
+        totalCount: repayments.length,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum)
+        }
       }
     });
   } catch (error) {

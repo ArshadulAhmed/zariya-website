@@ -128,6 +128,20 @@
       color: var(--text-secondary);
       font-size: 0.76rem;
     }
+
+    .repayment-history-sentinel {
+      min-height: 20px;
+      padding: 16px 8px;
+      position: relative;
+    }
+
+    .repayment-history-loading-more {
+      text-align: center;
+      padding: 12px;
+      font-size: 0.76rem;
+      color: #6b7280;
+      font-family: 'Poppins', sans-serif;
+    }
   }
 
   .edit-repayment-modal {

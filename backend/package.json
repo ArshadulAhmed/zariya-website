@@ -10,6 +10,10 @@
     "create-admin": "node scripts/createAdmin.js",
     "sync-prod-to-local": "node scripts/syncProdToLocal.js",
     "cleanup-images": "node scripts/cleanupOrphanedImages.js",
+    "seed:membership": "node scripts/seedMemberships.js",
+    "seed:loan-applications": "node scripts/seedLoanApplications.js",
+    "seed:loans": "node scripts/seedLoans.js",
+    "seed:repayments": "node scripts/seedRepayments.js",
     "cleanup-images:dry-run": "node scripts/cleanupOrphanedImages.js --dry-run",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

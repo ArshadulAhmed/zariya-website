@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { clearSelectedLoan } from '../../store/slices/loansSlice'
-import { fetchRepayments, clearRepayments } from '../../store/slices/repaymentRecordsSlice'
+import { fetchRepayments, clearRepayments, setPagination } from '../../store/slices/repaymentRecordsSlice'
 import Snackbar from '../../components/Snackbar'
 import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
@@ -14,13 +14,16 @@ const RepaymentDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const isLoadingRepayments = useAppSelector((state) => state.repaymentRecords?.isLoadingRepayments) || false
-  const repayments = useAppSelector((state) => state.repaymentRecords?.repayments) || []
-  const totalPaid = useAppSelector((state) => state.repaymentRecords?.totalPaid) || 0
-  const totalLateFeePaid = useAppSelector((state) => state.repaymentRecords?.totalLateFeePaid) ?? 0
-  const additionalAmountPaid = useAppSelector((state) => state.repaymentRecords?.additionalAmountPaid) || 0
-  const loanInfo = useAppSelector((state) => state.repaymentRecords?.loanInfo)
-  const error = useAppSelector((state) => state.repaymentRecords?.error)
+  const repaymentRecordsState = useAppSelector((state) => state.repaymentRecords)
+  const isLoadingRepayments = repaymentRecordsState?.isLoadingRepayments || false
+  const isLoadingMore = repaymentRecordsState?.isLoadingMore || false
+  const repayments = repaymentRecordsState?.repayments || []
+  const totalPaid = repaymentRecordsState?.totalPaid || 0
+  const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
+  const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
+  const loanInfo = repaymentRecordsState?.loanInfo
+  const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
+  const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
   const isAdmin = user?.role === 'admin'
 
@@ -50,7 +53,7 @@ const RepaymentDetails = () => {
     hasFetchedRef.current = false // Reset fetch flag when ID changes
 
     // Step 3: Fetch repayments (visible to all users - staff and admin)
-    dispatch(fetchRepayments(id))
+    dispatch(fetchRepayments({ loanId: id, page: 1, limit: 50 }))
 
     // Note: Loan data is fetched by CloseLoanCard component when needed (admin only)
 
@@ -73,6 +76,14 @@ const RepaymentDetails = () => {
 
   const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
+
+  const handleLoadMore = () => {
+    if (pagination.page < pagination.pages && !isLoadingMore && !isLoadingRepayments) {
+      const nextPage = pagination.page + 1
+      dispatch(setPagination({ page: nextPage }))
+      dispatch(fetchRepayments({ loanId: id, page: nextPage, limit: pagination.limit }))
+    }
+  }
 
   return (
     <div className="repayment-details-page">
@@ -140,7 +151,11 @@ const RepaymentDetails = () => {
             remainingAmount={remainingAmount}
             additionalAmountPaid={additionalAmountPaid}
           />
-          <RepaymentHistory />
+          <RepaymentHistory 
+            hasMore={pagination.page < pagination.pages}
+            onLoadMore={handleLoadMore}
+            loadingMore={isLoadingMore}
+          />
           <CloseLoanCard />
         </div>
       ) : null}

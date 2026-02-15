@@ -94,7 +94,7 @@ export const getLoans = async (req, res) => {
 // @access  Private/Admin or Employee
 export const getOngoingLoans = async (req, res) => {
   try {
-    const { search, status } = req.query;
+    const { search, status, page = 1, limit = 15 } = req.query;
 
     // Build query - only active loans
     const query = {
@@ -133,10 +133,18 @@ export const getOngoingLoans = async (req, res) => {
       }
     }
 
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = Math.min(parseInt(limit, 10) || 15, 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await Loan.countDocuments(query);
+
     const loans = await Loan.find(query)
       .populate('membership', 'userId fullName')
       .populate('createdBy', 'username fullName')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     // Calculate remaining amount for each loan
     const Repayment = (await import('../models/Repayment.model.js')).default;
@@ -157,7 +165,13 @@ export const getOngoingLoans = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        loans: loansWithRemaining.map((loan) => sanitizeMembershipInLoan(loan))
+        loans: loansWithRemaining.map((loan) => sanitizeMembershipInLoan(loan)),
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum) || 0
+        }
       }
     });
   } catch (error) {

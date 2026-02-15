@@ -61,34 +61,31 @@ const Loans = memo(() => {
   // Safely extract values with defaults
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
+  const isLoadingMore = loansState?.isLoadingMore || false
   const filters = loansState?.filters || { status: '', search: '' }
+  const pagination = loansState?.pagination || { page: 1, limit: 15, total: 0, pages: 0 }
   const snackbar = loansState?.snackbar || { open: false, message: '', severity: 'success' }
 
   const [searchInput, setSearchInput] = useState('')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   
-  // Show skeleton if loading OR if we haven't fetched yet (initial load) - always show skeleton on first render
   const showSkeleton = isLoading || !hasFetchedRef.current
 
-  // Fetch loans when filters change
+  // Fetch loans when filters or pagination page change
   useEffect(() => {
-    const params = {}
+    const params = { page: pagination.page, limit: pagination.limit }
     if (filters.status) params.status = filters.status
     if (filters.search) params.search = filters.search
 
-    // Create a unique key for these params
     const paramsKey = JSON.stringify(params)
-    
-    // Only fetch if params have changed (prevents duplicate calls from StrictMode)
-    // Don't skip if loading - let Redux handle the loading state
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
       lastParamsRef.current = paramsKey
       dispatch(fetchLoans(params))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, filters.status, filters.search])
+  }, [dispatch, filters.status, filters.search, pagination.page, pagination.limit])
 
   // Debounce search
   useEffect(() => {
@@ -107,6 +104,13 @@ const Loans = memo(() => {
 
   const handleFilterChange = (key, value) => {
     dispatch(setFilters({ [key]: value }))
+    dispatch(setPagination({ page: 1 }))
+  }
+
+  const handleLoadMore = () => {
+    if (pagination.page < pagination.pages && !isLoadingMore) {
+      dispatch(setPagination({ page: pagination.page + 1 }))
+    }
   }
 
   const handleRowClick = (row) => {
@@ -186,6 +190,9 @@ const Loans = memo(() => {
         onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No loans found"
+        hasMore={pagination.page < pagination.pages}
+        onLoadMore={handleLoadMore}
+        loadingMore={isLoadingMore}
       />
 
       {snackbar && (

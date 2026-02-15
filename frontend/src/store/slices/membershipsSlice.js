@@ -5,6 +5,7 @@ const initialState = {
   memberships: [],
   selectedMembership: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
   snackbar: {
     open: false,
@@ -13,7 +14,7 @@ const initialState = {
   },
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 15,
     total: 0,
     pages: 0,
   },
@@ -137,23 +138,29 @@ const membershipsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch memberships
-      .addCase(fetchMemberships.pending, (state) => {
-        state.isLoading = true
+      .addCase(fetchMemberships.pending, (state, action) => {
+        const page = action.meta?.arg?.page || 1
+        if (page > 1) {
+          state.isLoadingMore = true
+        } else {
+          state.isLoading = true
+        }
         state.error = null
       })
       .addCase(fetchMemberships.fulfilled, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         const membershipsData = action.payload.memberships || []
-        // Ensure pagination is serializable
         const paginationData = action.payload.pagination || {}
+        const page = Number(paginationData.page) || 1
         state.pagination = {
-          page: Number(paginationData.page) || initialState.pagination.page,
+          page,
           limit: Number(paginationData.limit) || initialState.pagination.limit,
           total: Number(paginationData.total) || initialState.pagination.total,
           pages: Number(paginationData.pages) || initialState.pagination.pages,
         }
         // Format memberships data - ensure all values are primitives
-        state.memberships = membershipsData.map((membership) => {
+        const formatted = membershipsData.map((membership) => {
           let createdAtFormatted = ''
           if (membership.createdAt) {
             try {
@@ -184,9 +191,11 @@ const membershipsSlice = createSlice({
           }
           return cleanMembership
         })
+        state.memberships = page > 1 ? [...state.memberships, ...formatted] : formatted
       })
       .addCase(fetchMemberships.rejected, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         state.error = action.payload || 'Failed to fetch memberships'
         // Don't clear existing data on error
       })

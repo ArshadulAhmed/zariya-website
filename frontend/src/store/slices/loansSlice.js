@@ -5,6 +5,7 @@ const initialState = {
   loans: [],
   selectedLoan: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
   snackbar: {
     open: false,
@@ -13,7 +14,7 @@ const initialState = {
   },
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 15,
     total: 0,
     pages: 0,
   },
@@ -148,22 +149,29 @@ const loansSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch loans
-      .addCase(fetchLoans.pending, (state) => {
-        state.isLoading = true
+      .addCase(fetchLoans.pending, (state, action) => {
+        const page = action.meta?.arg?.page || 1
+        if (page > 1) {
+          state.isLoadingMore = true
+        } else {
+          state.isLoading = true
+        }
         state.error = null
       })
       .addCase(fetchLoans.fulfilled, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         const loansData = action.payload.loans || []
         const paginationData = action.payload.pagination || {}
+        const page = Number(paginationData.page) || 1
         state.pagination = {
-          page: Number(paginationData.page) || initialState.pagination.page,
+          page,
           limit: Number(paginationData.limit) || initialState.pagination.limit,
           total: Number(paginationData.total) || initialState.pagination.total,
           pages: Number(paginationData.pages) || initialState.pagination.pages,
         }
         // Format loans data
-        state.loans = loansData.map((loan) => {
+        const formatted = loansData.map((loan) => {
           let createdAtFormatted = ''
           if (loan.createdAt) {
             try {
@@ -200,21 +208,37 @@ const loansSlice = createSlice({
             membership: loan.membership, // Preserve membership object for memberName access
           }
         })
+        state.loans = page > 1 ? [...state.loans, ...formatted] : formatted
       })
       .addCase(fetchLoans.rejected, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         state.error = action.payload || 'Failed to fetch loans'
       })
       // Fetch ongoing loans
-      .addCase(fetchOngoingLoans.pending, (state) => {
-        state.isLoading = true
+      .addCase(fetchOngoingLoans.pending, (state, action) => {
+        const page = action.meta?.arg?.page || 1
+        if (page > 1) {
+          state.isLoadingMore = true
+        } else {
+          state.isLoading = true
+        }
         state.error = null
       })
       .addCase(fetchOngoingLoans.fulfilled, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         const loansData = action.payload.loans || []
+        const paginationData = action.payload.pagination || {}
+        const page = Number(paginationData.page) || 1
+        state.pagination = {
+          page,
+          limit: Number(paginationData.limit) || initialState.pagination.limit,
+          total: Number(paginationData.total) || initialState.pagination.total,
+          pages: Number(paginationData.pages) || initialState.pagination.pages,
+        }
         // Format loans data
-        state.loans = loansData.map((loan) => {
+        const formatted = loansData.map((loan) => {
           let createdAtFormatted = ''
           if (loan.createdAt) {
             try {
@@ -251,9 +275,11 @@ const loansSlice = createSlice({
             membership: loan.membership, // Preserve membership object for memberName access
           }
         })
+        state.loans = page > 1 ? [...state.loans, ...formatted] : formatted
       })
       .addCase(fetchOngoingLoans.rejected, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         state.error = action.payload || 'Failed to fetch ongoing loans'
       })
       // Fetch single loan

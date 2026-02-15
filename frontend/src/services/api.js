@@ -587,9 +587,11 @@ export const repaymentsAPI = {
     }
   },
 
-  getDailyCollections: async (date) => {
+  getDailyCollections: async (date, params = {}) => {
     try {
-      const data = await apiRequest(`/repayments/daily/${date}`, {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/repayments/daily/${date}${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, {
         method: 'GET',
       })
       return data

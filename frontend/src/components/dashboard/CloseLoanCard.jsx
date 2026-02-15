@@ -122,7 +122,7 @@ const CloseLoanCard = memo(() => {
         severity: 'success' 
       }))
       // Refresh repayments
-      dispatch(fetchRepayments(id))
+      dispatch(fetchRepayments({ loanId: id, page: 1, limit: 50 }))
     } else {
       dispatch(setSnackbar({ 
         message: result.payload || 'Failed to close loan', 

@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useRef, useEffect } from 'react'
 import { useAppSelector } from '../../store/hooks'
 import './RepaymentHistory.scss'
 
@@ -39,6 +39,9 @@ const paymentMethodLabel = (method) => {
  * @param {string} [emptyMessage] - Optional. Message when no repayments
  * @param {boolean} [showRemarks] - Optional. Show "Remarks" column (default true)
  * @param {boolean} [showSNo] - Optional. Show "S.No" column (default true)
+ * @param {boolean} [hasMore] - Optional. Whether more pages are available for infinite scroll
+ * @param {Function} [onLoadMore] - Optional. Callback when user scrolls to bottom
+ * @param {boolean} [loadingMore] - Optional. Whether currently loading more data
  */
 const RepaymentHistory = memo(({
   repayments: repaymentsProp,
@@ -46,11 +49,32 @@ const RepaymentHistory = memo(({
   emptyMessage: emptyMessageProp,
   showRemarks = true,
   showSNo = true,
+  hasMore = false,
+  onLoadMore,
+  loadingMore = false,
 }) => {
   const stateRepayments = useAppSelector((state) => state.repaymentRecords?.repayments) || []
   const repayments = repaymentsProp !== undefined ? repaymentsProp : stateRepayments
   const isLoading = isLoadingProp !== undefined ? isLoadingProp : false
   const emptyMessage = emptyMessageProp ?? 'No repayments recorded yet'
+  const sentinelRef = useRef(null)
+
+  // Infinite scroll: when sentinel is visible and hasMore and not loading, load next page
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || loadingMore || isLoading) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { rootMargin: '300px', threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [onLoadMore, hasMore, loadingMore, isLoading])
 
   if (isLoading) {
     return (
@@ -102,6 +126,11 @@ const RepaymentHistory = memo(({
           </tbody>
         </table>
       </div>
+      {hasMore && (
+        <div ref={sentinelRef} className="repayment-history-sentinel">
+          {loadingMore && <div className="repayment-history-loading-more">Loading more…</div>}
+        </div>
+      )}
     </div>
   )
 })

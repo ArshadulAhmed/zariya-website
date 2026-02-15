@@ -100,8 +100,13 @@ const Memberships = memo(() => {
 
   const handleFilterChange = (key, value) => {
     dispatch(setFilters({ [key]: value }))
-    // Reset to page 1 when filters change
     dispatch(setPagination({ page: 1 }))
+  }
+
+  const handleLoadMore = () => {
+    if (pagination.page < pagination.pages && !membershipsState?.isLoadingMore) {
+      dispatch(setPagination({ page: pagination.page + 1 }))
+    }
   }
 
   // Debounce search
@@ -183,6 +188,9 @@ const Memberships = memo(() => {
         onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No memberships found"
+        hasMore={pagination.page < pagination.pages}
+        onLoadMore={handleLoadMore}
+        loadingMore={membershipsState?.isLoadingMore || false}
       />
 
       {snackbar && (

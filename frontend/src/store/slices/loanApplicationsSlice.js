@@ -5,9 +5,10 @@ const initialState = {
   applications: [],
   selectedApplication: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
   snackbar: { open: false, message: '', severity: 'success' },
-  pagination: { page: 1, limit: 10, total: 0, pages: 0 },
+  pagination: { page: 1, limit: 15, total: 0, pages: 0 },
   filters: { status: '', search: '' },
 }
 
@@ -112,6 +113,9 @@ const loanApplicationsSlice = createSlice({
     setSnackbar: (state, action) => {
       state.snackbar = { open: true, message: action.payload.message || '', severity: action.payload.severity || 'success' }
     },
+    setPagination: (state, action) => {
+      state.pagination = { ...state.pagination, ...action.payload }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -132,14 +136,21 @@ const loanApplicationsSlice = createSlice({
         state.error = action.payload
         state.snackbar = { open: true, message: action.payload || 'Failed to submit application', severity: 'error' }
       })
-      .addCase(fetchApplications.pending, (state) => {
-        state.isLoading = true
+      .addCase(fetchApplications.pending, (state, action) => {
+        const page = action.meta?.arg?.page || 1
+        if (page > 1) {
+          state.isLoadingMore = true
+        } else {
+          state.isLoading = true
+        }
         state.error = null
       })
       .addCase(fetchApplications.fulfilled, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         const { applications = [], pagination = {} } = action.payload
-        state.applications = applications.map((a) => ({
+        const page = Number(pagination.page) || 1
+        const formatted = applications.map((a) => ({
           _id: a._id,
           id: a._id,
           applicationNumber: a.applicationNumber || '-',
@@ -150,15 +161,17 @@ const loanApplicationsSlice = createSlice({
           createdAt: formatDate(a.createdAt),
           membership: a.membership,
         }))
+        state.applications = page > 1 ? [...state.applications, ...formatted] : formatted
         state.pagination = {
-          page: Number(pagination.page) || 1,
-          limit: Number(pagination.limit) || 10,
+          page,
+          limit: Number(pagination.limit) || 15,
           total: Number(pagination.total) || 0,
           pages: Number(pagination.pages) || 0,
         }
       })
       .addCase(fetchApplications.rejected, (state, action) => {
         state.isLoading = false
+        state.isLoadingMore = false
         state.error = action.payload
       })
       .addCase(fetchApplication.pending, (state) => {
@@ -213,6 +226,7 @@ const loanApplicationsSlice = createSlice({
 export const {
   setFilters,
   clearFilters,
+  setPagination,
   clearSelectedApplication,
   closeSnackbar,
   setSnackbar,

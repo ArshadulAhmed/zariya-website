@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { clearRepayments, fetchRepayments, updateRepaymentThunk, deleteRepaymentThunk } from '../../store/slices/repaymentRecordsSlice'
+import { clearRepayments, fetchRepayments, updateRepaymentThunk, deleteRepaymentThunk, setPagination } from '../../store/slices/repaymentRecordsSlice'
 import { clearSelectedLoan } from '../../store/slices/loansSlice'
 import Snackbar from '../../components/Snackbar'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
@@ -58,17 +58,21 @@ const RepaymentEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const isLoadingRepayments = useAppSelector((state) => state.repaymentRecords?.isLoadingRepayments) || false
-  const repayments = useAppSelector((state) => state.repaymentRecords?.repayments) || []
-  const totalPaid = useAppSelector((state) => state.repaymentRecords?.totalPaid) || 0
-  const totalLateFeePaid = useAppSelector((state) => state.repaymentRecords?.totalLateFeePaid) ?? 0
-  const additionalAmountPaid = useAppSelector((state) => state.repaymentRecords?.additionalAmountPaid) || 0
-  const loanInfo = useAppSelector((state) => state.repaymentRecords?.loanInfo)
-  const error = useAppSelector((state) => state.repaymentRecords?.error)
+  const repaymentRecordsState = useAppSelector((state) => state.repaymentRecords)
+  const isLoadingRepayments = repaymentRecordsState?.isLoadingRepayments || false
+  const isLoadingMore = repaymentRecordsState?.isLoadingMore || false
+  const repayments = repaymentRecordsState?.repayments || []
+  const totalPaid = repaymentRecordsState?.totalPaid || 0
+  const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
+  const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
+  const loanInfo = repaymentRecordsState?.loanInfo
+  const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
+  const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
   const isAdmin = user?.role === 'admin'
 
   const lastLoanIdRef = useRef('')
+  const sentinelRef = useRef(null)
   const [editingRepayment, setEditingRepayment] = useState(null)
   const [editForm, setEditForm] = useState({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', isLateFee: false })
   const [editErrors, setEditErrors] = useState({})
@@ -94,7 +98,7 @@ const RepaymentEdit = () => {
     dispatch(clearRepayments())
     dispatch(clearSelectedLoan())
     lastLoanIdRef.current = id
-    dispatch(fetchRepayments(id))
+    dispatch(fetchRepayments({ loanId: id, page: 1, limit: 50 }))
     return () => {
       dispatch(clearSelectedLoan())
       dispatch(clearRepayments())
@@ -104,6 +108,32 @@ const RepaymentEdit = () => {
   const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
+
+  const handleLoadMore = useCallback(() => {
+    if (pagination.page < pagination.pages && !isLoadingMore && !isLoadingRepayments && id) {
+      const nextPage = pagination.page + 1
+      dispatch(setPagination({ page: nextPage }))
+      dispatch(fetchRepayments({ loanId: id, page: nextPage, limit: pagination.limit }))
+    }
+  }, [pagination.page, pagination.pages, pagination.limit, isLoadingMore, isLoadingRepayments, id, dispatch])
+
+  // Infinite scroll: when sentinel is visible and hasMore and not loading, load next page
+  useEffect(() => {
+    const hasMore = pagination.page < pagination.pages
+    if (!hasMore || isLoadingMore || isLoadingRepayments || !id) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          handleLoadMore()
+        }
+      },
+      { rootMargin: '300px', threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [pagination.page, pagination.pages, isLoadingMore, isLoadingRepayments, id, handleLoadMore])
 
   // Don't render for non-admin (redirect will run)
   if (user && user.role !== 'admin') {
@@ -298,6 +328,11 @@ const RepaymentEdit = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {pagination.page < pagination.pages && (
+              <div ref={sentinelRef} className="repayment-history-sentinel">
+                {isLoadingMore && <div className="repayment-history-loading-more">Loading more…</div>}
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 import { memo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchApplications, setFilters, closeSnackbar } from '../../store/slices/loanApplicationsSlice'
+import { fetchApplications, setFilters, setPagination, closeSnackbar } from '../../store/slices/loanApplicationsSlice'
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
@@ -38,7 +38,9 @@ const columns = [
 const LoanApplications = memo(function LoanApplications() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { applications, isLoading, filters, snackbar } = useAppSelector((state) => state.loanApplications)
+  const loanApplicationsState = useAppSelector((state) => state.loanApplications)
+  const { applications, isLoading, isLoadingMore, filters, pagination, snackbar } = loanApplicationsState
+  const paginationSafe = pagination || { page: 1, limit: 15, total: 0, pages: 0 }
 
   const [searchInput, setSearchInput] = useState('')
   const hasFetchedRef = useRef(false)
@@ -46,7 +48,7 @@ const LoanApplications = memo(function LoanApplications() {
   const showSkeleton = isLoading || !hasFetchedRef.current
 
   useEffect(() => {
-    const params = {}
+    const params = { page: paginationSafe.page, limit: paginationSafe.limit }
     if (filters?.status) params.status = filters.status
     if (filters?.search) params.search = filters.search
     const paramsKey = JSON.stringify(params)
@@ -55,16 +57,23 @@ const LoanApplications = memo(function LoanApplications() {
       lastParamsRef.current = paramsKey
       dispatch(fetchApplications(params))
     }
-  }, [dispatch, filters?.status, filters?.search])
+  }, [dispatch, filters?.status, filters?.search, paginationSafe.page, paginationSafe.limit])
 
   useEffect(() => {
     const t = setTimeout(() => {
       if (searchInput !== (filters?.search || '')) {
         dispatch(setFilters({ search: searchInput }))
+        dispatch(setPagination({ page: 1 }))
       }
     }, 500)
     return () => clearTimeout(t)
   }, [searchInput, dispatch, filters?.search])
+
+  const handleLoadMore = () => {
+    if (paginationSafe.page < paginationSafe.pages && !isLoadingMore) {
+      dispatch(setPagination({ page: paginationSafe.page + 1 }))
+    }
+  }
 
   const getApplicationId = (row) => {
     return row.applicationNumber && row.applicationNumber !== '-' ? row.applicationNumber : row._id || row.id
@@ -117,7 +126,10 @@ const LoanApplications = memo(function LoanApplications() {
         <div className="filter-select-group">
           <FilterSelect
             value={filters?.status || ''}
-            onChange={(e) => dispatch(setFilters({ status: e.target.value }))}
+            onChange={(e) => {
+              dispatch(setFilters({ status: e.target.value }))
+              dispatch(setPagination({ page: 1 }))
+            }}
             placeholder="All Status"
             options={[
               { value: '', label: 'All Status' },
@@ -136,6 +148,9 @@ const LoanApplications = memo(function LoanApplications() {
         onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No loan applications found"
+        hasMore={paginationSafe.page < paginationSafe.pages}
+        onLoadMore={handleLoadMore}
+        loadingMore={isLoadingMore || false}
       />
 
       {snackbar?.open && (

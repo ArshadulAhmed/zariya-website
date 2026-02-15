@@ -103,6 +103,19 @@
   }
 }
 
+.data-table-sentinel {
+  min-height: 1px;
+  padding: 8px;
+}
+
+.data-table-loading-more {
+  text-align: center;
+  padding: 12px;
+  font-size: 0.76rem;
+  color: #6b7280;
+  font-family: 'Poppins', sans-serif;
+}
+
 .data-table-empty {
   display: flex;
   flex-direction: column;

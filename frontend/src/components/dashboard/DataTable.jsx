@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useRef, useEffect } from 'react'
 import TableSkeleton from './TableSkeleton'
 import './DataTable.scss'
 
@@ -9,10 +9,30 @@ const DataTable = memo(({
   onRowClick,
   actions,
   emptyMessage = 'No data available',
-  skeletonRowCount = 5
+  skeletonRowCount = 5,
+  hasMore = false,
+  onLoadMore,
+  loadingMore = false,
 }) => {
-  // Show skeleton with table headers while loading
-  if (loading) {
+  const sentinelRef = useRef(null)
+
+  // Infinite scroll: when sentinel is visible and hasMore and not loading, load next page
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || loadingMore || loading) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) onLoadMore()
+      },
+      { rootMargin: '200px', threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [onLoadMore, hasMore, loadingMore, loading])
+
+  // Show skeleton with table headers while loading (initial load only)
+  if (loading && (!data || data.length === 0)) {
     return (
       <TableSkeleton 
         columns={columns}
@@ -78,6 +98,11 @@ const DataTable = memo(({
           ))}
         </tbody>
       </table>
+      {hasMore && (
+        <div ref={sentinelRef} className="data-table-sentinel">
+          {loadingMore && <div className="data-table-loading-more">Loading more…</div>}
+        </div>
+      )}
     </div>
   )
 })
