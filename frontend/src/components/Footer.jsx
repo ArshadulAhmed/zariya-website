@@ -61,6 +61,16 @@ const Footer = () => {
         </div>
         <div className="footer-bottom">
           <p>&copy; {new Date().getFullYear()} Zariya - The Thrift and Credit Co-operative Society Limited. All rights reserved.</p>
+          <p className="tech-partner">
+            Technology Partner{' '}
+            <a
+              href="https://www.zyphron.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Zyphron Technologies
+            </a>
+          </p>
           <button className="scroll-to-top" onClick={scrollToTop} aria-label="Scroll to top">
             ↑
           </button>
