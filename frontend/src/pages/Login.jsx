@@ -74,9 +74,7 @@ const Login = () => {
     dispatch(loginStart())
 
     try {
-      console.log('Calling API...', formData.email)
       const response = await authAPI.login(formData.email, formData.password)
-      console.log('API Response:', response)
 
       if (response.success && response.data) {
         dispatch(

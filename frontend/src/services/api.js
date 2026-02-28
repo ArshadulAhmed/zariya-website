@@ -42,26 +42,13 @@ const apiRequest = async (endpoint, options = {}) => {
     config.body = options.body
   }
 
-  // Only log in development
-  if (import.meta.env.DEV) {
-    console.log('API Request:', `${API_BASE_URL}${endpoint}`, config)
-  }
-
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
   
   let data
   try {
     data = await response.json()
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('Failed to parse response:', error)
-    }
     throw new Error('Invalid response from server')
-  }
-
-  // Only log in development
-  if (import.meta.env.DEV) {
-    console.log('API Response:', response.status, data)
   }
 
   if (!response.ok) {
