@@ -181,13 +181,27 @@ const membershipsSlice = createSlice({
           // Ensure all values are serializable - convert MongoDB ObjectId to string
           const membershipId = safeToString(membership._id) || safeToString(membership.id) || ''
           // Create a clean membership object with only serializable primitives
+          // Include fields needed for Memberships page and for member-select drawer + fillFromMember
           const cleanMembership = {
             userId: String(membership.userId || ''),
             fullName: String(membership.fullName || ''),
+            fatherOrHusbandName: String(membership.fatherOrHusbandName || ''),
+            mobileNumber: String(membership.mobileNumber || ''),
+            email: membership.email ? String(membership.email) : '',
             status: String(membership.status || 'pending'),
             district: String(membership.address?.district || ''),
             createdAt: String(createdAtFormatted),
             id: String(membershipId),
+            address: membership.address
+              ? {
+                  village: String(membership.address.village || ''),
+                  postOffice: String(membership.address.postOffice || ''),
+                  policeStation: String(membership.address.policeStation || ''),
+                  district: String(membership.address.district || ''),
+                  pinCode: String(membership.address.pinCode || ''),
+                  landmark: String(membership.address.landmark || ''),
+                }
+              : {},
           }
           return cleanMembership
         })
@@ -356,6 +370,9 @@ export const {
   closeSnackbar,
   setPagination,
 } = membershipsSlice.actions
+
+/** @deprecated No-op for backwards compatibility; drawer now uses main memberships list */
+export const clearMemberSelectList = () => {}
 
 export default membershipsSlice.reducer
 

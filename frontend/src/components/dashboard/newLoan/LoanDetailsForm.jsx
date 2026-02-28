@@ -18,6 +18,10 @@ const LoanDetailsForm = () => {
     }
   }
 
+  const preventNumberArrowKeys = (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault()
+  }
+
   return (
     <div className="form-section">
       <div className="section-header">
@@ -35,6 +39,7 @@ const LoanDetailsForm = () => {
           type="number"
           value={formData.loanAmount}
           onChange={handleChange}
+          onKeyDown={preventNumberArrowKeys}
           placeholder="Enter loan amount"
           error={errors.loanAmount}
           helperText={errors.loanAmount}
@@ -48,6 +53,7 @@ const LoanDetailsForm = () => {
           type="number"
           value={formData.loanTenure}
           onChange={handleChange}
+          onKeyDown={preventNumberArrowKeys}
           placeholder="Enter loan tenure in days"
           error={errors.loanTenure}
           helperText={errors.loanTenure}
@@ -73,6 +79,7 @@ const LoanDetailsForm = () => {
           type="number"
           value={formData.installmentAmount}
           onChange={handleChange}
+          onKeyDown={preventNumberArrowKeys}
           placeholder="Enter installment amount"
           error={errors.installmentAmount}
           helperText={errors.installmentAmount}

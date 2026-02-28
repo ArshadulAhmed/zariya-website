@@ -195,12 +195,44 @@
     .form-section {
       margin-bottom: 2.4rem;
       background: #dddddd40;
-    padding: 18px;
-    border-radius: 12px;
+      padding: 18px;
+      border-radius: 12px;
 
       &:last-of-type {
         margin-bottom: 0;
       }
+    }
+
+    /* Fill from member button - own row so it's always visible */
+    .fill-from-member-row,
+    .new-loan-fill-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.2rem;
+    }
+
+    .fill-from-member-btn,
+    .new-loan-fill-btn {
+      display: inline-flex !important;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff !important;
+      background: var(--primary-color) !important;
+      border: 1px solid var(--primary-color);
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      min-height: 36px;
+    }
+
+    .fill-from-member-btn:hover,
+    .new-loan-fill-btn:hover {
+      background: var(--primary-dark) !important;
+      color: #fff !important;
     }
 
     .section-header {
@@ -237,9 +269,11 @@
         }
 
         .section-description {
-          font-size: 0.76rem;
+          font-size: 0.85rem;
           color: var(--text-secondary);
           margin: 0;
+          line-height: 1.4;
+          min-height: 1.4em;
         }
       }
     }
@@ -256,6 +290,18 @@
       @media (max-width: 768px) {
         grid-template-columns: 1fr;
         gap: 1rem;
+      }
+    }
+
+    /* Hide browser number input spin buttons (Loan Details and other number fields) */
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
       }
     }
 

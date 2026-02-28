@@ -186,6 +186,36 @@ const newLoanSlice = createSlice({
       state.hasCoApplicant = !!(app.coApplicant && (app.coApplicant.fullName || app.coApplicant.mobileNumber))
       state.errors = {}
     },
+    fillFromMember: (state, action) => {
+      const { section, member } = action.payload
+      if (!member || !section) return
+      const addr = (a) => ({
+        village: a?.village ?? '',
+        postOffice: a?.postOffice ?? '',
+        policeStation: a?.policeStation ?? '',
+        district: a?.district ?? '',
+        pinCode: a?.pinCode ?? '',
+        landmark: a?.landmark ?? '',
+      })
+      const address = addr(member.address)
+      if (section === 'nominee') {
+        state.formData.nominee.name = member.fullName ?? ''
+        state.formData.nominee.mobileNumber = member.mobileNumber ?? ''
+        state.formData.nominee.address = address
+      } else if (section === 'guarantor') {
+        state.formData.guarantor.name = member.fullName ?? ''
+        state.formData.guarantor.fatherOrHusbandName = member.fatherOrHusbandName ?? ''
+        state.formData.guarantor.mobileNumber = member.mobileNumber ?? ''
+        state.formData.guarantor.address = address
+      } else if (section === 'coApplicant') {
+        state.hasCoApplicant = true
+        state.formData.coApplicant.fullName = member.fullName ?? ''
+        state.formData.coApplicant.fatherOrHusbandName = member.fatherOrHusbandName ?? ''
+        state.formData.coApplicant.mobileNumber = member.mobileNumber ?? ''
+        state.formData.coApplicant.email = member.email ?? ''
+        state.formData.coApplicant.address = address
+      }
+    },
     copyAddress: (state, action) => {
       const { from, to } = action.payload
       // from and to can be: 'member', 'nominee', 'guarantor', 'coApplicant'
@@ -235,6 +265,7 @@ export const {
   setErrors,
   clearError,
   resetForm,
+  fillFromMember,
   copyAddress,
 } = newLoanSlice.actions
 

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { setHasCoApplicant, copyAddress } from '../../../store/slices/newLoanSlice'
+import { setHasCoApplicant, copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
+import MemberSelectDrawer from './MemberSelectDrawer'
 import './CoApplicantForm.scss'
 
 const CoApplicantForm = () => {
@@ -15,7 +16,7 @@ const CoApplicantForm = () => {
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
   
-  // State to track which checkbox is checked
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [checkedSource, setCheckedSource] = useState(null)
   
   const handleCopyMemberAddress = (e) => {
@@ -54,6 +55,25 @@ const CoApplicantForm = () => {
           <p className="section-description">Add co-applicant if applicable</p>
         </div>
       </div>
+      {hasCoApplicant && (
+        <div className="fill-from-member-row new-loan-fill-row">
+          <button
+            type="button"
+            className="fill-from-member-btn new-loan-fill-btn"
+            onClick={() => setDrawerOpen(true)}
+          >
+            Fill from member
+          </button>
+        </div>
+      )}
+      {hasCoApplicant && (
+        <MemberSelectDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onSelect={(member) => dispatch(fillFromMember({ section: 'coApplicant', member }))}
+          title="Select member for Co-Applicant"
+        />
+      )}
 
       <div className="co-applicant-toggle">
         <label className="checkbox-label">

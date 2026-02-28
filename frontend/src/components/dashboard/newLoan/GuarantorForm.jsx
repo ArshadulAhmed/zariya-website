@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { copyAddress } from '../../../store/slices/newLoanSlice'
+import { copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import Select from '../../Select'
 import { RELATIONSHIPS } from '../../../constants/relationships'
+import MemberSelectDrawer from './MemberSelectDrawer'
 import './GuarantorForm.scss'
 
 const GuarantorForm = () => {
@@ -15,7 +16,7 @@ const GuarantorForm = () => {
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
   
-  // State to track which checkbox is checked
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [checkedSource, setCheckedSource] = useState(null)
   
   const handleCopyMemberAddress = (e) => {
@@ -45,6 +46,21 @@ const GuarantorForm = () => {
           <p className="section-description">Provide guarantor information</p>
         </div>
       </div>
+      <div className="fill-from-member-row new-loan-fill-row">
+        <button
+          type="button"
+          className="fill-from-member-btn new-loan-fill-btn"
+          onClick={() => setDrawerOpen(true)}
+        >
+          Fill from member
+        </button>
+      </div>
+      <MemberSelectDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSelect={(member) => dispatch(fillFromMember({ section: 'guarantor', member }))}
+        title="Select member for Guarantor"
+      />
 
       <div className="address-copy-section">
         <label className="checkbox-label">
