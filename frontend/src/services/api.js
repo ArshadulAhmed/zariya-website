@@ -657,6 +657,28 @@ export const dashboardAPI = {
   },
 }
 
+// Loan due tracking (loans not repaid up to date) - data from cron snapshot
+export const loanDueTrackingAPI = {
+  getLoansNotRepaidUpToDate: async (params = {}) => {
+    try {
+      const { page = 1, limit = 25, search = '', minPendingEmi, hasFine, sortBy = 'last_calculated_at', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      query.set('page', String(page))
+      query.set('limit', String(limit))
+      if (search) query.set('search', search)
+      if (minPendingEmi != null && minPendingEmi !== '') query.set('minPendingEmi', String(minPendingEmi))
+      if (hasFine === true || hasFine === 'true') query.set('hasFine', 'true')
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const data = await apiRequest(`/loan-due-tracking?${query.toString()}`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan due tracking API error:', error)
+      throw error
+    }
+  },
+}
+
 // Upload API
 export const uploadAPI = {
   /**

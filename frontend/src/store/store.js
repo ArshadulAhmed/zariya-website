@@ -11,6 +11,7 @@ import dashboardReducer from './slices/dashboardSlice'
 import loanReportReducer from './slices/loanReportSlice'
 import repaymentRecordsReducer from './slices/repaymentRecordsSlice'
 import dailyCollectionReducer from './slices/dailyCollectionSlice'
+import loanDueTrackingReducer from './slices/loanDueTrackingSlice'
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     loanReport: loanReportReducer,
     repaymentRecords: repaymentRecordsReducer,
     dailyCollection: dailyCollectionReducer,
+    loanDueTracking: loanDueTrackingReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
