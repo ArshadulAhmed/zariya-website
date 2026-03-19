@@ -259,7 +259,7 @@ const LoanApplicationDetails = () => {
               </button>
             </>
           )}
-          {underReview && (isAdmin || isEmployee) && (
+          {(isAdmin || isEmployee) && (
             <button
               className="btn-secondary"
               onClick={handleDownload}
