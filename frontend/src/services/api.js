@@ -506,6 +506,46 @@ export const loanApplicationsAPI = {
       throw error
     }
   },
+  downloadContract: async (id) => {
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loan-applications/${id}/contract`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download contract')
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `Loan_Application_${id}.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      return { success: true, message: 'Contract downloaded successfully' }
+    } catch (error) {
+      console.error('Loan Applications API downloadContract error:', error)
+      throw error
+    }
+  },
 }
 
 // Repayments API

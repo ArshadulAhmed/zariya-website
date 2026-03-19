@@ -1,17 +1,23 @@
 import './ConfirmationModal.scss'
 
-const ConfirmationModal = ({ 
-  open, 
-  onClose, 
-  onConfirm, 
-  title = 'Confirm Action',
-  message = 'Are you sure you want to proceed?',
+const PromptModal = ({
+  open,
+  onClose,
+  onConfirm,
+  title = 'Prompt',
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  variant = 'danger', // 'danger' | 'warning' | 'info'
-  isLoading = false
+  variant = 'danger',
+  isLoading = false,
+  value = '',
+  onChange = () => {},
+  placeholder = '',
+  required = false,
+  fieldLabel = 'Input'
 }) => {
   if (!open) return null
+
+  const isEmpty = !value || value.toString().trim() === ''
 
   return (
     <div className="modal-overlay">
@@ -27,7 +33,19 @@ const ConfirmationModal = ({
         </div>
 
         <div className="modal-body">
-          {typeof message === 'string' ? <p>{message}</p> : message}
+          <textarea
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            rows={4}
+            aria-required={required}
+            style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 6, border: '1px solid #e5e7eb', fontSize: 14 }}
+          />
+          {required && isEmpty && (
+            <div className="field-error" style={{ color: '#d32f2f', marginTop: 6, fontSize: 13 }}>
+              required.
+            </div>
+          )}
         </div>
 
         <div className="modal-actions">
@@ -43,7 +61,7 @@ const ConfirmationModal = ({
             type="button"
             className={`btn-primary btn-${variant}`}
             onClick={onConfirm}
-            disabled={isLoading}
+            disabled={isLoading || (required && isEmpty)}
           >
             {isLoading ? (
               <>
@@ -65,5 +83,5 @@ const ConfirmationModal = ({
   )
 }
 
-export default ConfirmationModal
+export default PromptModal
 

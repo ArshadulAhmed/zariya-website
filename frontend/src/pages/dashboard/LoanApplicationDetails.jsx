@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { loanApplicationsAPI } from '../../services/api'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchApplication, reviewApplication, clearSelectedApplication } from '../../store/slices/loanApplicationsSlice'
 import Snackbar from '../../components/Snackbar'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
+import PromptModal from '../../components/dashboard/PromptModal'
 import './LoanApplicationDetails.scss'
 
 const LoanApplicationDetails = () => {
@@ -34,9 +37,12 @@ const LoanApplicationDetails = () => {
   }, [dispatch])
 
   const isAdmin = user?.role === 'admin'
+  const isEmployee = user?.role === 'employee'
   const underReview = application?.status === 'under_review'
+  const [downloading, setDownloading] = useState(false)
+  const [approveModal, setApproveModal] = useState(false)
 
-  const handleApprove = async () => {
+  const handleApprove = useCallback(async () => {
     const result = await dispatch(reviewApplication({ id, reviewData: { status: 'approved' } }))
     if (reviewApplication.fulfilled.match(result)) {
       const loan = result.payload?.loan
@@ -46,10 +52,27 @@ const LoanApplicationDetails = () => {
         dispatch(fetchApplication(id))
       }
     }
-  }
+  }, [dispatch, id, navigate])
 
-  const handleRejectClick = () => setRejectModal(true)
-  const handleRejectConfirm = async () => {
+  const handleRejectClick = useCallback(() => {
+    setRejectModal(true)
+  }, [])
+
+  const handleApproveOpen = useCallback(() => {
+    setApproveModal(true)
+  }, [])
+
+  const handleApproveCancel = useCallback(() => {
+    setApproveModal(false)
+  }, [])
+
+  const handleApproveConfirm = useCallback(async () => {
+    // reuse existing approve logic
+    await handleApprove()
+    setApproveModal(false)
+  }, [handleApprove])
+
+  const handleRejectConfirm = useCallback(async () => {
     const result = await dispatch(reviewApplication({
       id,
       reviewData: { status: 'rejected', rejectionReason: rejectionReason.trim() || undefined },
@@ -59,9 +82,9 @@ const LoanApplicationDetails = () => {
       setRejectionReason('')
       dispatch(fetchApplication(id))
     }
-  }
+  }, [dispatch, id, rejectionReason])
 
-  const handleCopyApplicationNumber = async () => {
+  const handleCopyApplicationNumber = useCallback(async () => {
     const appNumber = application?.applicationNumber
     if (!appNumber) return
     try {
@@ -71,7 +94,45 @@ const LoanApplicationDetails = () => {
     } catch (err) {
       console.error('Failed to copy:', err)
     }
-  }
+  }, [application?.applicationNumber])
+
+  const handleBack = useCallback(() => {
+    navigate('/dashboard/loan-applications')
+  }, [navigate])
+
+  const handleEdit = useCallback(() => {
+    navigate(`/dashboard/loan-applications/${id}/edit`)
+  }, [navigate, id])
+
+  const handleViewLoan = useCallback(() => {
+    navigate(`/dashboard/loans/${application.loan?.loanAccountNumber || application.loan?._id}`)
+  }, [navigate, application?.loan?._id, application?.loan?.loanAccountNumber])
+
+  const handleCloseRejectModal = useCallback(() => {
+    setRejectModal(false)
+  }, [])
+
+  const handleRejectCancel = useCallback(() => {
+    setRejectModal(false)
+    setRejectionReason('')
+  }, [])
+
+  const handleRejectionChange = useCallback((e) => {
+    setRejectionReason(e.target.value)
+  }, [])
+
+  const handleDownload = useCallback(async () => {
+    if (!id) return
+    setDownloading(true)
+    try {
+      await loanApplicationsAPI.downloadContract(id)
+    } catch (err) {
+      console.error(err)
+      alert(err.message || 'Failed to download contract')
+    } finally {
+      setDownloading(false)
+    }
+  }, [id])
 
   const formatDate = (d) => {
     if (!d) return 'N/A'
@@ -100,7 +161,7 @@ const LoanApplicationDetails = () => {
       <div className="loan-application-details-page">
         <div className="error-container">
           <p>{error || 'Application not found'}</p>
-          <button className="btn-primary" onClick={() => navigate('/dashboard/loan-applications')}>
+          <button className="btn-primary" onClick={handleBack}>
             Back to Loan Applications
           </button>
         </div>
@@ -168,7 +229,7 @@ const LoanApplicationDetails = () => {
     <div className="loan-application-details-page">
       <div className="page-header">
         <div>
-          <button className="back-button" onClick={() => navigate('/dashboard/loan-applications')}>
+          <button className="back-button" onClick={handleBack}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -183,14 +244,14 @@ const LoanApplicationDetails = () => {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => navigate(`/dashboard/loan-applications/${id}/edit`)}
+              onClick={handleEdit}
             >
               Edit
             </button>
           )}
           {underReview && isAdmin && (
             <>
-              <button className="btn-primary" onClick={handleApprove} disabled={isLoading}>
+              <button className="btn-primary" onClick={handleApproveOpen} disabled={isLoading}>
                 Approve
               </button>
               <button className="btn-danger" onClick={handleRejectClick} disabled={isLoading}>
@@ -198,10 +259,20 @@ const LoanApplicationDetails = () => {
               </button>
             </>
           )}
+          {underReview && (isAdmin || isEmployee) && (
+            <button
+              className="btn-secondary"
+              onClick={handleDownload}
+              disabled={downloading}
+              title="Download Application Form"
+            >
+              {downloading ? 'Downloading...' : 'Download Form'}
+            </button>
+          )}
           {application.status === 'approved' && application.loan && (
             <button
               className="btn-primary"
-              onClick={() => navigate(`/dashboard/loans/${application.loan?.loanAccountNumber || application.loan?._id}`)}
+              onClick={handleViewLoan}
             >
               View Loan {application.loan?.loanAccountNumber || ''}
             </button>
@@ -330,24 +401,33 @@ const LoanApplicationDetails = () => {
         </div>
       </div>
 
-      {rejectModal && (
-        <div className="modal-overlay" onClick={() => setRejectModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Reject application</h3>
-            <label>Reason (optional)</label>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Rejection reason..."
-              rows={3}
-            />
-            <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => { setRejectModal(false); setRejectionReason('') }}>Cancel</button>
-              <button className="btn-danger" onClick={handleRejectConfirm} disabled={isLoading}>Reject</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PromptModal
+        open={rejectModal}
+        onClose={handleRejectCancel}
+        onConfirm={handleRejectConfirm}
+        title="Reject application"
+        confirmText="Reject"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isLoading}
+        value={rejectionReason}
+        onChange={handleRejectionChange}
+        placeholder="Rejection reason..."
+        required={true}
+        fieldLabel="Reason (required)"
+      />
+
+      <ConfirmationModal
+        open={approveModal}
+        onClose={handleApproveCancel}
+        onConfirm={handleApproveConfirm}
+        title="Approve application"
+        message="Are you sure you want to approve this application?"
+        confirmText="Approve"
+        cancelText="Cancel"
+        variant="info"
+        isLoading={isLoading}
+      />
 
       <Snackbar />
     </div>
