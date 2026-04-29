@@ -13,6 +13,7 @@ const LoanInfo = memo(() => {
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [downloadingReceipt, setDownloadingReceipt] = useState(false)
+  const [downloadingDefaultNotice, setDownloadingDefaultNotice] = useState(false)
 
   if (!loan) {
     return null
@@ -80,6 +81,21 @@ const LoanInfo = memo(() => {
       alert(error.message || 'Failed to download acknowledgement receipt')
     } finally {
       setDownloadingReceipt(false)
+    }
+  }
+
+  const handleDownloadDefaultNotice = async () => {
+    const loanId = loan?._id || loan?.id || loan?.loanAccountNumber
+    if (!loanId) return
+
+    setDownloadingDefaultNotice(true)
+    try {
+      await loansAPI.downloadDefaultNotice(loanId)
+    } catch (error) {
+      console.error('Failed to download default notice:', error)
+      alert(error.message || 'Failed to download default notice')
+    } finally {
+      setDownloadingDefaultNotice(false)
     }
   }
 
@@ -153,6 +169,20 @@ const LoanInfo = memo(() => {
                   <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 {downloadingReceipt ? 'Downloading...' : 'Download Acknowledgment'}
+              </button>
+
+              <button
+                className="download-contract-button"
+                onClick={handleDownloadDefaultNotice}
+                disabled={downloadingDefaultNotice}
+                title="Download Notice of Default"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.53 21H20.47A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {downloadingDefaultNotice ? 'Downloading...' : 'Download Default Notice'}
               </button>
             </>
           )}

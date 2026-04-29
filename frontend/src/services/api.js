@@ -396,6 +396,46 @@ export const loansAPI = {
       throw error
     }
   },
+  downloadDefaultNotice: async (id) => {
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loans/${id}/default-notice`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download default notice')
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `Loan_Default_Notice_${id}.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      return { success: true, message: 'Default notice downloaded successfully' }
+    } catch (error) {
+      console.error('Loans API downloadDefaultNotice error:', error)
+      throw error
+    }
+  },
 
   downloadNOC: async (id) => {
     try {
