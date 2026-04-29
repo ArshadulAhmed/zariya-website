@@ -27,6 +27,7 @@ const paymentMethodLabel = (method) => {
   if (method === 'cash') return 'Cash'
   if (method === 'bank_transfer') return 'Bank Transfer'
   if (method === 'upi') return 'UPI'
+  if (method === 'system') return 'System'
   return method || 'Other'
 }
 
@@ -109,7 +110,7 @@ const RepaymentHistory = memo(({
           </thead>
           <tbody>
             {repayments.map((repayment, index) => (
-              <tr key={repayment._id || repayment.id}>
+              <tr key={repayment._id || repayment.id} className={repayment.isSystemGenerated ? 'system-missed-row' : ''}>
                 {showSNo && <td>{index + 1}</td>}
                 <td>{formatDate(repayment.paymentDate)}</td>
                 <td>{formatCurrency(repayment.amount)}</td>
@@ -118,7 +119,7 @@ const RepaymentHistory = memo(({
                     {paymentMethodLabel(repayment.paymentMethod)}
                   </span>
                 </td>
-                <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
+                <td>{repayment.isSystemGenerated ? '-' : (repayment.isLateFee ? 'Yes' : 'No')}</td>
                 <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                 {showRemarks && <td className="remarks-cell">{repayment.remarks || '-'}</td>}
               </tr>
