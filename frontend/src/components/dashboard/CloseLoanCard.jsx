@@ -12,11 +12,16 @@ const CloseLoanCard = memo(() => {
   // Get loan info from repaymentRecords (comes with repayments response)
   // Fallback to loans.selectedLoan if not available
   const loanInfoFromRepayments = useAppSelector((state) => state.repaymentRecords.loanInfo)
+  const missedEmiCount = useAppSelector((state) => state.repaymentRecords.missedEmiCount || 0)
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
   const userRole = useAppSelector((state) => state.auth.user?.role)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
   
-  const [closeConfirm, setCloseConfirm] = useState({ open: false })
+  const [closeConfirm, setCloseConfirm] = useState({
+    open: false,
+    isEligibleForNextLoan: true,
+    closureRemark: '',
+  })
   
   const isAdmin = userRole === 'admin'
   // Use loan info from repayments if available, otherwise use selectedLoan
@@ -81,7 +86,11 @@ const CloseLoanCard = memo(() => {
     }
     
     // All checks passed - open the modal
-    setCloseConfirm({ open: true })
+    setCloseConfirm({
+      open: true,
+      isEligibleForNextLoan: loanToCheck.membership?.isEligibleForNextLoan !== false,
+      closureRemark: '',
+    })
   }
 
   const handleCloseLoan = async () => {
@@ -92,7 +101,7 @@ const CloseLoanCard = memo(() => {
         message: 'Loan details not available', 
         severity: 'error' 
       }))
-      setCloseConfirm({ open: false })
+      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
       return
     }
     
@@ -102,7 +111,7 @@ const CloseLoanCard = memo(() => {
         message: 'Loan ID not found', 
         severity: 'error' 
       }))
-      setCloseConfirm({ open: false })
+      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
       return
     }
     
@@ -111,12 +120,14 @@ const CloseLoanCard = memo(() => {
         id: currentLoanId,
         loanData: {
           status: 'closed',
+          isEligibleForNextLoan: closeConfirm.isEligibleForNextLoan,
+          closureRemark: closeConfirm.closureRemark.trim(),
         },
       })
     )
     
     if (updateLoan.fulfilled.match(result)) {
-      setCloseConfirm({ open: false })
+      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
       dispatch(setSnackbar({ 
         message: 'Loan closed successfully', 
         severity: 'success' 
@@ -157,41 +168,66 @@ const CloseLoanCard = memo(() => {
       </div>
       <ConfirmationModal
         open={closeConfirm.open}
-        onClose={() => setCloseConfirm({ open: false })}
+        onClose={() => setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })}
         onConfirm={handleCloseLoan}
-        title="⚠️ Close Loan - Warning"
+        title="Close Loan Review"
         message={
-          <div>
-            <p style={{ marginBottom: '1rem', fontWeight: '600', color: '#dc2626' }}>
-              Are you absolutely sure you want to close this loan?
-            </p>
-            <p style={{ marginBottom: '0.75rem' }}>
-              This will mark the loan for <strong>"{memberName || 'this member'}"</strong> as closed.
-            </p>
-            <div style={{ 
-              backgroundColor: '#fef3c7', 
-              padding: '0.75rem', 
-              borderRadius: '6px', 
-              border: '1px solid #fbbf24',
-              marginTop: '1rem'
-            }}>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#92400e' }}>
-                <strong>⚠️ Important:</strong> Please ensure:
-              </p>
-              <ul style={{ margin: '0.5rem 0 0 1.25rem', padding: 0, color: '#92400e' }}>
+          <div className="close-loan-modal-body">
+            <div className="close-loan-alert">
+              <strong>Review before closing</strong>
+              <span>This will mark the loan for <b>{memberName || 'this member'}</b> as closed. This action cannot be undone.</span>
+            </div>
+
+            <div className="close-loan-review-grid">
+              <div className="close-loan-review-item">
+                <span className="review-label">Missed EMI</span>
+                <strong className="review-value">{missedEmiCount}</strong>
+              </div>
+              <label className="close-loan-eligibility-toggle">
+                <input
+                  type="checkbox"
+                  checked={closeConfirm.isEligibleForNextLoan}
+                  onChange={(event) =>
+                    setCloseConfirm((prev) => ({
+                      ...prev,
+                      isEligibleForNextLoan: event.target.checked,
+                    }))
+                  }
+                />
+                <span>Eligible for next loan</span>
+              </label>
+            </div>
+
+            <label className="close-loan-remark-field">
+              <span>Closure remark</span>
+              <textarea
+                value={closeConfirm.closureRemark}
+                onChange={(event) =>
+                  setCloseConfirm((prev) => ({
+                    ...prev,
+                    closureRemark: event.target.value.slice(0, 1000),
+                  }))
+                }
+                placeholder="Add remarks about repayments, late fees, or eligibility decision"
+                rows={3}
+              />
+            </label>
+
+            <div className="close-loan-checklist">
+              <strong>Before confirming, ensure:</strong>
+              <ul>
                 <li>All repayments have been recorded</li>
-                <li>Any late fees or additional charges have been added</li>
+                <li>Late fees or additional charges have been added</li>
                 <li>The loan balance is accurate</li>
               </ul>
             </div>
-            <p style={{ marginTop: '1rem', fontWeight: '600', color: '#dc2626' }}>
-              This action <strong>cannot be undone</strong>.
-            </p>
           </div>
         }
         confirmText="Yes, Close Loan"
         cancelText="Cancel"
         variant="warning"
+        isLoading={isLoading}
+        className="close-loan-confirmation-modal"
       />
     </>
   )

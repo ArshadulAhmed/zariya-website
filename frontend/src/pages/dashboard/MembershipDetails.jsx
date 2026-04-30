@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
+import { fetchMembership, reviewMembership, updateMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
@@ -23,6 +23,10 @@ const MembershipDetails = () => {
 
   const [approveConfirm, setApproveConfirm] = useState({ open: false })
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
+  const [loanEligibilityModal, setLoanEligibilityModal] = useState({
+    open: false,
+    isEligibleForNextLoan: false,
+  })
   const [rejectionReason, setRejectionReason] = useState('')
   const [copied, setCopied] = useState(false)
   const [enlargedImage, setEnlargedImage] = useState(null)
@@ -117,6 +121,41 @@ const MembershipDetails = () => {
       }, 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
+    }
+  }
+
+  const handleApplyLoanClick = () => {
+    if (!membership) return
+
+    if (membership.isEligibleForNextLoan === false) {
+      setLoanEligibilityModal({
+        open: true,
+        isEligibleForNextLoan: false,
+      })
+      return
+    }
+
+    navigate(`/dashboard/loans/new?userId=${encodeURIComponent(membership.userId)}`)
+  }
+
+  const handleUpdateLoanEligibility = async () => {
+    if (!isAdmin || !membership?.id) {
+      setLoanEligibilityModal({ open: false, isEligibleForNextLoan: false })
+      return
+    }
+
+    const result = await dispatch(
+      updateMembership({
+        id: membership.id,
+        membershipData: {
+          isEligibleForNextLoan: loanEligibilityModal.isEligibleForNextLoan,
+        },
+      })
+    )
+
+    if (updateMembership.fulfilled.match(result)) {
+      setLoanEligibilityModal({ open: false, isEligibleForNextLoan: false })
+      dispatch(fetchMembership(id))
     }
   }
 
@@ -219,7 +258,7 @@ const MembershipDetails = () => {
           {!isLoading && isApproved && (
             <button
               className="btn-primary"
-              onClick={() => navigate(`/dashboard/loans/new?userId=${encodeURIComponent(membership.userId)}`)}
+              onClick={handleApplyLoanClick}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -561,6 +600,49 @@ const MembershipDetails = () => {
             cancelText="Cancel"
             variant="danger"
             isLoading={isLoading}
+          />
+
+          <ConfirmationModal
+            open={loanEligibilityModal.open}
+            onClose={() => !isLoading && setLoanEligibilityModal({ open: false, isEligibleForNextLoan: false })}
+            onConfirm={isAdmin ? handleUpdateLoanEligibility : () => setLoanEligibilityModal({ open: false, isEligibleForNextLoan: false })}
+            title="Loan Eligibility"
+            message={
+              <div className="loan-eligibility-modal-body">
+                <div className="loan-eligibility-warning">
+                  <strong>This member is not eligible for the next loan.</strong>
+                  <span>Please contact administrator before creating a new loan application.</span>
+                </div>
+
+                <div className="last-loan-remark-box">
+                  <span className="remark-label">
+                    Last loan remark{membership.lastLoanAccountNumber ? ` (${membership.lastLoanAccountNumber})` : ''}
+                  </span>
+                  <p>{membership.lastLoanClosureRemark || 'No closure remark recorded.'}</p>
+                </div>
+
+                {isAdmin && (
+                  <label className="eligibility-admin-toggle">
+                    <input
+                      type="checkbox"
+                      checked={loanEligibilityModal.isEligibleForNextLoan}
+                      onChange={(event) =>
+                        setLoanEligibilityModal((prev) => ({
+                          ...prev,
+                          isEligibleForNextLoan: event.target.checked,
+                        }))
+                      }
+                    />
+                    <span>Mark this member eligible for next loan</span>
+                  </label>
+                )}
+              </div>
+            }
+            confirmText={isAdmin ? 'Update Eligibility' : 'OK'}
+            cancelText="Cancel"
+            variant={isAdmin ? 'warning' : 'info'}
+            isLoading={isLoading}
+            className="loan-eligibility-modal"
           />
         </>
       )}

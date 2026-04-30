@@ -6,6 +6,7 @@ const initialState = {
   totalPaid: 0,
   totalLateFeePaid: 0,
   additionalAmountPaid: 0,
+  missedEmiCount: 0,
   isLoadingRepayments: false,
   isLoadingMore: false,
   error: null,
@@ -26,6 +27,7 @@ export const fetchRepayments = createAsyncThunk(
           totalPaid: response.data.totalPaid || 0,
           totalLateFeePaid: response.data.totalLateFeePaid ?? 0,
           additionalAmountPaid: response.data.additionalAmountPaid || 0,
+          missedEmiCount: response.data.missedEmiCount || 0,
           pagination: response.data.pagination || { page: 1, limit: 50, total: 0, pages: 0 },
           // Store minimal loan info from repayments response (avoids separate API call)
           loanInfo: response.data.loan || null,
@@ -47,6 +49,7 @@ const repaymentRecordsSlice = createSlice({
       state.totalPaid = 0
       state.totalLateFeePaid = 0
       state.additionalAmountPaid = 0
+      state.missedEmiCount = 0
       state.loanInfo = null
       state.pagination = initialState.pagination
     },
@@ -80,6 +83,7 @@ const repaymentRecordsSlice = createSlice({
         state.totalPaid = action.payload.totalPaid
         state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
         state.additionalAmountPaid = action.payload.additionalAmountPaid || 0
+        state.missedEmiCount = action.payload.missedEmiCount || 0
         state.loanInfo = action.payload.loanInfo || null
       })
       .addCase(fetchRepayments.rejected, (state, action) => {
@@ -93,6 +97,7 @@ const repaymentRecordsSlice = createSlice({
           state.totalPaid = 0
           state.totalLateFeePaid = 0
           state.additionalAmountPaid = 0
+          state.missedEmiCount = 0
           state.loanInfo = null
         }
       })

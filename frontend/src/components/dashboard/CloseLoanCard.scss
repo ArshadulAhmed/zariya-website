@@ -3,5 +3,153 @@
 // Styles are shared with LoanDetails.scss
 // This file exists for potential component-specific overrides
 
+.close-loan-confirmation-modal {
+  max-width: 520px;
+}
+
+.close-loan-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.close-loan-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+
+  strong {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  span {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.close-loan-review-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.close-loan-review-item,
+.close-loan-eligibility-toggle {
+  min-height: 68px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.close-loan-review-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+
+  .review-label {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .review-value {
+    color: #111827;
+    font-size: 28px;
+    line-height: 1;
+  }
+}
+
+.close-loan-eligibility-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #374151;
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    cursor: pointer;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+.close-loan-remark-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  span {
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 86px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    color: #111827;
+    font: inherit;
+    line-height: 1.45;
+    resize: vertical;
+
+    &:focus {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14);
+      outline: none;
+    }
+  }
+}
+
+.close-loan-checklist {
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+
+  strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin: 3px 0;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 560px) {
+  .close-loan-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 

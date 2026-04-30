@@ -102,6 +102,21 @@ export const reviewMembership = createAsyncThunk(
   }
 )
 
+export const updateMembership = createAsyncThunk(
+  'memberships/updateMembership',
+  async ({ id, membershipData }, { rejectWithValue }) => {
+    try {
+      const response = await membershipsAPI.updateMembership(id, membershipData)
+      if (response.success) {
+        return response.data.membership
+      }
+      return rejectWithValue(response.message || 'Failed to update membership')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update membership')
+    }
+  }
+)
+
 const membershipsSlice = createSlice({
   name: 'memberships',
   initialState,
@@ -298,6 +313,9 @@ const membershipsSlice = createSlice({
           createdAt: createdAtFormatted,
           reviewedAt: reviewedAtFormatted,
           rejectionReason: String(membership.rejectionReason || ''),
+          isEligibleForNextLoan: membership.isEligibleForNextLoan !== false,
+          lastLoanClosureRemark: String(membership.lastLoanClosureRemark || ''),
+          lastLoanAccountNumber: String(membership.lastLoanAccountNumber || ''),
           reviewedBy: membership.reviewedBy ? {
             id: safeToString(membership.reviewedBy._id || membership.reviewedBy.id),
             username: String(membership.reviewedBy.username || ''),
@@ -355,6 +373,48 @@ const membershipsSlice = createSlice({
         state.snackbar = {
           open: true,
           message: action.payload || 'Failed to review membership',
+          severity: 'error',
+        }
+      })
+      // Update membership
+      .addCase(updateMembership.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(updateMembership.fulfilled, (state, action) => {
+        state.isLoading = false
+        const updatedMembership = action.payload
+        const membershipId = safeToString(updatedMembership._id) || safeToString(updatedMembership.id) || ''
+
+        if (state.selectedMembership && state.selectedMembership.id === String(membershipId)) {
+          state.selectedMembership = {
+            ...state.selectedMembership,
+            isEligibleForNextLoan: updatedMembership.isEligibleForNextLoan !== false,
+            lastLoanClosureRemark: String(updatedMembership.lastLoanClosureRemark || state.selectedMembership.lastLoanClosureRemark || ''),
+            lastLoanAccountNumber: String(updatedMembership.lastLoanAccountNumber || state.selectedMembership.lastLoanAccountNumber || ''),
+          }
+        }
+
+        const index = state.memberships.findIndex((m) => m.id === String(membershipId))
+        if (index !== -1) {
+          state.memberships[index] = {
+            ...state.memberships[index],
+            isEligibleForNextLoan: updatedMembership.isEligibleForNextLoan !== false,
+          }
+        }
+
+        state.snackbar = {
+          open: true,
+          message: 'Membership updated successfully',
+          severity: 'success',
+        }
+      })
+      .addCase(updateMembership.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || 'Failed to update membership'
+        state.snackbar = {
+          open: true,
+          message: action.payload || 'Failed to update membership',
           severity: 'error',
         }
       })
