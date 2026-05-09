@@ -3,6 +3,20 @@ import { TextField as MUITextField, InputAdornment, IconButton } from '@mui/mate
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import './TextField.scss'
 
+const allowedKeys = [
+  'Backspace',
+  'Delete',
+  'Tab',
+  'Escape',
+  'Enter',
+  'Home',
+  'End',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+]
+
 const TextField = ({
   label,
   name,
@@ -18,33 +32,63 @@ const TextField = ({
   multiline,
   rows,
   maxLength,
+  inputProps,
+  InputProps,
+  onKeyDown,
+  onWheel,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false)
   
   // Determine if this is a password field that should show toggle
   const isPassword = type === 'password'
+  const isNumber = type === 'number'
   const inputType = isPassword && showPassword ? 'text' : type
+  const renderedInputType = isNumber ? 'text' : inputType
+
+  const handleChange = (event) => {
+    if (isNumber && !/^\d*\.?\d*$/.test(event.target.value)) return
+    onChange?.(event)
+  }
+
+  const handleKeyDown = (event) => {
+    onKeyDown?.(event)
+    if (!isNumber || event.defaultPrevented) return
+
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) return
+
+    if (event.key === '.') {
+      if (String(event.target.value).includes('.')) {
+        event.preventDefault()
+      }
+      return
+    }
+
+    if (!/^\d$/.test(event.key)) event.preventDefault()
+  }
 
   return (
     <MUITextField
       label={label}
       name={name}
       value={value}
-      onChange={onChange}
+      onChange={handleChange}
       onKeyPress={onKeyPress}
+      onKeyDown={handleKeyDown}
       error={!!error}
       helperText={error || helperText}
       placeholder={placeholder}
       required={required}
       disabled={disabled}
-      type={inputType}
+      type={renderedInputType}
       multiline={multiline}
       rows={rows}
+      onWheel={onWheel}
       inputProps={{
         maxLength: maxLength,
-        autoComplete: props.inputProps?.autoComplete ?? 'off',
-        ...props.inputProps
+        ...(isNumber && { inputMode: 'decimal', pattern: '[0-9]*[.]?[0-9]*' }),
+        autoComplete: inputProps?.autoComplete ?? 'off',
+        ...inputProps
       }}
       InputProps={
         isPassword
@@ -62,7 +106,7 @@ const TextField = ({
                 </InputAdornment>
               ),
             }
-          : props.InputProps
+          : InputProps
       }
       fullWidth
       variant="outlined"

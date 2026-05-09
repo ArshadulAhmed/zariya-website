@@ -23,6 +23,8 @@ const ApplyLoan = () => {
 
   const [errors, setErrors] = useState({})
 
+  const isValidDecimalInput = (value) => /^\d*\.?\d*$/.test(value)
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({
@@ -35,6 +37,12 @@ const ApplyLoan = () => {
         ...errors,
         [name]: '',
       })
+    }
+  }
+
+  const handleDecimalChange = (e) => {
+    if (isValidDecimalInput(e.target.value)) {
+      handleChange(e)
     }
   }
 
@@ -188,11 +196,13 @@ const ApplyLoan = () => {
                   Loan Amount (₹) <span className="required">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
                   id="loanAmount"
                   name="loanAmount"
                   value={formData.loanAmount}
-                  onChange={handleChange}
+                  onChange={handleDecimalChange}
                   placeholder="Enter loan amount"
                   min="1"
                   step="0.01"
@@ -207,11 +217,13 @@ const ApplyLoan = () => {
                   Loan Tenure (Days) <span className="required">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
                   id="loanTenure"
                   name="loanTenure"
                   value={formData.loanTenure}
-                  onChange={handleChange}
+                  onChange={handleDecimalChange}
                   placeholder="Enter tenure in days"
                   min="1"
                   className={errors.loanTenure ? 'error' : ''}
@@ -243,11 +255,13 @@ const ApplyLoan = () => {
                   Installment Amount (₹) <span className="required">*</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
                   id="installmentAmount"
                   name="installmentAmount"
                   value={formData.installmentAmount}
-                  onChange={handleChange}
+                  onChange={handleDecimalChange}
                   placeholder="Enter installment amount"
                   min="1"
                   step="0.01"

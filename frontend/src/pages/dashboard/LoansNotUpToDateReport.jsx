@@ -179,7 +179,9 @@ const LoansNotUpToDateReport = () => {
                 <div className="filter-group">
                   <label htmlFor="minPending">Min. pending EMIs</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     id="minPending"
                     className="filter-input"
                     placeholder="Any"

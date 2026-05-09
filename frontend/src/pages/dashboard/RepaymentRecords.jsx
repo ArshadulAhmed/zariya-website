@@ -12,6 +12,8 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+const isValidDecimalInput = (value) => /^\d*\.?\d*$/.test(value)
+
 // Calculate min and max dates (3 months before and after today) in local calendar date
 const getDateLimits = () => {
   const today = new Date()
@@ -356,11 +358,17 @@ const RepaymentRecords = () => {
       width: '110px',
       render: (value, row) => (
         <input
-          type="number"
+          type="text"
+          inputMode="decimal"
+          pattern="[0-9]*[.]?[0-9]*"
           className="repayment-input"
           placeholder="0.00"
           value={row.form.amount}
-          onChange={(e) => handleRepaymentAmountChange(row.loanId, e.target.value)}
+          onChange={(e) => {
+            if (isValidDecimalInput(e.target.value)) {
+              handleRepaymentAmountChange(row.loanId, e.target.value)
+            }
+          }}
           disabled={row.isSubmitting}
           min="0.01"
           step="0.01"
