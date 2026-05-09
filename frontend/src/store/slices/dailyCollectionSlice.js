@@ -4,9 +4,11 @@ import { repaymentsAPI } from '../../services/api'
 // Async thunk to fetch daily collections
 export const fetchDailyCollections = createAsyncThunk(
   'dailyCollection/fetchDailyCollections',
-  async ({ date, page = 1, limit = 50 }, { rejectWithValue }) => {
+  async ({ date, page = 1, limit = 50, paymentMethod = '' }, { rejectWithValue }) => {
     try {
-      const response = await repaymentsAPI.getDailyCollections(date, { page, limit })
+      const params = { page, limit }
+      if (paymentMethod) params.paymentMethod = paymentMethod
+      const response = await repaymentsAPI.getDailyCollections(date, params)
       if (response.success) {
         return {
           date: response.data.date,

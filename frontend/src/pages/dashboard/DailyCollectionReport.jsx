@@ -25,6 +25,26 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+const paymentMethodLabel = (method) => {
+  if (method === 'cash') return 'Cash'
+  if (method === 'bank_transfer') return 'Bank Transfer'
+  if (method === 'upi') return 'UPI'
+  return method || 'Other'
+}
+
+const paymentMethodOrder = ['cash', 'upi', 'bank_transfer']
+
+const sortPaymentMethods = (methods) => {
+  return [...methods].sort((a, b) => {
+    const aIndex = paymentMethodOrder.indexOf(a)
+    const bIndex = paymentMethodOrder.indexOf(b)
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b)
+    if (aIndex === -1) return 1
+    if (bIndex === -1) return -1
+    return aIndex - bIndex
+  })
+}
+
 // Calculate min and max dates (3 months before and after today)
 const getDateLimits = () => {
   const today = new Date()
@@ -42,10 +62,13 @@ const getDateLimits = () => {
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
+  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, totalCount, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
   const dateLimits = getDateLimits()
+  const paymentMethodOptions = sortPaymentMethods([...new Set([...paymentMethodOrder, ...Object.keys(collectionByMethod || {})])])
+  const hasCollectionSummary = Boolean(date) && (totalCount > 0 || totalCollection > 0 || totalLateFee > 0 || emiCollection > 0)
 
   // Clear daily collection data on mount (to remove any stale data from previous visits)
   useEffect(() => {
@@ -79,7 +102,16 @@ const DailyCollectionReport = () => {
     }
 
     // Fetch first page
+    setSelectedPaymentMethod('')
     dispatch(fetchDailyCollections({ date: selectedDate, page: 1, limit: pagination?.limit || 50 }))
+  }
+
+  const handlePaymentMethodFilterChange = (event) => {
+    const paymentMethod = event.target.value
+    setSelectedPaymentMethod(paymentMethod)
+    if (date) {
+      dispatch(fetchDailyCollections({ date, page: 1, limit: pagination?.limit || 50, paymentMethod }))
+    }
   }
 
   const handlePrint = () => {
@@ -112,14 +144,14 @@ const DailyCollectionReport = () => {
       (entries) => {
         if (entries[0]?.isIntersecting) {
           // Load next page
-          dispatch(fetchDailyCollections({ date, page: (pagination.page || 1) + 1, limit: pagination.limit || 50 }))
+          dispatch(fetchDailyCollections({ date, page: (pagination.page || 1) + 1, limit: pagination.limit || 50, paymentMethod: selectedPaymentMethod }))
         }
       },
       { rootMargin: '300px', threshold: 0.1 }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [date, pagination?.page, pagination?.pages, pagination?.limit, isLoadingMore, isLoading, dispatch])
+  }, [date, pagination?.page, pagination?.pages, pagination?.limit, isLoadingMore, isLoading, selectedPaymentMethod, dispatch])
 
   return (
     <div className="daily-collection-report-page">
@@ -183,7 +215,7 @@ const DailyCollectionReport = () => {
           rowCount={5}
           showActions={false}
         />
-      ) : collections.length > 0 ? (
+      ) : hasCollectionSummary ? (
         <>
           <div className="summary-section">
             <div className="summary-card">
@@ -205,7 +237,7 @@ const DailyCollectionReport = () => {
                       <span className="summary-info-icon" aria-label="More info">ⓘ</span>
                     </Tooltip>
                   </span>
-                  <span className="summary-value">{collections.length}</span>
+                  <span className="summary-value">{totalCount}</span>
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">
@@ -234,11 +266,47 @@ const DailyCollectionReport = () => {
                   </span>
                   <span className="summary-value total">{formatCurrency(totalCollection)}</span>
                 </div>
+                <div className="summary-item summary-methods">
+                  <span className="summary-value methods-inline">
+                    {collectionByMethod && Object.keys(collectionByMethod).length > 0 ? (
+                      paymentMethodOptions.map((method) => {
+                        const data = collectionByMethod[method]
+                        const amount = data?.total ?? data ?? 0
+                        const count = data?.count ?? 0
+                        const label = paymentMethodLabel(method)
+                        return (
+                          <span key={method} className="method-inline">
+                            <span className="method-label">{label}</span>
+                            <span className="method-amount">{formatCurrency(amount)} ({count})</span>
+                          </span>
+                        )
+                      })
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="actions-section">
+            <div className="payment-filter">
+              <label htmlFor="paymentMethodFilter">Filter by Payment Method</label>
+              <select
+                id="paymentMethodFilter"
+                value={selectedPaymentMethod}
+                onChange={handlePaymentMethodFilterChange}
+                disabled={isLoading || paymentMethodOptions.length === 0}
+              >
+                <option value="">All Methods</option>
+                {paymentMethodOptions.map((method) => (
+                  <option key={method} value={method}>
+                    {paymentMethodLabel(method)}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               className="btn-primary"
               onClick={handlePrint}
@@ -282,24 +350,30 @@ const DailyCollectionReport = () => {
                 </tr>
               </thead>
               <tbody>
-                {collections.map((repayment, index) => (
-                  <tr key={repayment._id}>
-                    <td>{index + 1}</td>
-                    <td>{repayment.loan?.loanAccountNumber || 'N/A'}</td>
-                    <td>{repayment.loan?.membership?.fullName || 'N/A'}</td>
-                    <td className="amount-cell">{formatCurrency(repayment.amount)}</td>
-                    <td>
-                      <span className="payment-method-badge">
-                        {repayment.paymentMethod === 'cash' ? 'Cash' :
-                         repayment.paymentMethod === 'bank_transfer' ? 'Bank Transfer' :
-                         repayment.paymentMethod === 'upi' ? 'UPI' : 'Other'}
-                      </span>
+                {collections.length > 0 ? (
+                  collections.map((repayment, index) => (
+                    <tr key={repayment._id}>
+                      <td>{index + 1}</td>
+                      <td>{repayment.loan?.loanAccountNumber || 'N/A'}</td>
+                      <td>{repayment.loan?.membership?.fullName || 'N/A'}</td>
+                      <td className="amount-cell">{formatCurrency(repayment.amount)}</td>
+                      <td>
+                        <span className="payment-method-badge">
+                          {paymentMethodLabel(repayment.paymentMethod)}
+                        </span>
+                      </td>
+                      <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
+                      <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
+                      <td className="remarks-cell">{repayment.remarks || '-'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="table-empty-cell">
+                      No collections found for the selected payment method
                     </td>
-                    <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
-                    <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
-                    <td className="remarks-cell">{repayment.remarks || '-'}</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
