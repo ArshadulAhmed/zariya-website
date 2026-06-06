@@ -314,6 +314,7 @@ const membershipsSlice = createSlice({
           reviewedAt: reviewedAtFormatted,
           rejectionReason: String(membership.rejectionReason || ''),
           isEligibleForNextLoan: membership.isEligibleForNextLoan !== false,
+          loanEligibilityRemark: String(membership.loanEligibilityRemark || ''),
           lastLoanClosureRemark: String(membership.lastLoanClosureRemark || ''),
           lastLoanAccountNumber: String(membership.lastLoanAccountNumber || ''),
           reviewedBy: membership.reviewedBy ? {
@@ -384,12 +385,23 @@ const membershipsSlice = createSlice({
       .addCase(updateMembership.fulfilled, (state, action) => {
         state.isLoading = false
         const updatedMembership = action.payload
+        const requestData = action.meta.arg?.membershipData || {}
         const membershipId = safeToString(updatedMembership._id) || safeToString(updatedMembership.id) || ''
 
-        if (state.selectedMembership && state.selectedMembership.id === String(membershipId)) {
+        const loanEligibilityRemark = requestData.loanEligibilityRemark !== undefined
+          ? String(requestData.loanEligibilityRemark || '')
+          : String(updatedMembership.loanEligibilityRemark || state.selectedMembership?.loanEligibilityRemark || '')
+
+        const matchesSelectedMembership = state.selectedMembership && (
+          state.selectedMembership.id === String(membershipId)
+          || (updatedMembership.userId && state.selectedMembership.userId === updatedMembership.userId)
+        )
+
+        if (matchesSelectedMembership) {
           state.selectedMembership = {
             ...state.selectedMembership,
             isEligibleForNextLoan: updatedMembership.isEligibleForNextLoan !== false,
+            loanEligibilityRemark,
             lastLoanClosureRemark: String(updatedMembership.lastLoanClosureRemark || state.selectedMembership.lastLoanClosureRemark || ''),
             lastLoanAccountNumber: String(updatedMembership.lastLoanAccountNumber || state.selectedMembership.lastLoanAccountNumber || ''),
           }
