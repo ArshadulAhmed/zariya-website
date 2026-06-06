@@ -44,6 +44,64 @@ export const formatNumber = (num) => {
   return num.toLocaleString('en-IN')
 }
 
+export const MOBILE_NUMBER_PLACEHOLDER = '123-456-7890'
+export const MOBILE_INPUT_MAX_LENGTH = 12
+
+/**
+ * Strip non-digits from a mobile number and limit to 10 digits.
+ * @param {string|number} value
+ * @returns {string}
+ */
+export const stripMobileDigits = (value) => String(value || '').replace(/\D/g, '').slice(0, 10)
+
+/**
+ * Check whether a value contains exactly 10 mobile digits.
+ * @param {string|number} value
+ * @returns {boolean}
+ */
+export const isValidMobileNumber = (value) => stripMobileDigits(value).length === 10
+
+/**
+ * Format a 10-digit mobile number as XXX-XXX-XXXX for display.
+ * @param {string|number} value
+ * @returns {string}
+ */
+export const formatMobileNumber = (value) => {
+  const digits = stripMobileDigits(value)
+  if (!digits) return ''
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
+/**
+ * Format a mobile number for read-only UI display.
+ * @param {string|number} value
+ * @param {string} [fallback='N/A']
+ * @returns {string}
+ */
+export const formatMobileNumberDisplay = (value, fallback = 'N/A') => {
+  const formatted = formatMobileNumber(value)
+  return formatted || fallback
+}
+
+/**
+ * Validate a mobile number for UI forms (accepts formatted or plain digits).
+ * @param {string|number} value
+ * @param {{ requiredMessage?: string, invalidMessage?: string }} [options]
+ * @returns {string} Error message, or empty string when valid
+ */
+export const getMobileNumberValidationError = (value, options = {}) => {
+  const {
+    requiredMessage = 'Mobile number is required',
+    invalidMessage = 'Enter a complete 10-digit mobile number (123-456-7890)',
+  } = options
+  const digits = stripMobileDigits(value)
+  if (!digits) return requiredMessage
+  if (digits.length !== 10) return invalidMessage
+  return ''
+}
+
 /**
  * Calculate time ago from timestamp
  * @param {string|Date} timestamp - ISO timestamp or Date object

@@ -2,6 +2,7 @@ import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector } from '../../store/hooks'
 import { loansAPI } from '../../services/api'
+import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import AdditionalInfo from './AdditionalInfo'
 import './LoanInfo.scss'
 
@@ -225,7 +226,7 @@ const LoanInfo = memo(() => {
           <MemberInfoGrid
             items={[
               { label: 'Member', value: memberDisplay },
-              { label: 'Mobile', value: loan.mobileNumber || 'N/A' },
+              { label: 'Mobile', value: formatMobileNumberDisplay(loan.mobileNumber) },
               { label: 'Email', value: loan.email || 'N/A' },
             ]}
           />

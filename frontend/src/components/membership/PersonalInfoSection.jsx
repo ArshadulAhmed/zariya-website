@@ -3,6 +3,7 @@ import { updateFormData, clearValidationError } from '../../store/slices/members
 import { calculateAge } from '../../utils/membershipUtils'
 import { OCCUPATIONS } from '../../constants/occupations'
 import TextField from '../TextField'
+import MobileNumberField from '../MobileNumberField'
 import SearchableSelect from '../SearchableSelect'
 import DatePicker from '../DatePicker'
 
@@ -82,22 +83,14 @@ const PersonalInfoSection = () => {
         </div>
 
         <div className="form-group">
-          <TextField
+          <MobileNumberField
             label="Mobile Number"
             name="mobileNumber"
-            type="text"
             value={formData.mobileNumber}
             onChange={handleChange}
-            placeholder="10 digit mobile number"
             error={validationErrors.mobileNumber}
             helperText={validationErrors.mobileNumber}
             required
-            maxLength={10}
-            inputProps={{
-              autoComplete: 'off',
-              maxLength: 10,
-              pattern: '[0-9]*'
-            }}
           />
         </div>
 

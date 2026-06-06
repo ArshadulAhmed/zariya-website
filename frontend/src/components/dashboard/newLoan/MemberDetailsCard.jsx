@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppSelector } from '../../../store/hooks'
 import SecureDocumentImage from '../../SecureDocumentImage'
+import { formatMobileNumber } from '../../../utils/dashboardUtils'
 import './MemberDetailsCard.scss'
 
 const MemberDetailsCard = () => {
@@ -108,7 +109,7 @@ const MemberDetailsCard = () => {
           {membership.mobileNumber && (
             <div className="info-row">
               <span className="info-label">Mobile Number</span>
-              <span className="info-value">{membership.mobileNumber}</span>
+              <span className="info-value">{formatMobileNumber(membership.mobileNumber)}</span>
             </div>
           )}
           <div className="info-row">

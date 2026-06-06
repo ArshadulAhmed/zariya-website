@@ -1,9 +1,11 @@
+import { getMobileNumberValidationError, isValidMobileNumber } from '../../../utils/dashboardUtils'
+
 export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) => {
   const errors = {}
 
   // Mobile number is now taken from membership, no need to validate from form
   // But we can validate if it exists in membership
-  if (selectedMembership && (!selectedMembership.mobileNumber || !/^\d{10}$/.test(selectedMembership.mobileNumber))) {
+  if (selectedMembership && !isValidMobileNumber(selectedMembership.mobileNumber)) {
     errors.mobileNumber = 'Member mobile number is invalid or missing'
   }
 
@@ -30,9 +32,11 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
   if (!formData.nominee.relationship.trim()) {
     errors['nominee.relationship'] = 'Nominee relationship is required'
   }
-  if (!formData.nominee.mobileNumber.trim() || !/^\d{10}$/.test(formData.nominee.mobileNumber)) {
-    errors['nominee.mobileNumber'] = 'Nominee valid 10-digit mobile number is required'
-  }
+  const nomineeMobileError = getMobileNumberValidationError(formData.nominee.mobileNumber, {
+    requiredMessage: 'Nominee valid 10-digit mobile number is required',
+    invalidMessage: 'Nominee valid 10-digit mobile number is required',
+  })
+  if (nomineeMobileError) errors['nominee.mobileNumber'] = nomineeMobileError
   if (!formData.nominee.address.village.trim()) {
     errors['nominee.address.village'] = 'Nominee village/ward is required'
   }
@@ -59,9 +63,11 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
   if (!formData.guarantor.relationship.trim()) {
     errors['guarantor.relationship'] = 'Guarantor relationship is required'
   }
-  if (!formData.guarantor.mobileNumber.trim() || !/^\d{10}$/.test(formData.guarantor.mobileNumber)) {
-    errors['guarantor.mobileNumber'] = 'Guarantor valid 10-digit mobile number is required'
-  }
+  const guarantorMobileError = getMobileNumberValidationError(formData.guarantor.mobileNumber, {
+    requiredMessage: 'Guarantor valid 10-digit mobile number is required',
+    invalidMessage: 'Guarantor valid 10-digit mobile number is required',
+  })
+  if (guarantorMobileError) errors['guarantor.mobileNumber'] = guarantorMobileError
   if (!formData.guarantor.address.village.trim()) {
     errors['guarantor.address.village'] = 'Guarantor village/ward is required'
   }
@@ -86,9 +92,11 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
     if (!formData.coApplicant.fatherOrHusbandName.trim()) {
       errors['coApplicant.fatherOrHusbandName'] = 'Co-applicant father\'s/husband\'s name is required'
     }
-    if (!formData.coApplicant.mobileNumber.trim() || !/^\d{10}$/.test(formData.coApplicant.mobileNumber)) {
-      errors['coApplicant.mobileNumber'] = 'Co-applicant valid 10-digit mobile number is required'
-    }
+    const coApplicantMobileError = getMobileNumberValidationError(formData.coApplicant.mobileNumber, {
+      requiredMessage: 'Co-applicant valid 10-digit mobile number is required',
+      invalidMessage: 'Co-applicant valid 10-digit mobile number is required',
+    })
+    if (coApplicantMobileError) errors['coApplicant.mobileNumber'] = coApplicantMobileError
     if (formData.coApplicant.email && !/^\S+@\S+\.\S+$/.test(formData.coApplicant.email)) {
       errors['coApplicant.email'] = 'Co-applicant valid email is required'
     }
@@ -111,4 +119,3 @@ export const validateLoanForm = (formData, hasCoApplicant, selectedMembership) =
 
   return errors
 }
-

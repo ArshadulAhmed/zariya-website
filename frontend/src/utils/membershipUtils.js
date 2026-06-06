@@ -3,6 +3,7 @@
  * @param {string} dateOfBirth - Date string in YYYY-MM-DD format
  * @returns {string} - Age as string
  */
+import { getMobileNumberValidationError, stripMobileDigits } from './dashboardUtils'
 export const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return ''
   const today = new Date()
@@ -43,11 +44,8 @@ export const validateMembershipForm = (formData) => {
     errors.occupation = 'Occupation is required'
   }
 
-  if (!formData.mobileNumber?.trim()) {
-    errors.mobileNumber = 'Mobile number is required'
-  } else if (!/^\d{10}$/.test(formData.mobileNumber.trim())) {
-    errors.mobileNumber = 'Mobile number must be 10 digits'
-  }
+  const mobileError = getMobileNumberValidationError(formData.mobileNumber)
+  if (mobileError) errors.mobileNumber = mobileError
 
   // Email is optional, but if provided, validate format
   if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
@@ -118,8 +116,8 @@ export const validateMembershipFormForEdit = (formData) => {
   if (!formData.age || parseInt(formData.age) < 18 || parseInt(formData.age) > 100) errors.age = 'Age must be between 18 and 100'
   if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of birth is required'
   if (!formData.occupation?.trim()) errors.occupation = 'Occupation is required'
-  if (!formData.mobileNumber?.trim()) errors.mobileNumber = 'Mobile number is required'
-  else if (!/^\d{10}$/.test(formData.mobileNumber.trim())) errors.mobileNumber = 'Mobile number must be 10 digits'
+  const mobileError = getMobileNumberValidationError(formData.mobileNumber)
+  if (mobileError) errors.mobileNumber = mobileError
   if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) errors.email = 'Please enter a valid email address'
   if (!formData.aadhar?.trim()) errors.aadhar = 'Aadhar number is required'
   else if (!/^\d{12}$/.test(formData.aadhar.trim())) errors.aadhar = 'Aadhar number must be 12 digits'
@@ -143,7 +141,7 @@ export const buildMembershipUpdatePayload = (formData) => ({
   age: parseInt(formData.age, 10),
   dateOfBirth: formData.dateOfBirth,
   occupation: formData.occupation?.trim(),
-  mobileNumber: formData.mobileNumber?.trim(),
+  mobileNumber: stripMobileDigits(formData.mobileNumber),
   email: formData.email?.trim() || null,
   aadhar: formData.aadhar?.trim(),
   pan: formData.pan?.trim().toUpperCase(),
@@ -172,7 +170,7 @@ export const createMembershipFormData = (formData) => {
   submitData.append('age', formData.age)
   submitData.append('dateOfBirth', formData.dateOfBirth)
   submitData.append('occupation', formData.occupation.trim())
-  submitData.append('mobileNumber', formData.mobileNumber.trim())
+  submitData.append('mobileNumber', stripMobileDigits(formData.mobileNumber))
   if (formData.email?.trim()) {
     submitData.append('email', formData.email.trim())
   }

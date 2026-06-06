@@ -16,6 +16,7 @@ import {
 } from '../../store/slices/loanReportSlice'
 import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
+import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import './LoanReport.scss'
 
 const formatDate = (dateString) => {
@@ -350,7 +351,7 @@ const LoanReport = () => {
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Mobile Number</span>
-                    <span className="detail-value">{loan.mobileNumber || 'N/A'}</span>
+                    <span className="detail-value">{formatMobileNumberDisplay(loan.mobileNumber)}</span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Email</span>

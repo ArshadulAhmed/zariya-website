@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppSelector } from '../../store/hooks'
 import SecureDocumentImage from '../SecureDocumentImage'
+import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import './AdditionalInfo.scss'
 
 const formatDate = (dateString) => {
@@ -173,7 +174,7 @@ const AdditionalInfo = () => {
                 items={[
                   { label: 'Name', value: nominee.name || 'N/A' },
                   { label: 'Relationship', value: nominee.relationship || 'N/A' },
-                  { label: 'Mobile number', value: nominee.mobileNumber || 'N/A' },
+                  { label: 'Mobile number', value: formatMobileNumberDisplay(nominee.mobileNumber) },
                   { label: 'Bank account number', value: nominee.bankAccountNumber || 'N/A' },
                   ...addressToItems(nominee.address),
                 ]}
@@ -190,7 +191,7 @@ const AdditionalInfo = () => {
                   { label: 'Name', value: guarantor.name || 'N/A' },
                   ...(guarantor.fatherOrHusbandName ? [{ label: 'Father/Husband name', value: guarantor.fatherOrHusbandName }] : []),
                   { label: 'Relationship', value: guarantor.relationship || 'N/A' },
-                  { label: 'Mobile number', value: guarantor.mobileNumber || 'N/A' },
+                  { label: 'Mobile number', value: formatMobileNumberDisplay(guarantor.mobileNumber) },
                   { label: 'Bank account number', value: guarantor.bankAccountNumber || 'N/A' },
                   ...addressToItems(guarantor.address),
                 ]}
@@ -206,7 +207,7 @@ const AdditionalInfo = () => {
                 items={[
                   { label: 'Full name', value: coApplicant.fullName || 'N/A' },
                   { label: 'Father/Husband name', value: coApplicant.fatherOrHusbandName || 'N/A' },
-                  { label: 'Mobile number', value: coApplicant.mobileNumber || 'N/A' },
+                  { label: 'Mobile number', value: formatMobileNumberDisplay(coApplicant.mobileNumber) },
                   { label: 'Email', value: coApplicant.email || 'N/A' },
                   ...addressToItems(coApplicant.address),
                 ]}

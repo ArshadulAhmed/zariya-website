@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { fetchMemberships } from '../../../store/slices/membershipsSlice'
 import TableSkeleton from '../TableSkeleton'
+import { formatMobileNumberDisplay } from '../../../utils/dashboardUtils'
 import './MemberSelectDrawer.scss'
 
 const MEMBER_TABLE_COLUMNS = [
@@ -120,7 +121,7 @@ const MemberSelectDrawer = ({ open, onClose, onSelect, title = 'Select member' }
                     <tr key={m.id || m._id || m.userId}>
                       <td>{m.userId ?? '—'}</td>
                       <td>{m.fullName ?? '—'}</td>
-                      <td>{m.mobileNumber ?? '—'}</td>
+                      <td>{formatMobileNumberDisplay(m.mobileNumber, '—')}</td>
                       <td>{m.address?.village ?? '—'}</td>
                       <td>
                         <button

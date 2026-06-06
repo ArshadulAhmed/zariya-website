@@ -7,6 +7,7 @@ import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import SecureDocumentImage from '../../components/SecureDocumentImage'
+import { formatMobileNumber } from '../../utils/dashboardUtils'
 import './MembershipDetails.scss'
 
 // Guard so Strict Mode's double effect doesn't trigger two membership fetches
@@ -394,7 +395,7 @@ const MembershipDetails = () => {
                 {membership.mobileNumber && (
                   <div className="info-row">
                     <span className="info-label">Mobile Number</span>
-                    <span className="info-value">{membership.mobileNumber}</span>
+                    <span className="info-value">{formatMobileNumber(membership.mobileNumber)}</span>
                   </div>
                 )}
                 <div className="info-row">

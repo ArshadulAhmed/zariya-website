@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
+import MobileNumberField from '../../MobileNumberField'
 import Select from '../../Select'
 import { RELATIONSHIPS } from '../../../constants/relationships'
 import MemberSelectDrawer from './MemberSelectDrawer'
@@ -89,18 +90,14 @@ const NomineeForm = () => {
           required
         />
 
-        <TextField
+        <MobileNumberField
           label="Mobile Number"
           name="nominee.mobileNumber"
-          type="text"
           value={formData.mobileNumber}
           onChange={handleChange}
-          placeholder="10 digit mobile number"
           error={errors['nominee.mobileNumber']}
           helperText={errors['nominee.mobileNumber']}
           required
-          maxLength={10}
-          inputProps={{ autoComplete: 'off', maxLength: 10, pattern: '[0-9]*' }}
         />
 
         <TextField

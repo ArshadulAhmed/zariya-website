@@ -12,6 +12,12 @@ import FilterSelect from '../../components/dashboard/FilterSelect'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
+import MobileNumberField from '../../components/MobileNumberField'
+import {
+  formatMobileNumberDisplay,
+  getMobileNumberValidationError,
+  stripMobileDigits,
+} from '../../utils/dashboardUtils'
 import './LoanQueue.scss'
 
 function statusLabel(value) {
@@ -100,9 +106,8 @@ const LoanQueue = memo(function LoanQueue() {
   const validateForm = () => {
     const errors = {}
     if (!form.fullName.trim()) errors.fullName = 'Name is required'
-    if (!/^\d{10}$/.test(form.mobileNumber.trim())) {
-      errors.mobileNumber = 'Mobile number must be 10 digits'
-    }
+    const mobileError = getMobileNumberValidationError(form.mobileNumber)
+    if (mobileError) errors.mobileNumber = mobileError
     if (!form.expectedLoanDate) {
       errors.expectedLoanDate = 'Expected loan date is required'
     }
@@ -136,7 +141,7 @@ const LoanQueue = memo(function LoanQueue() {
     const result = await dispatch(
       createLoanQueueRequest({
         fullName: form.fullName.trim(),
-        mobileNumber: form.mobileNumber.trim(),
+        mobileNumber: stripMobileDigits(form.mobileNumber),
         membershipUserId: form.membershipUserId.trim(),
         expectedLoanDate: form.expectedLoanDate,
       })
@@ -279,7 +284,7 @@ const LoanQueue = memo(function LoanQueue() {
                       </td>
                     )}
                     <td>{application.fullName}</td>
-                    <td>{application.mobileNumber}</td>
+                    <td>{formatMobileNumberDisplay(application.mobileNumber, '—')}</td>
                     <td>{application.membershipUserId || '—'}</td>
                     <td>{application.entryDate || '—'}</td>
                     <td>{application.entryBy || '—'}</td>
@@ -328,7 +333,7 @@ const LoanQueue = memo(function LoanQueue() {
             required
             disabled={isSubmitting}
           />
-          <TextField
+          <MobileNumberField
             label="Mobile Number"
             name="mobileNumber"
             value={form.mobileNumber}
@@ -336,8 +341,6 @@ const LoanQueue = memo(function LoanQueue() {
             error={!!formErrors.mobileNumber}
             helperText={formErrors.mobileNumber}
             required
-            type="number"
-            inputProps={{ maxLength: 10 }}
             disabled={isSubmitting}
           />
           <TextField

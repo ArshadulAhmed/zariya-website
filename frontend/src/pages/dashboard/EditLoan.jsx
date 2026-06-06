@@ -3,9 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchLoan, updateLoan } from '../../store/slices/loansSlice'
 import TextField from '../../components/TextField'
+import MobileNumberField from '../../components/MobileNumberField'
 import Select from '../../components/Select'
 import Snackbar from '../../components/Snackbar'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import { getMobileNumberValidationError, stripMobileDigits } from '../../utils/dashboardUtils'
 import { ASSAM_DISTRICTS } from '../../constants/assamDistricts'
 import { RELATIONSHIPS } from '../../constants/relationships'
 import { LOAN_PURPOSES } from '../../constants/loanPurposes'
@@ -129,8 +131,11 @@ const EditLoan = () => {
 
   const validate = () => {
     const err = {}
-    if (!form.mobileNumber?.trim()) err.mobileNumber = 'Required'
-    else if (!/^\d{10}$/.test(form.mobileNumber.trim())) err.mobileNumber = 'Must be 10 digits'
+    const mobileError = getMobileNumberValidationError(form.mobileNumber, {
+      requiredMessage: 'Required',
+      invalidMessage: 'Must be 10 digits (123-456-7890)',
+    })
+    if (mobileError) err.mobileNumber = mobileError
     if (form.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) err.email = 'Invalid email'
     if (!form.loanAmount || Number(form.loanAmount) <= 0) err.loanAmount = 'Must be greater than 0'
     if (!form.loanTenure || Number(form.loanTenure) < 1) err.loanTenure = 'Required'
@@ -139,8 +144,11 @@ const EditLoan = () => {
     if (form.nominee) {
       if (!form.nominee.name?.trim()) err['nominee.name'] = 'Required'
       if (!form.nominee.relationship?.trim()) err['nominee.relationship'] = 'Required'
-      if (!form.nominee.mobileNumber?.trim()) err['nominee.mobileNumber'] = 'Required'
-      else if (!/^\d{10}$/.test(form.nominee.mobileNumber.trim())) err['nominee.mobileNumber'] = '10 digits'
+      const nomineeMobileError = getMobileNumberValidationError(form.nominee.mobileNumber, {
+        requiredMessage: 'Required',
+        invalidMessage: '10 digits (123-456-7890)',
+      })
+      if (nomineeMobileError) err['nominee.mobileNumber'] = nomineeMobileError
       const a = form.nominee.address
       if (a && (!a.village?.trim() || !a.postOffice?.trim() || !a.pinCode?.trim())) {
         if (!a.village?.trim()) err['nominee.address.village'] = 'Required'
@@ -150,13 +158,19 @@ const EditLoan = () => {
     }
     if (form.guarantor) {
       if (!form.guarantor.name?.trim()) err['guarantor.name'] = 'Required'
-      if (!form.guarantor.mobileNumber?.trim()) err['guarantor.mobileNumber'] = 'Required'
-      else if (!/^\d{10}$/.test(form.guarantor.mobileNumber.trim())) err['guarantor.mobileNumber'] = '10 digits'
+      const guarantorMobileError = getMobileNumberValidationError(form.guarantor.mobileNumber, {
+        requiredMessage: 'Required',
+        invalidMessage: '10 digits (123-456-7890)',
+      })
+      if (guarantorMobileError) err['guarantor.mobileNumber'] = guarantorMobileError
     }
     if (form.coApplicant) {
       if (!form.coApplicant.fullName?.trim()) err['coApplicant.fullName'] = 'Required'
-      if (!form.coApplicant.mobileNumber?.trim()) err['coApplicant.mobileNumber'] = 'Required'
-      else if (!/^\d{10}$/.test(form.coApplicant.mobileNumber.trim())) err['coApplicant.mobileNumber'] = '10 digits'
+      const coApplicantMobileError = getMobileNumberValidationError(form.coApplicant.mobileNumber, {
+        requiredMessage: 'Required',
+        invalidMessage: '10 digits (123-456-7890)',
+      })
+      if (coApplicantMobileError) err['coApplicant.mobileNumber'] = coApplicantMobileError
     }
     setFormErrors(err)
     return Object.keys(err).length === 0
@@ -164,7 +178,7 @@ const EditLoan = () => {
 
   const buildPayload = () => {
     const payload = {
-      mobileNumber: form.mobileNumber?.trim(),
+      mobileNumber: stripMobileDigits(form.mobileNumber),
       email: form.email?.trim() || '',
       loanAmount: Number(form.loanAmount),
       loanTenure: Number(form.loanTenure),
@@ -174,7 +188,7 @@ const EditLoan = () => {
       nominee: form.nominee ? {
         name: form.nominee.name?.trim(),
         relationship: form.nominee.relationship?.trim(),
-        mobileNumber: form.nominee.mobileNumber?.trim(),
+        mobileNumber: stripMobileDigits(form.nominee.mobileNumber),
         bankAccountNumber: form.nominee.bankAccountNumber?.trim() || '',
         address: form.nominee.address,
       } : undefined,
@@ -182,14 +196,14 @@ const EditLoan = () => {
         name: form.guarantor.name?.trim(),
         fatherOrHusbandName: form.guarantor.fatherOrHusbandName?.trim(),
         relationship: form.guarantor.relationship?.trim(),
-        mobileNumber: form.guarantor.mobileNumber?.trim(),
+        mobileNumber: stripMobileDigits(form.guarantor.mobileNumber),
         bankAccountNumber: form.guarantor.bankAccountNumber?.trim() || '',
         address: form.guarantor.address,
       } : undefined,
       coApplicant: form.coApplicant && form.coApplicant.fullName ? {
         fullName: form.coApplicant.fullName?.trim(),
         fatherOrHusbandName: form.coApplicant.fatherOrHusbandName?.trim(),
-        mobileNumber: form.coApplicant.mobileNumber?.trim(),
+        mobileNumber: stripMobileDigits(form.coApplicant.mobileNumber),
         email: form.coApplicant.email?.trim() || '',
         address: form.coApplicant.address,
       } : null,
@@ -272,7 +286,7 @@ const EditLoan = () => {
       </div>
       <form className="edit-loan-form" onSubmit={handleSubmit}>
         <Section number="01" title="Loan & Contact" description="Update loan and contact details">
-          <TextField label="Mobile Number" name="mobileNumber" value={form.mobileNumber} onChange={(e) => set('mobileNumber', e.target.value)} error={formErrors.mobileNumber} required maxLength={10} />
+          <MobileNumberField label="Mobile Number" name="mobileNumber" value={form.mobileNumber} onChange={(e) => set('mobileNumber', e.target.value)} error={formErrors.mobileNumber} required />
           <TextField label="Email" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} error={formErrors.email} />
           <TextField label="Loan Amount" type="number" value={form.loanAmount} onChange={(e) => set('loanAmount', e.target.value)} error={formErrors.loanAmount} required />
           <TextField label="Tenure (days)" type="number" value={form.loanTenure} onChange={(e) => set('loanTenure', e.target.value)} error={formErrors.loanTenure} required />
@@ -284,7 +298,7 @@ const EditLoan = () => {
         <Section number="02" title="Nominee" description="Nominee information">
           <TextField label="Name" value={form.nominee?.name} onChange={(e) => set('nominee.name', e.target.value)} error={formErrors['nominee.name']} required />
           <Select label="Relationship" value={form.nominee?.relationship} onChange={(e) => set('nominee.relationship', e.target.value)} options={RELATIONSHIPS.map((r) => ({ value: r, label: r }))} required />
-          <TextField label="Mobile" value={form.nominee?.mobileNumber} onChange={(e) => set('nominee.mobileNumber', e.target.value)} error={formErrors['nominee.mobileNumber']} maxLength={10} required />
+          <MobileNumberField label="Mobile" value={form.nominee?.mobileNumber} onChange={(e) => set('nominee.mobileNumber', e.target.value)} error={formErrors['nominee.mobileNumber']} required />
           <TextField label="Bank Account" value={form.nominee?.bankAccountNumber} onChange={(e) => set('nominee.bankAccountNumber', e.target.value)} />
           <AddrFields prefix="nominee" form={form} set={set} formErrors={formErrors} />
         </Section>
@@ -293,7 +307,7 @@ const EditLoan = () => {
           <TextField label="Name" value={form.guarantor?.name} onChange={(e) => set('guarantor.name', e.target.value)} error={formErrors['guarantor.name']} required />
           <TextField label="Father/Husband Name" value={form.guarantor?.fatherOrHusbandName} onChange={(e) => set('guarantor.fatherOrHusbandName', e.target.value)} required />
           <Select label="Relationship" value={form.guarantor?.relationship} onChange={(e) => set('guarantor.relationship', e.target.value)} options={RELATIONSHIPS.map((r) => ({ value: r, label: r }))} required />
-          <TextField label="Mobile" value={form.guarantor?.mobileNumber} onChange={(e) => set('guarantor.mobileNumber', e.target.value)} error={formErrors['guarantor.mobileNumber']} maxLength={10} required />
+          <MobileNumberField label="Mobile" value={form.guarantor?.mobileNumber} onChange={(e) => set('guarantor.mobileNumber', e.target.value)} error={formErrors['guarantor.mobileNumber']} required />
           <TextField label="Bank Account" value={form.guarantor?.bankAccountNumber} onChange={(e) => set('guarantor.bankAccountNumber', e.target.value)} />
           <AddrFields prefix="guarantor" form={form} set={set} formErrors={formErrors} />
         </Section>
@@ -302,7 +316,7 @@ const EditLoan = () => {
           <Section number="04" title="Co-Applicant" description="Co-applicant details">
             <TextField label="Full Name" value={form.coApplicant.fullName} onChange={(e) => set('coApplicant.fullName', e.target.value)} error={formErrors['coApplicant.fullName']} required />
             <TextField label="Father/Husband Name" value={form.coApplicant.fatherOrHusbandName} onChange={(e) => set('coApplicant.fatherOrHusbandName', e.target.value)} required />
-            <TextField label="Mobile" value={form.coApplicant.mobileNumber} onChange={(e) => set('coApplicant.mobileNumber', e.target.value)} error={formErrors['coApplicant.mobileNumber']} maxLength={10} required />
+            <MobileNumberField label="Mobile" value={form.coApplicant.mobileNumber} onChange={(e) => set('coApplicant.mobileNumber', e.target.value)} error={formErrors['coApplicant.mobileNumber']} required />
             <TextField label="Email" type="email" value={form.coApplicant.email} onChange={(e) => set('coApplicant.email', e.target.value)} />
             <AddrFields prefix="coApplicant" form={form} set={set} formErrors={formErrors} />
           </Section>

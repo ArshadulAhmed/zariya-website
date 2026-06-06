@@ -7,10 +7,11 @@ import NomineeForm from './NomineeForm'
 import GuarantorForm from './GuarantorForm'
 import CoApplicantForm from './CoApplicantForm'
 import { validateLoanForm } from './validateLoanForm'
+import { stripMobileDigits } from '../../../utils/dashboardUtils'
 
 const buildApplicationPayload = (formData, hasCoApplicant, selectedMembership) => {
   const loanData = {
-    mobileNumber: (selectedMembership?.mobileNumber || formData.mobileNumber?.trim() || '').trim(),
+    mobileNumber: stripMobileDigits(selectedMembership?.mobileNumber || formData.mobileNumber || ''),
     email: (selectedMembership?.email || formData.email)?.trim() || undefined,
     loanAmount: parseFloat(formData.loanAmount),
     loanTenure: parseInt(formData.loanTenure),
@@ -20,7 +21,7 @@ const buildApplicationPayload = (formData, hasCoApplicant, selectedMembership) =
     nominee: {
       name: formData.nominee.name.trim(),
       relationship: formData.nominee.relationship.trim(),
-      mobileNumber: formData.nominee.mobileNumber.trim(),
+      mobileNumber: stripMobileDigits(formData.nominee.mobileNumber),
       bankAccountNumber: formData.nominee.bankAccountNumber.trim() || undefined,
       address: {
         village: formData.nominee.address.village.trim(),
@@ -35,7 +36,7 @@ const buildApplicationPayload = (formData, hasCoApplicant, selectedMembership) =
       name: formData.guarantor.name.trim(),
       fatherOrHusbandName: formData.guarantor.fatherOrHusbandName.trim(),
       relationship: formData.guarantor.relationship.trim(),
-      mobileNumber: formData.guarantor.mobileNumber.trim(),
+      mobileNumber: stripMobileDigits(formData.guarantor.mobileNumber),
       bankAccountNumber: formData.guarantor.bankAccountNumber.trim() || undefined,
       address: {
         village: formData.guarantor.address.village.trim(),
@@ -51,7 +52,7 @@ const buildApplicationPayload = (formData, hasCoApplicant, selectedMembership) =
     ? {
         fullName: formData.coApplicant.fullName.trim(),
         fatherOrHusbandName: formData.coApplicant.fatherOrHusbandName.trim(),
-        mobileNumber: formData.coApplicant.mobileNumber.trim(),
+        mobileNumber: stripMobileDigits(formData.coApplicant.mobileNumber),
         email: formData.coApplicant.email.trim() || undefined,
         address: {
           village: formData.coApplicant.address.village.trim(),

@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { setHasCoApplicant, copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
+import MobileNumberField from '../../MobileNumberField'
 import MemberSelectDrawer from './MemberSelectDrawer'
 import './CoApplicantForm.scss'
 
@@ -143,17 +144,14 @@ const CoApplicantForm = () => {
             inputProps={{ autoComplete: 'off' }}
           />
 
-          <TextField
+          <MobileNumberField
             label="Mobile Number"
             name="coApplicant.mobileNumber"
             value={formData.mobileNumber}
             onChange={handleChange}
-            placeholder="10 digit mobile number"
             error={errors['coApplicant.mobileNumber']}
             helperText={errors['coApplicant.mobileNumber']}
             required={hasCoApplicant}
-            maxLength={10}
-            inputProps={{ autoComplete: 'off', maxLength: 10, pattern: '[0-9]*' }}
           />
 
           <TextField

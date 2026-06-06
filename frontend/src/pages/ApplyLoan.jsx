@@ -2,6 +2,13 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { updateStage1Data, submitLoanStart, submitLoanSuccess, submitLoanFailure } from '../store/slices/loanSlice'
+import {
+  formatMobileNumber,
+  getMobileNumberValidationError,
+  MOBILE_INPUT_MAX_LENGTH,
+  MOBILE_NUMBER_PLACEHOLDER,
+  stripMobileDigits,
+} from '../utils/dashboardUtils'
 import Logo from '../components/Logo'
 import './ApplyLoan.scss'
 
@@ -27,9 +34,10 @@ const ApplyLoan = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    const nextValue = name === 'mobileNumber' ? stripMobileDigits(value) : value
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: nextValue,
     })
     // Clear error for this field
     if (errors[name]) {
@@ -53,11 +61,8 @@ const ApplyLoan = () => {
       newErrors.membership = 'Membership ID is required'
     }
 
-    if (!formData.mobileNumber.trim()) {
-      newErrors.mobileNumber = 'Mobile number is required'
-    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
-      newErrors.mobileNumber = 'Mobile number must be 10 digits'
-    }
+    const mobileError = getMobileNumberValidationError(formData.mobileNumber)
+    if (mobileError) newErrors.mobileNumber = mobileError
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
@@ -160,10 +165,10 @@ const ApplyLoan = () => {
                   type="tel"
                   id="mobileNumber"
                   name="mobileNumber"
-                  value={formData.mobileNumber}
+                  value={formatMobileNumber(formData.mobileNumber)}
                   onChange={handleChange}
-                  placeholder="10 digit mobile number"
-                  maxLength="10"
+                  placeholder={MOBILE_NUMBER_PLACEHOLDER}
+                  maxLength={MOBILE_INPUT_MAX_LENGTH}
                   className={errors.mobileNumber ? 'error' : ''}
                   autoComplete="off"
                 />

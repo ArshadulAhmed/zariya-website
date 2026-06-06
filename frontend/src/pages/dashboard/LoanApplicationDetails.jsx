@@ -7,6 +7,7 @@ import Snackbar from '../../components/Snackbar'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import PromptModal from '../../components/dashboard/PromptModal'
+import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import './LoanApplicationDetails.scss'
 
 const LoanApplicationDetails = () => {
@@ -328,7 +329,7 @@ const LoanApplicationDetails = () => {
                 items={[
                   { label: 'Member', value: memberName },
                   { label: 'Member ID', value: memberIdDisplay },
-                  { label: 'Mobile', value: application.mobileNumber || 'N/A' },
+                  { label: 'Mobile', value: formatMobileNumberDisplay(application.mobileNumber) },
                   { label: 'Email', value: application.email || 'N/A' },
                   { label: 'Loan amount', value: formatCurrency(application.loanAmount) },
                   { label: 'Tenure (days)', value: application.loanTenure ?? 'N/A' },
@@ -346,7 +347,7 @@ const LoanApplicationDetails = () => {
                   items={[
                     { label: 'Name', value: application.nominee.name },
                     { label: 'Relationship', value: application.nominee.relationship },
-                    { label: 'Mobile', value: application.nominee.mobileNumber },
+                    { label: 'Mobile', value: formatMobileNumberDisplay(application.nominee.mobileNumber) },
                     ...addressToItems(application.nominee?.address),
                   ]}
                 />
@@ -361,7 +362,7 @@ const LoanApplicationDetails = () => {
                     { label: 'Name', value: application.guarantor.name },
                     { label: 'Father/Husband', value: application.guarantor.fatherOrHusbandName },
                     { label: 'Relationship', value: application.guarantor.relationship },
-                    { label: 'Mobile', value: application.guarantor.mobileNumber },
+                    { label: 'Mobile', value: formatMobileNumberDisplay(application.guarantor.mobileNumber) },
                     ...addressToItems(application.guarantor?.address),
                   ]}
                 />
@@ -374,7 +375,7 @@ const LoanApplicationDetails = () => {
                 <MemberInfoGrid
                   items={[
                     { label: 'Name', value: application.coApplicant.fullName },
-                    { label: 'Mobile', value: application.coApplicant.mobileNumber },
+                    { label: 'Mobile', value: formatMobileNumberDisplay(application.coApplicant.mobileNumber) },
                     ...addressToItems(application.coApplicant?.address),
                   ]}
                 />
