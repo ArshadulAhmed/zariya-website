@@ -404,7 +404,6 @@ const LoanQueue = memo(function LoanQueue() {
               }}
               placeholder="All Status"
               options={[
-                { value: '', label: 'All Status' },
                 { value: 'pending', label: 'Pending' },
                 { value: 'approved', label: 'Approved' },
                 { value: 'rejected', label: 'Rejected' },

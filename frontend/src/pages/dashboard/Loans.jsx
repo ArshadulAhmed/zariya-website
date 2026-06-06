@@ -161,7 +161,7 @@ const Loans = memo(() => {
         <div className="search-input-group">
           <input
             type="text"
-            placeholder="Search by Loan Account, Member Name..."
+            placeholder="Search by loan account, member name, or membership ID"
             autoComplete="off"
             className="search-input"
             value={searchInput}
@@ -174,7 +174,6 @@ const Loans = memo(() => {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             placeholder="All Status"
             options={[
-              { value: '', label: 'All Status' },
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
               { value: 'defaulted', label: 'Defaulted' }

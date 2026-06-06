@@ -42,7 +42,7 @@ const LoanApplications = memo(function LoanApplications() {
   const { applications, isLoading, isLoadingMore, filters, pagination, snackbar } = loanApplicationsState
   const paginationSafe = pagination || { page: 1, limit: 15, total: 0, pages: 0 }
 
-  const [searchInput, setSearchInput] = useState('')
+  const [searchInput, setSearchInput] = useState(filters?.search || '')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   const showSkeleton = isLoading || !hasFetchedRef.current
@@ -50,7 +50,8 @@ const LoanApplications = memo(function LoanApplications() {
   useEffect(() => {
     const params = { page: paginationSafe.page, limit: paginationSafe.limit }
     if (filters?.status) params.status = filters.status
-    if (filters?.search) params.search = filters.search
+    const search = filters?.search?.trim()
+    if (search) params.search = search
     const paramsKey = JSON.stringify(params)
     if (!hasFetchedRef.current || lastParamsRef.current !== paramsKey) {
       hasFetchedRef.current = true
@@ -61,9 +62,12 @@ const LoanApplications = memo(function LoanApplications() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (searchInput !== (filters?.search || '')) {
-        dispatch(setFilters({ search: searchInput }))
+      const trimmed = searchInput.trim()
+      if (trimmed !== (filters?.search || '')) {
+        dispatch(setFilters({ search: trimmed }))
         dispatch(setPagination({ page: 1 }))
+        hasFetchedRef.current = false
+        lastParamsRef.current = ''
       }
     }, 500)
     return () => clearTimeout(t)
@@ -116,7 +120,7 @@ const LoanApplications = memo(function LoanApplications() {
         <div className="search-input-group">
           <input
             type="text"
-            placeholder="Search by ID or Name"
+            placeholder="Search by application ID, member name, or membership ID"
             autoComplete="off"
             className="search-input"
             value={searchInput}
@@ -132,7 +136,6 @@ const LoanApplications = memo(function LoanApplications() {
             }}
             placeholder="All Status"
             options={[
-              { value: '', label: 'All Status' },
               { value: 'under_review', label: 'Under Review' },
               { value: 'approved', label: 'Approved' },
               { value: 'rejected', label: 'Rejected' },
