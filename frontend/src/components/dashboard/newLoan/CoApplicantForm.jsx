@@ -1,51 +1,17 @@
-import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { setHasCoApplicant, copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
+import { setHasCoApplicant } from '../../../store/slices/newLoanSlice'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import MobileNumberField from '../../MobileNumberField'
-import MemberSelectDrawer from './MemberSelectDrawer'
+import SectionPopulateControl from './SectionPopulateControl'
 import './CoApplicantForm.scss'
 
-const CoApplicantForm = () => {
+const CoApplicantForm = ({ allowPreviousLoans = true }) => {
   const dispatch = useAppDispatch()
   const formData = useAppSelector((state) => state.newLoan.formData.coApplicant)
-  const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
-  const nomineeAddress = useAppSelector((state) => state.newLoan.formData.nominee.address)
-  const guarantorAddress = useAppSelector((state) => state.newLoan.formData.guarantor.address)
   const hasCoApplicant = useAppSelector((state) => state.newLoan.hasCoApplicant)
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
-  
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [checkedSource, setCheckedSource] = useState(null)
-  
-  const handleCopyMemberAddress = (e) => {
-    if (e.target.checked && selectedMembership?.address) {
-      dispatch(copyAddress({ from: 'member', to: 'coApplicant' }))
-      setCheckedSource('member')
-    } else {
-      setCheckedSource(null)
-    }
-  }
-  
-  const handleCopyNomineeAddress = (e) => {
-    if (e.target.checked && nomineeAddress?.village) {
-      dispatch(copyAddress({ from: 'nominee', to: 'coApplicant' }))
-      setCheckedSource('nominee')
-    } else {
-      setCheckedSource(null)
-    }
-  }
-  
-  const handleCopyGuarantorAddress = (e) => {
-    if (e.target.checked && guarantorAddress?.village) {
-      dispatch(copyAddress({ from: 'guarantor', to: 'coApplicant' }))
-      setCheckedSource('guarantor')
-    } else {
-      setCheckedSource(null)
-    }
-  }
 
   return (
     <div className="form-section">
@@ -55,26 +21,10 @@ const CoApplicantForm = () => {
           <h2>Co-Applicant Details (Optional)</h2>
           <p className="section-description">Add co-applicant if applicable</p>
         </div>
+        {hasCoApplicant && (
+          <SectionPopulateControl section="coApplicant" allowPreviousLoans={allowPreviousLoans} />
+        )}
       </div>
-      {hasCoApplicant && (
-        <div className="fill-from-member-row new-loan-fill-row">
-          <button
-            type="button"
-            className="fill-from-member-btn new-loan-fill-btn"
-            onClick={() => setDrawerOpen(true)}
-          >
-            Fill from member
-          </button>
-        </div>
-      )}
-      {hasCoApplicant && (
-        <MemberSelectDrawer
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          onSelect={(member) => dispatch(fillFromMember({ section: 'coApplicant', member }))}
-          title="Select member for Co-Applicant"
-        />
-      )}
 
       <div className="co-applicant-toggle">
         <label className="checkbox-label">
@@ -88,49 +38,18 @@ const CoApplicantForm = () => {
       </div>
 
       {hasCoApplicant && (
-        <>
-          <div className="address-copy-section">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={checkedSource === 'member'}
-                onChange={handleCopyMemberAddress}
-                disabled={!selectedMembership?.address}
-              />
-              <span>Same as Member Address</span>
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={checkedSource === 'nominee'}
-                onChange={handleCopyNomineeAddress}
-                disabled={!nomineeAddress?.village}
-              />
-              <span>Same as Nominee Address</span>
-            </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={checkedSource === 'guarantor'}
-                onChange={handleCopyGuarantorAddress}
-                disabled={!guarantorAddress?.village}
-              />
-              <span>Same as Guarantor Address</span>
-            </label>
-          </div>
-
-          <div className="form-grid" data-form="co-applicant">
-            <TextField
-              label="Co-Applicant Full Name"
-              name="coApplicant.fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Enter co-applicant full name"
-              error={errors['coApplicant.fullName']}
-              helperText={errors['coApplicant.fullName']}
-              required={hasCoApplicant}
-              inputProps={{ autoComplete: 'off' }}
-            />
+        <div className="form-grid" data-form="co-applicant">
+          <TextField
+            label="Co-Applicant Full Name"
+            name="coApplicant.fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            placeholder="Enter co-applicant full name"
+            error={errors['coApplicant.fullName']}
+            helperText={errors['coApplicant.fullName']}
+            required={hasCoApplicant}
+            inputProps={{ autoComplete: 'off' }}
+          />
 
           <TextField
             label="Father's / Husband's Name"
@@ -235,12 +154,10 @@ const CoApplicantForm = () => {
             placeholder="Enter landmark"
             inputProps={{ autoComplete: 'off' }}
           />
-          </div>
-        </>
+        </div>
       )}
     </div>
   )
 }
 
 export default CoApplicantForm
-

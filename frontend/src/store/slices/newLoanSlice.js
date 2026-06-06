@@ -1,4 +1,40 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { mapCoApplicantFromRecord, mapGuarantorFromRecord, mapNomineeFromRecord } from '../../utils/previousLoanUtils'
+
+const NOMINEE_ERROR_KEYS = [
+  'nominee.name',
+  'nominee.relationship',
+  'nominee.mobileNumber',
+  'nominee.address.village',
+  'nominee.address.postOffice',
+  'nominee.address.policeStation',
+  'nominee.address.district',
+  'nominee.address.pinCode',
+]
+
+const GUARANTOR_ERROR_KEYS = [
+  'guarantor.name',
+  'guarantor.fatherOrHusbandName',
+  'guarantor.relationship',
+  'guarantor.mobileNumber',
+  'guarantor.address.village',
+  'guarantor.address.postOffice',
+  'guarantor.address.policeStation',
+  'guarantor.address.district',
+  'guarantor.address.pinCode',
+]
+
+const CO_APPLICANT_ERROR_KEYS = [
+  'coApplicant.fullName',
+  'coApplicant.fatherOrHusbandName',
+  'coApplicant.mobileNumber',
+  'coApplicant.email',
+  'coApplicant.address.village',
+  'coApplicant.address.postOffice',
+  'coApplicant.address.policeStation',
+  'coApplicant.address.district',
+  'coApplicant.address.pinCode',
+]
 
 const initialState = {
   selectedMembership: null,
@@ -216,6 +252,32 @@ const newLoanSlice = createSlice({
         state.formData.coApplicant.address = address
       }
     },
+    fillFromPreviousLoan: (state, action) => {
+      const { sections, record } = action.payload
+      if (!record || !sections) return
+
+      if ((sections === 'nominee' || sections === 'both') && record.nominee) {
+        state.formData.nominee = mapNomineeFromRecord(record.nominee)
+        NOMINEE_ERROR_KEYS.forEach((key) => {
+          delete state.errors[key]
+        })
+      }
+
+      if ((sections === 'guarantor' || sections === 'both') && record.guarantor) {
+        state.formData.guarantor = mapGuarantorFromRecord(record.guarantor)
+        GUARANTOR_ERROR_KEYS.forEach((key) => {
+          delete state.errors[key]
+        })
+      }
+
+      if (sections === 'coApplicant' && record.coApplicant) {
+        state.hasCoApplicant = true
+        state.formData.coApplicant = mapCoApplicantFromRecord(record.coApplicant)
+        CO_APPLICANT_ERROR_KEYS.forEach((key) => {
+          delete state.errors[key]
+        })
+      }
+    },
     copyAddress: (state, action) => {
       const { from, to } = action.payload
       // from and to can be: 'member', 'nominee', 'guarantor', 'coApplicant'
@@ -266,6 +328,7 @@ export const {
   clearError,
   resetForm,
   fillFromMember,
+  fillFromPreviousLoan,
   copyAddress,
 } = newLoanSlice.actions
 

@@ -10,12 +10,13 @@ const ConfirmationModal = ({
   cancelText = 'Cancel',
   variant = 'danger', // 'danger' | 'warning' | 'info'
   isLoading = false,
-  className = ''
+  className = '',
+  overlayClassName = '',
 }) => {
   if (!open) return null
 
   return (
-    <div className="modal-overlay">
+    <div className={`modal-overlay ${overlayClassName}`.trim()}>
       <div className={`modal-content ${className}`.trim()} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>

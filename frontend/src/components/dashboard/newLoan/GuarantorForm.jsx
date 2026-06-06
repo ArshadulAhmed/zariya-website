@@ -1,42 +1,16 @@
-import { useState } from 'react'
-import { useAppDispatch, useAppSelector } from '../../../store/hooks'
-import { copyAddress, fillFromMember } from '../../../store/slices/newLoanSlice'
+import { useAppSelector } from '../../../store/hooks'
 import { useFormField } from './useFormField'
 import TextField from '../../TextField'
 import MobileNumberField from '../../MobileNumberField'
 import Select from '../../Select'
 import { RELATIONSHIPS } from '../../../constants/relationships'
-import MemberSelectDrawer from './MemberSelectDrawer'
+import SectionPopulateControl from './SectionPopulateControl'
 import './GuarantorForm.scss'
 
-const GuarantorForm = () => {
-  const dispatch = useAppDispatch()
+const GuarantorForm = ({ allowPreviousLoans = true }) => {
   const formData = useAppSelector((state) => state.newLoan.formData.guarantor)
-  const selectedMembership = useAppSelector((state) => state.newLoan.selectedMembership)
-  const nomineeAddress = useAppSelector((state) => state.newLoan.formData.nominee.address)
   const errors = useAppSelector((state) => state.newLoan.errors)
   const { handleChange } = useFormField()
-  
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [checkedSource, setCheckedSource] = useState(null)
-  
-  const handleCopyMemberAddress = (e) => {
-    if (e.target.checked && selectedMembership?.address) {
-      dispatch(copyAddress({ from: 'member', to: 'guarantor' }))
-      setCheckedSource('member')
-    } else {
-      setCheckedSource(null)
-    }
-  }
-  
-  const handleCopyNomineeAddress = (e) => {
-    if (e.target.checked && nomineeAddress?.village) {
-      dispatch(copyAddress({ from: 'nominee', to: 'guarantor' }))
-      setCheckedSource('nominee')
-    } else {
-      setCheckedSource(null)
-    }
-  }
 
   return (
     <div className="form-section">
@@ -46,42 +20,7 @@ const GuarantorForm = () => {
           <h2>Guarantor Details</h2>
           <p className="section-description">Provide guarantor information</p>
         </div>
-      </div>
-      <div className="fill-from-member-row new-loan-fill-row">
-        <button
-          type="button"
-          className="fill-from-member-btn new-loan-fill-btn"
-          onClick={() => setDrawerOpen(true)}
-        >
-          Fill from member
-        </button>
-      </div>
-      <MemberSelectDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSelect={(member) => dispatch(fillFromMember({ section: 'guarantor', member }))}
-        title="Select member for Guarantor"
-      />
-
-      <div className="address-copy-section">
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={checkedSource === 'member'}
-            onChange={handleCopyMemberAddress}
-            disabled={!selectedMembership?.address}
-          />
-          <span>Same as Member Address</span>
-        </label>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={checkedSource === 'nominee'}
-            onChange={handleCopyNomineeAddress}
-            disabled={!nomineeAddress?.village}
-          />
-          <span>Same as Nominee Address</span>
-        </label>
+        <SectionPopulateControl section="guarantor" allowPreviousLoans={allowPreviousLoans} />
       </div>
 
       <div className="form-grid">
@@ -215,4 +154,3 @@ const GuarantorForm = () => {
 }
 
 export default GuarantorForm
-

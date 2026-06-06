@@ -111,9 +111,9 @@ const LoanFormContainer = ({ mode = 'create', applicationId = null }) => {
   return (
     <form className="loan-form" onSubmit={handleSubmit} autoComplete="off">
       <LoanDetailsForm />
-      <NomineeForm />
-      <GuarantorForm />
-      <CoApplicantForm />
+      <NomineeForm allowPreviousLoans={!isEditMode} />
+      <GuarantorForm allowPreviousLoans={!isEditMode} />
+      <CoApplicantForm allowPreviousLoans={!isEditMode} />
 
       <div className="form-footer">
         <div className="form-actions">

@@ -15,6 +15,11 @@
   animation: fadeIn 0.2s ease-in-out;
 }
 
+// Above side drawers (populate drawer z-index 1001, member drawer z-index 1101)
+.modal-overlay.section-populate-confirm-overlay {
+  z-index: 1300;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
