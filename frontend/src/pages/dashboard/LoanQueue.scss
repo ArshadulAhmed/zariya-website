@@ -1,0 +1,466 @@
+@use '../../styles/main.scss' as *;
+
+.loan-queue-page {
+  padding: 26px;
+  margin: 0 auto;
+
+  .page-header {
+    margin-bottom: 24px;
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 8px 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .page-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .loan-queue-form-section {
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow-x: auto;
+
+    .section-title {
+      margin-bottom: 12px;
+      font-size: 0.92rem;
+    }
+  }
+
+  .loan-queue-form {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 12px;
+    min-width: 0;
+
+    .custom-text-field {
+      flex: 1 1 0;
+      min-width: 120px;
+      position: relative;
+      padding-bottom: calc(18px + 0.4rem);
+      box-sizing: border-box;
+
+      .MuiFormHelperText-root {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        min-height: 18px;
+        margin-top: 0;
+      }
+
+      input[type='date'] {
+        line-height: 1.4375em;
+      }
+    }
+
+    .form-actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      padding-bottom: calc(18px + 0.4rem);
+      box-sizing: content-box;
+    }
+
+    .btn-primary {
+      height: 56px;
+      min-height: 56px;
+      padding: 0 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      box-sizing: border-box;
+
+      &:hover:not(:disabled) {
+        background: var(--primary-dark);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .loan-queue-table-section {
+    margin-top: 0;
+  }
+
+  .page-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-reset-btn {
+    padding: 11px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #374151;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .search-input-group {
+    min-width: 240px;
+    flex: 1;
+
+    .search-input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-family: 'Poppins', sans-serif;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+      }
+    }
+  }
+
+  .filter-select-group {
+    min-width: 160px;
+
+    .date-input {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-family: 'Poppins', sans-serif;
+      background: #fff;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+      }
+    }
+  }
+
+  .loan-queue-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .btn-success {
+    background: #16a34a;
+    color: #fff;
+
+    &:hover {
+      background: #15803d;
+    }
+  }
+
+  .btn-danger {
+    background: #dc2626;
+    color: #fff;
+
+    &:hover {
+      background: #b91c1c;
+    }
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: capitalize;
+
+    &.status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    &.status-approved {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    &.status-rejected {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  }
+
+  .loan-queue-grouped-table {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    &.loading {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  }
+
+  .loan-queue-table-scroll {
+    overflow-x: auto;
+  }
+
+  .loan-queue-apps-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+
+    th,
+    td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.78rem;
+      color: #374151;
+      vertical-align: middle;
+    }
+
+    thead th {
+      background: #f9fafb;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr.date-group-start td {
+      border-top: 2px solid #e5e7eb;
+    }
+
+    .date-header,
+    .date-cell {
+      width: 200px;
+      min-width: 200px;
+      border-right: 1px solid #e5e7eb;
+    }
+
+    .date-cell {
+      background: #fcfcfd;
+      vertical-align: middle;
+      text-align: center;
+
+      .date-label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+      }
+
+      .date-count {
+        display: block;
+        font-size: 0.78rem;
+        color: #4b5563;
+        margin-bottom: 6px;
+      }
+
+      .pending-count {
+        display: inline-flex;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.68rem;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .loan-queue-load-more {
+    padding: 14px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.78rem;
+  }
+
+  .skeleton-row {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 12px;
+    padding: 8px 0;
+  }
+
+  .skeleton-block {
+    height: 72px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-block.date-block {
+    height: 96px;
+  }
+
+  .data-table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    color: #6b7280;
+
+    svg {
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.review-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+}
+
+.review-reason-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  > span {
+    color: #374151;
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    .required {
+      color: #dc2626;
+    }
+  }
+
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 88px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+    }
+  }
+
+  .field-error {
+    color: #dc2626;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .loan-queue-page .loan-queue-form {
+    flex-wrap: wrap;
+
+    .custom-text-field {
+      flex: 1 1 calc(50% - 6px);
+      min-width: 140px;
+    }
+
+    .form-actions {
+      flex: 1 1 100%;
+      padding-bottom: 0;
+      justify-content: flex-start;
+    }
+  }
+}

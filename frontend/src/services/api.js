@@ -628,6 +628,47 @@ export const loanApplicationsAPI = {
   },
 }
 
+// Loan Queue API
+export const loanQueueAPI = {
+  createRequest: async (requestData) => {
+    try {
+      const data = await apiRequest('/loan-queue', {
+        method: 'POST',
+        body: JSON.stringify(requestData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Queue API createRequest error:', error)
+      throw error
+    }
+  },
+
+  getRequests: async (params = {}) => {
+    try {
+      const queryString = new URLSearchParams(params).toString()
+      const endpoint = `/loan-queue${queryString ? `?${queryString}` : ''}`
+      const data = await apiRequest(endpoint, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan Queue API getRequests error:', error)
+      throw error
+    }
+  },
+
+  reviewRequest: async (id, reviewData) => {
+    try {
+      const data = await apiRequest(`/loan-queue/${id}/review`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Queue API reviewRequest error:', error)
+      throw error
+    }
+  },
+}
+
 // Repayments API
 export const repaymentsAPI = {
   createRepayment: async (repaymentData) => {
