@@ -1,0 +1,228 @@
+@use '../../styles/main.scss' as *;
+
+.blacklist-members-page {
+  padding: 26px;
+  margin: 0 auto;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    gap: 16px;
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 8px 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .page-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 15px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Poppins', sans-serif;
+
+      &:hover {
+        background: var(--primary-dark);
+      }
+    }
+  }
+
+  .page-filters {
+    margin-bottom: 16px;
+
+    .search-input-group {
+      flex: 1;
+      max-width: 560px;
+
+      .search-input {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        font-family: 'Poppins', sans-serif;
+
+        &:focus {
+          outline: none;
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+        }
+      }
+    }
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .btn-success {
+    background: #16a34a;
+    color: #fff;
+
+    &:hover {
+      background: #15803d;
+    }
+  }
+}
+
+.blacklist-confirmation-modal {
+  max-width: 520px;
+}
+
+.blacklist-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  p {
+    margin: 0;
+    color: #374151;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .search-status {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.82rem;
+  }
+}
+
+.blacklist-search-field,
+.blacklist-remark-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  > span {
+    color: #374151;
+    font-size: 0.82rem;
+    font-weight: 600;
+
+    .required {
+      color: #dc2626;
+    }
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1.5;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 88px;
+  }
+
+  .field-error {
+    color: #dc2626;
+    font-size: 0.78rem;
+  }
+}
+
+.member-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.member-result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #f9fafb;
+  }
+
+  &.selected {
+    border-color: var(--primary-color);
+    background: rgba(26, 95, 63, 0.05);
+  }
+
+  .member-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .member-meta {
+    font-size: 0.76rem;
+    color: #6b7280;
+  }
+}
+
+.last-loan-remark-box {
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+
+  .remark-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  p {
+    margin: 0;
+    color: #111827;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+}

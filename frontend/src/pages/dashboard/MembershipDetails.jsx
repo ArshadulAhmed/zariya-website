@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchMembership, reviewMembership, updateMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
+import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
@@ -25,8 +25,6 @@ const MembershipDetails = () => {
   const [approveConfirm, setApproveConfirm] = useState({ open: false })
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
   const [loanEligibilityModalOpen, setLoanEligibilityModalOpen] = useState(false)
-  const [blacklistConfirm, setBlacklistConfirm] = useState({ open: false, remark: '' })
-  const [blacklistRemarkError, setBlacklistRemarkError] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
   const [copied, setCopied] = useState(false)
   const [enlargedImage, setEnlargedImage] = useState(null)
@@ -135,39 +133,6 @@ const MembershipDetails = () => {
     navigate(`/dashboard/loans/new?userId=${encodeURIComponent(membership.userId)}`)
   }
 
-  const handleToggleBlacklist = async () => {
-    if (!isAdmin || !membership?.id) {
-      setBlacklistConfirm({ open: false, remark: '' })
-      setBlacklistRemarkError('')
-      return
-    }
-
-    const willUnmark = membership.isEligibleForNextLoan === false
-    const remark = blacklistConfirm.remark.trim()
-
-    if (!willUnmark && !remark) {
-      setBlacklistRemarkError('Reason is required when marking a member as blacklisted')
-      return
-    }
-
-    setBlacklistRemarkError('')
-
-    const result = await dispatch(
-      updateMembership({
-        id: membership.id,
-        membershipData: {
-          isEligibleForNextLoan: willUnmark,
-          loanEligibilityRemark: willUnmark ? '' : remark,
-        },
-      })
-    )
-
-    if (updateMembership.fulfilled.match(result)) {
-      setBlacklistConfirm({ open: false, remark: '' })
-      dispatch(fetchMembership(id))
-    }
-  }
-
   // Legacy: resolve URL from old API shape (secure_url); new shape uses SecureDocumentImage + signed URLs
   const getDocumentUrl = (urlOrMetadata) => {
     if (!urlOrMetadata) return null
@@ -208,7 +173,6 @@ const MembershipDetails = () => {
   const isApproved = membership?.status === 'approved'
   const canReview = isPending
   const hasMembership = !!membership
-  const isBlacklisted = membership?.isEligibleForNextLoan === false
 
   return (
     <div className="membership-details-page">
@@ -237,28 +201,6 @@ const MembershipDetails = () => {
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Edit details
-            </button>
-          )}
-          {!isLoading && hasMembership && isAdmin && isApproved && (
-            <button
-              type="button"
-              className={isBlacklisted ? 'btn-success' : 'btn-blacklist'}
-              onClick={() => {
-                setBlacklistConfirm({ open: true, remark: '' })
-                setBlacklistRemarkError('')
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {isBlacklisted ? (
-                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                ) : (
-                  <>
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M4.5 4.5L19.5 19.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </>
-                )}
-              </svg>
-              {isBlacklisted ? 'Unmark blacklist' : 'Mark this user blacklisted'}
             </button>
           )}
           {!isLoading && canReview && (
@@ -632,59 +574,6 @@ const MembershipDetails = () => {
             cancelText="Cancel"
             variant="danger"
             isLoading={isLoading}
-          />
-
-          <ConfirmationModal
-            open={blacklistConfirm.open}
-            onClose={() => {
-              if (!isLoading) {
-                setBlacklistConfirm({ open: false, remark: '' })
-                setBlacklistRemarkError('')
-              }
-            }}
-            onConfirm={handleToggleBlacklist}
-            title={isBlacklisted ? 'Unmark Blacklist' : 'Mark User Blacklisted'}
-            message={
-              <div className="blacklist-modal-body">
-                <p>
-                  {isBlacklisted
-                    ? `Are you sure you want to remove "${membership.fullName || 'this member'}" from the blacklist? They will be able to apply for a new loan again.`
-                    : `Are you sure you want to blacklist "${membership.fullName || 'this member'}"? They will not be able to apply for a new loan until unmarked.`}
-                </p>
-
-                {isBlacklisted && membership.loanEligibilityRemark && (
-                  <div className="last-loan-remark-box">
-                    <span className="remark-label">Current reason</span>
-                    <p>{membership.loanEligibilityRemark}</p>
-                  </div>
-                )}
-
-                {!isBlacklisted && (
-                  <label className="blacklist-remark-field">
-                    <span>Reason <span className="required">*</span></span>
-                    <textarea
-                      value={blacklistConfirm.remark}
-                      onChange={(event) => {
-                        setBlacklistConfirm((prev) => ({
-                          ...prev,
-                          remark: event.target.value.slice(0, 1000),
-                        }))
-                        if (blacklistRemarkError) setBlacklistRemarkError('')
-                      }}
-                      placeholder="Add reason for blacklisting this member"
-                      rows={3}
-                      disabled={isLoading}
-                    />
-                    {blacklistRemarkError && <span className="field-error">{blacklistRemarkError}</span>}
-                  </label>
-                )}
-              </div>
-            }
-            confirmText={isBlacklisted ? 'Unmark Blacklist' : 'Mark Blacklisted'}
-            cancelText="Cancel"
-            variant={isBlacklisted ? 'info' : 'danger'}
-            isLoading={isLoading}
-            className="blacklist-confirmation-modal"
           />
 
           <ConfirmationModal

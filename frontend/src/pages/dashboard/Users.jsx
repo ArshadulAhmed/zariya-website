@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchUsers, deleteUser, setFilters, closeSnackbar } from '../../store/slices/usersSlice'
 import DataTable from '../../components/dashboard/DataTable'
@@ -10,10 +11,20 @@ import FilterSelect from '../../components/dashboard/FilterSelect'
 import './Users.scss'
 
 const Users = memo(() => {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const usersState = useAppSelector((state) => state.users)
-  const isAdmin = currentUser?.role === 'admin'
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'admin') {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [currentUser, navigate])
+
+  if (currentUser && currentUser.role !== 'admin') {
+    return null
+  }
 
   // Safely extract values with defaults
   const users = usersState?.users || []
@@ -136,10 +147,8 @@ const Users = memo(() => {
   ]
 
   const handleRowClick = (row) => {
-    if (isAdmin) {
-      setSelectedUser(row)
-      setIsEditUserModalOpen(true)
-    }
+    setSelectedUser(row)
+    setIsEditUserModalOpen(true)
   }
 
   const handleEditClick = (row) => {
@@ -147,34 +156,28 @@ const Users = memo(() => {
     setIsEditUserModalOpen(true)
   }
 
-  const handleActions = (row) => {
-    if (!isAdmin) {
-      return null // Staff users can't see actions
-    }
-
-    return (
-      <>
-        <button
-          className="btn-primary"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleEditClick(row)
-          }}
-        >
-          Edit
-        </button>
-        <button
-          className="btn-danger"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleDeleteClick(row)
-          }}
-        >
-          Delete
-        </button>
-      </>
-    )
-  }
+  const handleActions = (row) => (
+    <>
+      <button
+        className="btn-primary"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleEditClick(row)
+        }}
+      >
+        Edit
+      </button>
+      <button
+        className="btn-danger"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleDeleteClick(row)
+        }}
+      >
+        Delete
+      </button>
+    </>
+  )
 
   return (
     <div className="users-page">
@@ -190,18 +193,16 @@ const Users = memo(() => {
           <h1 className="page-title">Users</h1>
           <p className="page-subtitle">Manage system users and access control</p>
         </div>
-        {isAdmin && (
-          <button
-            className="btn-primary"
-            onClick={() => setIsNewUserModalOpen(true)}
-          >
+        <button
+          className="btn-primary"
+          onClick={() => setIsNewUserModalOpen(true)}
+        >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             New User
-          </button>
-        )}
+        </button>
       </div>
 
       <div className="page-filters">
@@ -241,7 +242,7 @@ const Users = memo(() => {
         columns={columns}
         data={filteredUsers}
         loading={showSkeleton}
-        onRowClick={isAdmin ? handleRowClick : undefined}
+        onRowClick={handleRowClick}
         actions={handleActions}
         emptyMessage="No users found"
       />

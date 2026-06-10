@@ -50,6 +50,9 @@ const mapRequest = (request) => ({
   fullName: String(request.fullName || ''),
   mobileNumber: String(request.mobileNumber || ''),
   membershipUserId: String(request.membershipUserId || ''),
+  requestedAmount: request.requestedAmount != null && request.requestedAmount !== ''
+    ? Number(request.requestedAmount)
+    : null,
   expectedLoanDate: formatDateOnly(request.expectedLoanDate),
   status: String(request.status || 'pending'),
   rejectionReason: String(request.rejectionReason || ''),

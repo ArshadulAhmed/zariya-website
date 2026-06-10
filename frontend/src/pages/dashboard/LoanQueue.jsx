@@ -18,6 +18,7 @@ import {
   getMobileNumberValidationError,
   stripMobileDigits,
 } from '../../utils/dashboardUtils'
+import { formatLoanCurrency } from '../../utils/previousLoanUtils'
 import './LoanQueue.scss'
 
 function statusLabel(value) {
@@ -29,6 +30,7 @@ const initialForm = {
   fullName: '',
   mobileNumber: '',
   membershipUserId: '',
+  requestedAmount: '',
   expectedLoanDate: '',
 }
 
@@ -108,6 +110,9 @@ const LoanQueue = memo(function LoanQueue() {
     if (!form.fullName.trim()) errors.fullName = 'Name is required'
     const mobileError = getMobileNumberValidationError(form.mobileNumber)
     if (mobileError) errors.mobileNumber = mobileError
+    if (!form.requestedAmount || parseFloat(form.requestedAmount) <= 0) {
+      errors.requestedAmount = 'Requested amount must be greater than 0'
+    }
     if (!form.expectedLoanDate) {
       errors.expectedLoanDate = 'Expected loan date is required'
     }
@@ -143,6 +148,7 @@ const LoanQueue = memo(function LoanQueue() {
         fullName: form.fullName.trim(),
         mobileNumber: stripMobileDigits(form.mobileNumber),
         membershipUserId: form.membershipUserId.trim(),
+        requestedAmount: parseFloat(form.requestedAmount),
         expectedLoanDate: form.expectedLoanDate,
       })
     )
@@ -151,14 +157,6 @@ const LoanQueue = memo(function LoanQueue() {
       setForm(initialForm)
       setFormErrors({})
       refetchGroups()
-      return
-    }
-
-    if (createLoanQueueRequest.rejected.match(result)) {
-      const message = String(result.payload || '')
-      if (/mobile number/i.test(message)) {
-        setFormErrors((prev) => ({ ...prev, mobileNumber: message }))
-      }
     }
   }
 
@@ -258,6 +256,7 @@ const LoanQueue = memo(function LoanQueue() {
                 <th>Name</th>
                 <th>Mobile</th>
                 <th>Membership ID</th>
+                <th>Requested Amount</th>
                 <th>Entry Date</th>
                 <th>Entry By</th>
                 <th>Status</th>
@@ -286,6 +285,7 @@ const LoanQueue = memo(function LoanQueue() {
                     <td>{application.fullName}</td>
                     <td>{formatMobileNumberDisplay(application.mobileNumber, '—')}</td>
                     <td>{application.membershipUserId || '—'}</td>
+                    <td>{formatLoanCurrency(application.requestedAmount)}</td>
                     <td>{application.entryDate || '—'}</td>
                     <td>{application.entryBy || '—'}</td>
                     <td>
@@ -350,6 +350,22 @@ const LoanQueue = memo(function LoanQueue() {
             onChange={handleFormChange}
             placeholder="ZMID-0000001"
             disabled={isSubmitting}
+          />
+          <TextField
+            label="Requested Amount"
+            name="requestedAmount"
+            type="number"
+            value={form.requestedAmount}
+            onChange={handleFormChange}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault()
+            }}
+            placeholder="Enter amount"
+            error={!!formErrors.requestedAmount}
+            helperText={formErrors.requestedAmount}
+            required
+            disabled={isSubmitting}
+            inputProps={{ min: 1, step: 0.01 }}
           />
           <TextField
             label="Expected Loan Date"

@@ -8,22 +8,52 @@ import { closeSnackbar as closeMembershipsSnackbar } from '../../store/slices/me
 import logoImage from '../../assets/logo.png'
 import './DashboardLayout.scss'
 
+const managementIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+)
+
+const usersIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
+const blacklistIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+    <path d="M4.5 4.5L19.5 19.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+)
+
 const DashboardLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [managementExpanded, setManagementExpanded] = useState(
+    location.pathname.startsWith('/dashboard/management')
+  )
 
-  // Clear snackbars when navigating to a different page
   useEffect(() => {
     dispatch(closeSnackbar())
     dispatch(closeLoanApplicationsSnackbar())
     dispatch(closeMembershipsSnackbar())
   }, [location.pathname, dispatch])
 
+  useEffect(() => {
+    if (location.pathname.startsWith('/dashboard/management')) {
+      setManagementExpanded(true)
+    }
+  }, [location.pathname])
+
   const isAdmin = user?.role === 'admin'
-  const isEmployee = user?.role === 'employee'
 
   const handleLogout = () => {
     dispatch(logout())
@@ -108,29 +138,39 @@ const DashboardLayout = () => {
         </svg>
       ),
     },
-    ...(isAdmin
-      ? [
-          {
-            key: '/dashboard/users',
-            label: 'Users',
-            icon: (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            ),
-          },
-        ]
-      : []),
   ]
 
-  const activeKey = location.pathname
+  const managementItems = [
+    {
+      key: '/dashboard/management/users',
+      label: 'Users',
+      icon: usersIcon,
+    },
+    {
+      key: '/dashboard/management/blacklist-members',
+      label: 'Blacklist Members',
+      icon: blacklistIcon,
+    },
+  ]
+
+  const isManagementActive = location.pathname.startsWith('/dashboard/management')
+
+  const renderNavItem = (item) => {
+    const isActive = location.pathname === item.key
+    return (
+      <button
+        key={item.key}
+        className={`nav-item ${isActive ? 'active' : ''}`}
+        onClick={() => navigate(item.key)}
+      >
+        <span className="nav-icon">{item.icon}</span>
+        {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
+      </button>
+    )
+  }
 
   return (
     <div className={`dashboard-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
-      {/* Sidebar */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
@@ -149,19 +189,54 @@ const DashboardLayout = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => {
-            const isActive = activeKey === item.key
-            return (
+          {menuItems.map(renderNavItem)}
+
+          {isAdmin && (
+            <div className={`nav-group ${isManagementActive ? 'active-group' : ''}`}>
               <button
-                key={item.key}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => navigate(item.key)}
+                type="button"
+                className={`nav-item nav-group-toggle ${isManagementActive ? 'active' : ''}`}
+                onClick={() => {
+                  if (sidebarCollapsed) {
+                    navigate('/dashboard/management/users')
+                    return
+                  }
+                  setManagementExpanded((prev) => !prev)
+                }}
               >
-                <span className="nav-icon">{item.icon}</span>
-                {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
+                <span className="nav-icon">{managementIcon}</span>
+                {!sidebarCollapsed && (
+                  <>
+                    <span className="nav-label">Management</span>
+                    <span className={`nav-chevron ${managementExpanded ? 'expanded' : ''}`}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  </>
+                )}
               </button>
-            )
-          })}
+
+              {!sidebarCollapsed && managementExpanded && (
+                <div className="nav-subitems">
+                  {managementItems.map((item) => {
+                    const isActive = location.pathname === item.key
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className={`nav-item nav-subitem ${isActive ? 'active' : ''}`}
+                        onClick={() => navigate(item.key)}
+                      >
+                        <span className="nav-icon">{item.icon}</span>
+                        <span className="nav-label">{item.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -187,7 +262,6 @@ const DashboardLayout = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="dashboard-main">
         <Outlet />
       </div>
@@ -196,4 +270,3 @@ const DashboardLayout = () => {
 }
 
 export default DashboardLayout
-

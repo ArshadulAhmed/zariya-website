@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import ApplyMembership from './pages/ApplyMembership'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import PublicRoute from './components/PublicRoute'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 // Import DashboardHome directly (not lazy) since it's the index route
@@ -26,6 +27,7 @@ const RepaymentRecords = lazy(() => import('./pages/dashboard/RepaymentRecords')
 const RepaymentDetails = lazy(() => import('./pages/dashboard/RepaymentDetails'))
 const RepaymentEdit = lazy(() => import('./pages/dashboard/RepaymentEdit'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
+const BlacklistMembers = lazy(() => import('./pages/dashboard/BlacklistMembers'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
 const DailyCollectionReport = lazy(() => import('./pages/dashboard/DailyCollectionReport'))
@@ -271,13 +273,26 @@ function App() {
           }
         />
         <Route
-          path="users"
+          path="management/users"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <Users />
-            </Suspense>
+            <AdminRoute>
+              <Suspense fallback={<PageLoader />}>
+                <Users />
+              </Suspense>
+            </AdminRoute>
           }
         />
+        <Route
+          path="management/blacklist-members"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<PageLoader />}>
+                <BlacklistMembers />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route path="users" element={<Navigate to="/dashboard/management/users" replace />} />
         <Route
           path="reports"
           element={
