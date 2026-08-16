@@ -8,6 +8,7 @@ import EmployeeForm, {
 } from '../../components/dashboard/EmployeeForm'
 import Snackbar from '../../components/Snackbar'
 import { employeesAPI } from '../../services/api'
+import '../ApplyMembership.scss'
 import '../../components/dashboard/EmployeeForm.scss'
 
 const UserNew = () => {
@@ -59,40 +60,70 @@ const UserNew = () => {
   }
 
   return (
-    <div className="user-new-page">
-      <div className="page-header">
-        <div>
-          <button type="button" className="back-button" onClick={() => navigate(usersPath)}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Back
-          </button>
-          <h1 className="page-title">Enroll Employee</h1>
-          <p className="page-subtitle">Capture KYC, address, and login access before adding them to the system</p>
-        </div>
-      </div>
-
-      <form className="employee-edit-form" onSubmit={handleSubmit}>
-        <EmployeeForm
-          form={form}
-          errors={errors}
-          onChange={handleChange}
-          isCreate
-          isSubmitting={isSubmitting}
-        />
-        <div className="form-footer">
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => navigate(usersPath)} disabled={isSubmitting}>
-              Cancel
+    <div className="apply-membership-page dashboard-mode">
+      <div className="apply-membership-container">
+        <div className="page-header">
+          <div>
+            <button type="button" className="back-button" onClick={() => navigate(usersPath)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Back
             </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Create Employee'}
-            </button>
+            <h1 className="page-title">New Employee</h1>
+            <p className="page-subtitle">Create a new employee and capture KYC before they can access the system</p>
           </div>
         </div>
-      </form>
+
+        <div className="form-wrapper no-header">
+          <form className="membership-form" onSubmit={handleSubmit} noValidate autoComplete="off">
+            <EmployeeForm
+              form={form}
+              errors={errors}
+              onChange={handleChange}
+              isCreate
+              isSubmitting={isSubmitting}
+            />
+            <div className="form-footer">
+              <div className="form-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M12 8H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <span>Employee information is stored securely and used only for HR records and dashboard access</span>
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn-secondary" onClick={() => navigate(usersPath)} disabled={isSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="32" strokeDashoffset="32">
+                          <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                          <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                        </circle>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Create Employee
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 5L19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
 
       {snackbar.open && (
         <Snackbar

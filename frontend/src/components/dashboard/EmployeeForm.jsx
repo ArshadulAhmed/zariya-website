@@ -190,7 +190,7 @@ const EmployeeForm = ({
   return (
     <div className="employee-form">
       <section className="form-section">
-        <div className="section-header">
+          <div className="section-header section-header-inline">
           <div className="section-number">01</div>
           <div className="section-title-group">
             <h2>Account access</h2>
@@ -255,7 +255,7 @@ const EmployeeForm = ({
       </section>
 
       <section className="form-section">
-        <div className="section-header">
+          <div className="section-header section-header-inline">
           <div className="section-number">02</div>
           <div className="section-title-group">
             <h2>Employment details</h2>
@@ -306,7 +306,7 @@ const EmployeeForm = ({
       </section>
 
       <section className="form-section">
-        <div className="section-header">
+          <div className="section-header section-header-inline">
           <div className="section-number">03</div>
           <div className="section-title-group">
             <h2>Identity & KYC</h2>
@@ -346,7 +346,7 @@ const EmployeeForm = ({
       </section>
 
       <section className="form-section">
-        <div className="section-header">
+          <div className="section-header section-header-inline">
           <div className="section-number">04</div>
           <div className="section-title-group">
             <h2>Address</h2>
@@ -364,7 +364,7 @@ const EmployeeForm = ({
       </section>
 
       <section className="form-section">
-        <div className="section-header">
+          <div className="section-header section-header-inline">
           <div className="section-number">05</div>
           <div className="section-title-group">
             <h2>Documents</h2>
@@ -373,7 +373,7 @@ const EmployeeForm = ({
             </p>
           </div>
         </div>
-        <div className="form-grid form-grid-docs">
+        <div className="form-grid form-grid-docs form-grid-three">
           {['aadharUpload', 'aadharUploadBack', 'panUpload', 'passportPhoto'].map((field) => {
             const labels = {
               aadharUpload: 'Aadhar (Front)',
