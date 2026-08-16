@@ -189,19 +189,27 @@
 
   .loan-queue-actions {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 6px;
+    flex-wrap: nowrap;
     justify-content: center;
   }
 
-  .btn-sm {
-    padding: 6px 12px;
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
     border: none;
     border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    font-family: 'Poppins', sans-serif;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    svg {
+      display: block;
+    }
   }
 
   .btn-success {
@@ -219,6 +227,17 @@
 
     &:hover {
       background: #b91c1c;
+    }
+  }
+
+  .btn-edit {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+
+    &:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
     }
   }
 
@@ -445,6 +464,56 @@
   .field-error {
     color: #dc2626;
     font-size: 0.78rem;
+  }
+}
+
+.loan-queue-edit-modal {
+  max-width: 560px;
+  max-height: 90vh;
+  overflow: auto;
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-actions {
+    padding: 14px 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+
+.loan-queue-edit-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 12px;
+
+  .custom-text-field {
+    width: 100%;
+    margin: 0;
+
+    .MuiFormHelperText-root:empty {
+      display: none;
+    }
+  }
+
+  .field-full {
+    grid-column: 1 / -1;
+    width: 100%;
+
+    .custom-text-field {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .loan-queue-edit-form {
+    grid-template-columns: 1fr;
   }
 }
 

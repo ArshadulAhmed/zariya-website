@@ -4,6 +4,7 @@ import {
   createLoanQueueRequest,
   fetchLoanQueueRequests,
   reviewLoanQueueRequest,
+  updateLoanQueueRequest,
   setFilters,
   setPagination,
   closeSnackbar,
@@ -52,6 +53,9 @@ const LoanQueue = memo(function LoanQueue() {
     rejectionReason: '',
   })
   const [reviewError, setReviewError] = useState('')
+  const [editConfirm, setEditConfirm] = useState({ open: false, request: null })
+  const [editForm, setEditForm] = useState(initialForm)
+  const [editFormErrors, setEditFormErrors] = useState({})
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   const loadMoreRef = useRef(null)
@@ -160,6 +164,72 @@ const LoanQueue = memo(function LoanQueue() {
     }
   }
 
+  const handleEditFormChange = (event) => {
+    const { name, value } = event.target
+    setEditForm((prev) => ({ ...prev, [name]: value }))
+    if (editFormErrors[name]) {
+      setEditFormErrors((prev) => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  const validateEditForm = () => {
+    const errors = {}
+    if (!editForm.fullName.trim()) errors.fullName = 'Name is required'
+    const mobileError = getMobileNumberValidationError(editForm.mobileNumber)
+    if (mobileError) errors.mobileNumber = mobileError
+    if (!editForm.requestedAmount || parseFloat(editForm.requestedAmount) <= 0) {
+      errors.requestedAmount = 'Requested amount must be greater than 0'
+    }
+    if (!editForm.expectedLoanDate) {
+      errors.expectedLoanDate = 'Expected loan date is required'
+    }
+    setEditFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const openEditModal = (request) => {
+    setEditConfirm({ open: true, request })
+    setEditForm({
+      fullName: request.fullName || '',
+      mobileNumber: request.mobileNumber || '',
+      membershipUserId: request.membershipUserId || '',
+      requestedAmount: request.requestedAmount != null ? String(request.requestedAmount) : '',
+      expectedLoanDate: request.expectedLoanDateInput || '',
+    })
+    setEditFormErrors({})
+  }
+
+  const closeEditModal = () => {
+    if (isSubmitting) return
+    setEditConfirm({ open: false, request: null })
+    setEditForm(initialForm)
+    setEditFormErrors({})
+  }
+
+  const handleEditSave = async () => {
+    if (!editConfirm.request || !validateEditForm()) return
+
+    const result = await dispatch(
+      updateLoanQueueRequest({
+        id: editConfirm.request.id,
+        requestData: {
+          fullName: editForm.fullName.trim(),
+          mobileNumber: stripMobileDigits(editForm.mobileNumber),
+          membershipUserId: editForm.membershipUserId.trim(),
+          requestedAmount: parseFloat(editForm.requestedAmount),
+          expectedLoanDate: editForm.expectedLoanDate,
+        },
+      })
+    )
+
+    if (updateLoanQueueRequest.fulfilled.match(result)) {
+      setEditConfirm({ open: false, request: null })
+      setEditForm(initialForm)
+      setEditFormErrors({})
+      refetchGroups()
+    }
+  }
+
   const openReviewModal = (request, status) => {
     setReviewConfirm({
       open: true,
@@ -197,24 +267,49 @@ const LoanQueue = memo(function LoanQueue() {
   }
 
   const renderApplicationActions = (application) => {
-    if (!isAdmin || application.status !== 'pending') return '—'
+    if (application.status !== 'pending') return '—'
 
     return (
       <div className="loan-queue-actions">
         <button
           type="button"
-          className="btn-success btn-sm"
-          onClick={() => openReviewModal(application, 'approved')}
+          className="btn-icon btn-edit"
+          title="Edit"
+          aria-label="Edit"
+          onClick={() => openEditModal(application)}
         >
-          Approve
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-        <button
-          type="button"
-          className="btn-danger btn-sm"
-          onClick={() => openReviewModal(application, 'rejected')}
-        >
-          Reject
-        </button>
+        {isAdmin && (
+          <>
+            <button
+              type="button"
+              className="btn-icon btn-success"
+              title="Approve"
+              aria-label="Approve"
+              onClick={() => openReviewModal(application, 'approved')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="btn-icon btn-danger"
+              title="Reject"
+              aria-label="Reject"
+              onClick={() => openReviewModal(application, 'rejected')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </>
+        )}
       </div>
     )
   }
@@ -259,9 +354,10 @@ const LoanQueue = memo(function LoanQueue() {
                 <th>Requested Amount</th>
                 <th>Entry Date</th>
                 <th>Entry By</th>
+                <th>Updated By</th>
                 <th>Status</th>
                 <th>Reason</th>
-                {isAdmin && <th>Actions</th>}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -288,13 +384,14 @@ const LoanQueue = memo(function LoanQueue() {
                     <td>{formatLoanCurrency(application.requestedAmount)}</td>
                     <td>{application.entryDate || '—'}</td>
                     <td>{application.entryBy || '—'}</td>
+                    <td>{application.updatedBy || '—'}</td>
                     <td>
                       <span className={`status-badge status-${application.status}`}>
                         {statusLabel(application.status)}
                       </span>
                     </td>
                     <td>{application.rejectionReason || '—'}</td>
-                    {isAdmin && <td>{renderApplicationActions(application)}</td>}
+                    <td>{renderApplicationActions(application)}</td>
                   </tr>
                 ))
               )}
@@ -476,6 +573,81 @@ const LoanQueue = memo(function LoanQueue() {
         variant={reviewConfirm.status === 'approved' ? 'info' : 'danger'}
         isLoading={isSubmitting}
         className="loan-queue-review-modal"
+      />
+
+      <ConfirmationModal
+        open={editConfirm.open}
+        onClose={closeEditModal}
+        onConfirm={handleEditSave}
+        title="Edit Queue Request"
+        message={
+          <div className="loan-queue-edit-form">
+            <TextField
+              label="Full Name"
+              name="fullName"
+              value={editForm.fullName}
+              onChange={handleEditFormChange}
+              error={!!editFormErrors.fullName}
+              helperText={editFormErrors.fullName || undefined}
+              required
+              disabled={isSubmitting}
+            />
+            <MobileNumberField
+              label="Mobile Number"
+              name="mobileNumber"
+              value={editForm.mobileNumber}
+              onChange={handleEditFormChange}
+              error={!!editFormErrors.mobileNumber}
+              helperText={editFormErrors.mobileNumber || undefined}
+              required
+              disabled={isSubmitting}
+            />
+            <TextField
+              label="Membership ID (optional)"
+              name="membershipUserId"
+              value={editForm.membershipUserId}
+              onChange={handleEditFormChange}
+              placeholder="ZMID-0000001"
+              disabled={isSubmitting}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Requested Amount"
+              name="requestedAmount"
+              type="number"
+              value={editForm.requestedAmount}
+              onChange={handleEditFormChange}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault()
+              }}
+              placeholder="Enter amount"
+              error={!!editFormErrors.requestedAmount}
+              helperText={editFormErrors.requestedAmount || undefined}
+              required
+              disabled={isSubmitting}
+              inputProps={{ min: 1, step: 0.01 }}
+            />
+            <div className="field-full">
+              <TextField
+                label="Expected Loan Date"
+                name="expectedLoanDate"
+                type="date"
+                value={editForm.expectedLoanDate}
+                onChange={handleEditFormChange}
+                error={!!editFormErrors.expectedLoanDate}
+                helperText={editFormErrors.expectedLoanDate || undefined}
+                required
+                disabled={isSubmitting}
+                InputLabelProps={{ shrink: true }}
+              />
+            </div>
+          </div>
+        }
+        confirmText="Save Changes"
+        cancelText="Cancel"
+        variant="primary"
+        isLoading={isSubmitting}
+        className="loan-queue-edit-modal"
       />
 
       {snackbar?.open && (

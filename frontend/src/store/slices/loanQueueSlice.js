@@ -44,6 +44,17 @@ const formatDateOnly = (dateStr) => {
   }
 }
 
+const toDateInputValue = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    const date = new Date(dateStr)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+  } catch (e) {
+    return ''
+  }
+}
+
 const mapRequest = (request) => ({
   id: String(request.id || request._id || ''),
   requestNumber: String(request.requestNumber || ''),
@@ -54,11 +65,15 @@ const mapRequest = (request) => ({
     ? Number(request.requestedAmount)
     : null,
   expectedLoanDate: formatDateOnly(request.expectedLoanDate),
+  expectedLoanDateInput: toDateInputValue(request.expectedLoanDate),
   status: String(request.status || 'pending'),
   rejectionReason: String(request.rejectionReason || ''),
   entryDate: formatDateOnly(request.createdAt),
   entryBy: request.createdBy
     ? String(request.createdBy.fullName || request.createdBy.username || '')
+    : '',
+  updatedBy: request.updatedBy
+    ? String(request.updatedBy.fullName || request.updatedBy.username || '')
     : '',
   reviewedAt: formatDate(request.reviewedAt),
 })
@@ -112,6 +127,19 @@ export const reviewLoanQueueRequest = createAsyncThunk(
       return rejectWithValue(response.message || 'Failed to review loan queue request')
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to review loan queue request')
+    }
+  }
+)
+
+export const updateLoanQueueRequest = createAsyncThunk(
+  'loanQueue/updateRequest',
+  async ({ id, requestData }, { rejectWithValue }) => {
+    try {
+      const response = await loanQueueAPI.updateRequest(id, requestData)
+      if (response.success) return mapRequest(response.data.request)
+      return rejectWithValue(response.message || 'Failed to update loan queue request')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update loan queue request')
     }
   }
 )
@@ -208,6 +236,27 @@ const loanQueueSlice = createSlice({
         state.snackbar = {
           open: true,
           message: action.payload || 'Failed to review request',
+          severity: 'error',
+        }
+      })
+      .addCase(updateLoanQueueRequest.pending, (state) => {
+        state.isSubmitting = true
+        state.error = null
+      })
+      .addCase(updateLoanQueueRequest.fulfilled, (state) => {
+        state.isSubmitting = false
+        state.snackbar = {
+          open: true,
+          message: 'Loan queue request updated successfully',
+          severity: 'success',
+        }
+      })
+      .addCase(updateLoanQueueRequest.rejected, (state, action) => {
+        state.isSubmitting = false
+        state.error = action.payload
+        state.snackbar = {
+          open: true,
+          message: action.payload || 'Failed to update loan queue request',
           severity: 'error',
         }
       })

@@ -667,6 +667,19 @@ export const loanQueueAPI = {
       throw error
     }
   },
+
+  updateRequest: async (id, requestData) => {
+    try {
+      const data = await apiRequest(`/loan-queue/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(requestData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Queue API updateRequest error:', error)
+      throw error
+    }
+  },
 }
 
 // Repayments API

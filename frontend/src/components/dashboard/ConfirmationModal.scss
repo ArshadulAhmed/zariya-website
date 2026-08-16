@@ -161,6 +161,14 @@
         background: #2563eb;
       }
     }
+
+    &.btn-primary {
+      background: var(--primary-color);
+
+      &:hover {
+        background: var(--primary-dark);
+      }
+    }
   }
 }
 
