@@ -14,6 +14,7 @@ const FileUpload = ({
   placeholderLabel, // Custom label to show inside the upload box
   onError, // Callback for error handling (for snackbar)
   userId, // Optional member ID for file naming (e.g., 'ZMID-0000001')
+  onPreviewClick,
 }) => {
   const fileInputRef = useRef(null)
   const [preview, setPreview] = useState(null)
@@ -196,7 +197,17 @@ const FileUpload = ({
           <div className="file-preview">
             {preview && (value instanceof File ? value.type.startsWith('image/') : (value?.resource_type === 'image' || (typeof value === 'object' && value.secure_url))) ? (
               <>
-                <img src={preview} alt="Preview" className="preview-image" />
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className={`preview-image${onPreviewClick ? ' clickable-preview' : ''}`}
+                  title={onPreviewClick ? 'Click to view large' : undefined}
+                  onClick={(e) => {
+                    if (!onPreviewClick || !preview) return
+                    e.stopPropagation()
+                    onPreviewClick(preview)
+                  }}
+                />
                 <button
                   type="button"
                   className="remove-file-btn"

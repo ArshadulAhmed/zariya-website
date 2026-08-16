@@ -164,6 +164,58 @@ export const usersAPI = {
       throw error
     }
   },
+
+  setPassword: async (id, password) => {
+    try {
+      return await apiRequest(`/users/${id}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password }),
+      })
+    } catch (error) {
+      console.error('Users API setPassword error:', error)
+      throw error
+    }
+  },
+}
+
+const employeeFormRequest = async (endpoint, method, formData) => {
+  const token = getToken()
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    if (response.status === 401) {
+      handleUnauthorized()
+      throw new Error('Session expired. Please login again.')
+    }
+    const firstError = data.errors?.[0]?.msg
+    throw new Error(firstError || data.message || 'Request failed')
+  }
+  return data
+}
+
+export const employeesAPI = {
+  createEmployee: (formData) => employeeFormRequest('/employees', 'POST', formData),
+
+  updateEmployeeProfile: (userId, formData) =>
+    employeeFormRequest(`/employees/user/${userId}`, 'PUT', formData),
+
+  getDocumentImageBlob: async (employeeId, documentType) => {
+    const token = getToken()
+    const url = `${API_BASE_URL}/employees/${employeeId}/documents/${documentType}/image`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Failed to load document')
+    }
+    return res.blob()
+  },
 }
 
 // Memberships API

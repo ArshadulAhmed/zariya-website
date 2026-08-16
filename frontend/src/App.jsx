@@ -27,6 +27,8 @@ const RepaymentRecords = lazy(() => import('./pages/dashboard/RepaymentRecords')
 const RepaymentDetails = lazy(() => import('./pages/dashboard/RepaymentDetails'))
 const RepaymentEdit = lazy(() => import('./pages/dashboard/RepaymentEdit'))
 const Users = lazy(() => import('./pages/dashboard/Users'))
+const UserNew = lazy(() => import('./pages/dashboard/UserNew'))
+const UserProfile = lazy(() => import('./pages/dashboard/UserProfile'))
 const BlacklistMembers = lazy(() => import('./pages/dashboard/BlacklistMembers'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
@@ -270,6 +272,26 @@ function App() {
             <Suspense fallback={<PageLoader />}>
               <RepaymentDetails />
             </Suspense>
+          }
+        />
+        <Route
+          path="management/users/new"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<PageLoader />}>
+                <UserNew />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="management/users/:id"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<PageLoader />}>
+                <UserProfile />
+              </Suspense>
+            </AdminRoute>
           }
         />
         <Route

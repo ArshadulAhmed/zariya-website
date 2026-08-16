@@ -220,7 +220,9 @@ const DashboardLayout = () => {
               {!sidebarCollapsed && managementExpanded && (
                 <div className="nav-subitems">
                   {managementItems.map((item) => {
-                    const isActive = location.pathname === item.key
+                    const isActive = item.key === '/dashboard/management/users'
+                      ? location.pathname.startsWith('/dashboard/management/users')
+                      : location.pathname === item.key
                     return (
                       <button
                         key={item.key}

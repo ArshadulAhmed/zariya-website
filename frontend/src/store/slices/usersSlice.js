@@ -89,7 +89,7 @@ const initialState = {
   },
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 100,
     total: 0,
     pages: 0,
   },
@@ -194,6 +194,8 @@ const usersSlice = createSlice({
           const userId = safeToString(user._id) || safeToString(user.id) || ''
           // Create a clean user object with only serializable primitives
           const cleanUser = {
+            employeeId: String(user.employeeId || ''),
+            mobileNumber: String(user.mobileNumber || ''),
             username: String(user.username || ''),
             email: String(user.email || ''),
             fullName: String(user.fullName || ''),

@@ -24,6 +24,7 @@ const Select = ({
         onChange={onChange}
         disabled={disabled}
         {...props}
+        displayEmpty={!!placeholder || !!props.displayEmpty}
       >
         {placeholder && (
           <MenuItem value="" disabled>
