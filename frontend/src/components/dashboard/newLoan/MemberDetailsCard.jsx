@@ -112,6 +112,12 @@ const MemberDetailsCard = () => {
               <span className="info-value">{formatMobileNumber(membership.mobileNumber)}</span>
             </div>
           )}
+          {membership.alternateMobileNumber && (
+            <div className="info-row">
+              <span className="info-label">Alternate Mobile</span>
+              <span className="info-value">{formatMobileNumber(membership.alternateMobileNumber)}</span>
+            </div>
+          )}
           <div className="info-row">
             <span className="info-label">Email</span>
             <span className="info-value">{membership.email || 'N/A'}</span>
