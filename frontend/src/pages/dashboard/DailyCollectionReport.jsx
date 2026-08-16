@@ -6,6 +6,7 @@ import { fetchDailyCollections, downloadDailyCollectionPDF, clearDailyCollection
 import Snackbar from '../../components/Snackbar'
 import TableSkeleton from '../../components/dashboard/TableSkeleton'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { repaymentTypeLabel } from '../../utils/repaymentType'
 import './DailyCollectionReport.scss'
 
 const formatDate = (dateString) => {
@@ -49,13 +50,13 @@ const sortPaymentMethods = (methods) => {
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { collections, totalCollection, totalLateFee, emiCollection, collectionByMethod, totalCount, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
+  const { collections, totalCollection, totalLateFee, emiCollection, legalNoticeCollection, collectionByMethod, totalCount, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
   const todayLocal = getLocalDateString()
   const paymentMethodOptions = sortPaymentMethods([...new Set([...paymentMethodOrder, ...Object.keys(collectionByMethod || {})])])
-  const hasCollectionSummary = Boolean(date) && (totalCount > 0 || totalCollection > 0 || totalLateFee > 0 || emiCollection > 0)
+  const hasCollectionSummary = Boolean(date) && (totalCount > 0 || totalCollection > 0 || totalLateFee > 0 || emiCollection > 0 || legalNoticeCollection > 0)
 
   // Clear daily collection data on mount (to remove any stale data from previous visits)
   useEffect(() => {
@@ -219,8 +220,8 @@ const DailyCollectionReport = () => {
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">
-                    EMI Collection
-                    <Tooltip title="Total principal/EMI collected (excludes late fee payments)." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                    EDI Collection
+                    <Tooltip title="Total EDI collected on this date (excludes late fee, legal notice, and pre-closer discount)." placement="top" arrow enterDelay={200} leaveDelay={0}>
                       <span className="summary-info-icon" aria-label="More info">ⓘ</span>
                     </Tooltip>
                   </span>
@@ -237,8 +238,17 @@ const DailyCollectionReport = () => {
                 </div>
                 <div className="summary-item">
                   <span className="summary-label">
+                    Legal Notice charges
+                    <Tooltip title="Legal notice charges collected on this date. Not counted as EDI or late fee." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+                    </Tooltip>
+                  </span>
+                  <span className="summary-value">{formatCurrency(legalNoticeCollection)}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">
                     Total Collection
-                    <Tooltip title="Total amount collected (EMI Collection + Total Late Fee)." placement="top" arrow enterDelay={200} leaveDelay={0}>
+                    <Tooltip title="Cash collected: EDI + Late Fee + Legal Notice. Pre-closer discount is not included." placement="top" arrow enterDelay={200} leaveDelay={0}>
                       <span className="summary-info-icon" aria-label="More info">ⓘ</span>
                     </Tooltip>
                   </span>
@@ -322,7 +332,7 @@ const DailyCollectionReport = () => {
                   <th>Member Name</th>
                   <th>Amount</th>
                   <th>Payment Method</th>
-                  <th>Late Fee</th>
+                  <th>Type</th>
                   <th>Recorded By</th>
                   <th>Remarks</th>
                 </tr>
@@ -340,7 +350,7 @@ const DailyCollectionReport = () => {
                           {paymentMethodLabel(repayment.paymentMethod)}
                         </span>
                       </td>
-                      <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
+                      <td>{repaymentTypeLabel(repayment.repaymentType)}</td>
                       <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                       <td className="remarks-cell">{repayment.remarks || '-'}</td>
                     </tr>

@@ -7,6 +7,7 @@ import { getLocalDateString } from '../../utils/dashboardUtils'
 import TextField from '../TextField'
 import Select from '../Select'
 import DatePicker from '../DatePicker'
+import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS } from '../../utils/repaymentType'
 import './RepaymentForm.scss'
 
 
@@ -33,7 +34,7 @@ const RepaymentForm = () => {
     paymentDate: getLocalDateString(),
     paymentMethod: 'cash',
     remarks: '',
-    isLateFee: false,
+    repaymentType: REPAYMENT_TYPE.EDI,
   })
   const [repaymentErrors, setRepaymentErrors] = useState({})
   const [isSubmittingRepayment, setIsSubmittingRepayment] = useState(false)
@@ -97,7 +98,7 @@ const RepaymentForm = () => {
         paymentDate: paymentDateISO,
         paymentMethod: repaymentForm.paymentMethod,
         remarks: repaymentForm.remarks.trim() || undefined,
-        isLateFee: Boolean(repaymentForm.isLateFee),
+        repaymentType: repaymentForm.repaymentType || REPAYMENT_TYPE.EDI,
       })
 
       if (response.success) {
@@ -107,7 +108,7 @@ const RepaymentForm = () => {
           paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
-          isLateFee: false,
+          repaymentType: REPAYMENT_TYPE.EDI,
         })
         setRepaymentErrors({})
         // Refresh loan and repayments
@@ -190,17 +191,14 @@ const RepaymentForm = () => {
             rows={2}
           />
 
-          <div className="form-field checkbox-field">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="isLateFee"
-                checked={Boolean(repaymentForm.isLateFee)}
-                onChange={(e) => setRepaymentForm((prev) => ({ ...prev, isLateFee: e.target.checked }))}
-              />
-              <span>Late fee payment</span>
-            </label>
-          </div>
+          <Select
+            label="Type"
+            name="repaymentType"
+            value={repaymentForm.repaymentType}
+            onChange={handleRepaymentChange}
+            options={REPAYMENT_TYPE_OPTIONS}
+            required
+          />
         </div>
 
         {repaymentErrors.submit && (

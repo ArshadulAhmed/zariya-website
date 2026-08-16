@@ -11,6 +11,7 @@ import TextField from '../../components/TextField'
 import Select from '../../components/Select'
 import DatePicker from '../../components/DatePicker'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
 import '../../components/dashboard/RepaymentHistory.scss'
 import './RepaymentEdit.scss'
 
@@ -74,7 +75,7 @@ const RepaymentEdit = () => {
   const lastLoanIdRef = useRef('')
   const sentinelRef = useRef(null)
   const [editingRepayment, setEditingRepayment] = useState(null)
-  const [editForm, setEditForm] = useState({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', isLateFee: false })
+  const [editForm, setEditForm] = useState({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', repaymentType: REPAYMENT_TYPE.EDI })
   const [editErrors, setEditErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -141,6 +142,7 @@ const RepaymentEdit = () => {
   }
 
   const openEditModal = (repayment) => {
+    if (repayment.isSystemGenerated) return
     const d = repayment.paymentDate ? new Date(repayment.paymentDate) : new Date()
     setEditingRepayment(repayment)
     setEditForm({
@@ -148,14 +150,14 @@ const RepaymentEdit = () => {
       paymentDate: getLocalDateString(d),
       paymentMethod: repayment.paymentMethod || 'cash',
       remarks: repayment.remarks ?? '',
-      isLateFee: Boolean(repayment.isLateFee),
+      repaymentType: repayment.repaymentType || REPAYMENT_TYPE.EDI,
     })
     setEditErrors({})
   }
 
   const closeEditModal = () => {
     setEditingRepayment(null)
-    setEditForm({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', isLateFee: false })
+    setEditForm({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', repaymentType: REPAYMENT_TYPE.EDI })
     setEditErrors({})
   }
 
@@ -180,7 +182,7 @@ const RepaymentEdit = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault()
-    if (!editingRepayment || !validateEditForm()) return
+    if (!editingRepayment || editingRepayment.isSystemGenerated || !validateEditForm()) return
     setSaving(true)
     try {
       const selectedDate = new Date(editForm.paymentDate + 'T00:00:00')
@@ -191,7 +193,7 @@ const RepaymentEdit = () => {
         paymentDate: selectedDate.toISOString(),
         paymentMethod: editForm.paymentMethod,
         remarks: editForm.remarks.trim() || '',
-        isLateFee: Boolean(editForm.isLateFee),
+        repaymentType: editForm.repaymentType || REPAYMENT_TYPE.EDI,
       }))
       if (response?.success) closeEditModal()
     } catch (err) {
@@ -202,6 +204,7 @@ const RepaymentEdit = () => {
   }
 
   const handleDeleteClick = (repayment) => {
+    if (repayment.isSystemGenerated) return
     setRepaymentToDelete(repayment)
   }
 
@@ -283,7 +286,7 @@ const RepaymentEdit = () => {
                       <th>Date</th>
                       <th>Amount</th>
                       <th>Method</th>
-                      <th>Late Fee</th>
+                      <th>Type</th>
                       <th>Recorded By</th>
                       <th>Remarks</th>
                       {isAdmin && <th>Actions</th>}
@@ -291,7 +294,7 @@ const RepaymentEdit = () => {
                   </thead>
                   <tbody>
                     {repayments.map((repayment, index) => (
-                      <tr key={repayment._id || repayment.id}>
+                      <tr key={repayment._id || repayment.id} className={repayment.isSystemGenerated ? 'system-missed-row' : ''}>
                         <td>{index + 1}</td>
                         <td>{formatDate(repayment.paymentDate)}</td>
                         <td>{formatCurrency(repayment.amount)}</td>
@@ -300,28 +303,34 @@ const RepaymentEdit = () => {
                             {paymentMethodLabel(repayment.paymentMethod)}
                           </span>
                         </td>
-                        <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
+                        <td>{repayment.isSystemGenerated ? '-' : repaymentTypeLabel(repayment.repaymentType)}</td>
                         <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                         <td className="remarks-cell">{repayment.remarks || '-'}</td>
                         {isAdmin && (
                           <td className="actions-cell">
-                            <button
-                              type="button"
-                              className="btn-edit-row"
-                              onClick={() => openEditModal(repayment)}
-                              title="Edit"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-delete-row"
-                              onClick={() => handleDeleteClick(repayment)}
-                              disabled={deletingId === repayment._id}
-                              title="Delete"
-                            >
-                              {deletingId === repayment._id ? 'Deleting...' : 'Delete'}
-                            </button>
+                            {repayment.isSystemGenerated ? (
+                              <span className="system-missed-actions">—</span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-edit-row"
+                                  onClick={() => openEditModal(repayment)}
+                                  title="Edit"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-delete-row"
+                                  onClick={() => handleDeleteClick(repayment)}
+                                  disabled={deletingId === repayment._id}
+                                  title="Delete"
+                                >
+                                  {deletingId === repayment._id ? 'Deleting...' : 'Delete'}
+                                </button>
+                              </>
+                            )}
                           </td>
                         )}
                       </tr>
@@ -392,17 +401,14 @@ const RepaymentEdit = () => {
                   multiline
                   rows={2}
                 />
-                <div className="form-field checkbox-field">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="isLateFee"
-                      checked={editForm.isLateFee}
-                      onChange={(e) => setEditForm((prev) => ({ ...prev, isLateFee: e.target.checked }))}
-                    />
-                    <span>Late fee payment</span>
-                  </label>
-                </div>
+                <Select
+                  label="Type"
+                  name="repaymentType"
+                  value={editForm.repaymentType}
+                  onChange={handleEditChange}
+                  options={REPAYMENT_TYPE_OPTIONS}
+                  required
+                />
                 {editErrors.submit && <div className="form-error">{editErrors.submit}</div>}
               </div>
               <div className="edit-repayment-modal-actions">

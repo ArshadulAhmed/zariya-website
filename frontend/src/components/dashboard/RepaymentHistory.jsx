@@ -1,5 +1,6 @@
 import { memo, useRef, useEffect } from 'react'
 import { useAppSelector } from '../../store/hooks'
+import { repaymentTypeLabel } from '../../utils/repaymentType'
 import './RepaymentHistory.scss'
 
 const formatDate = (dateString) => {
@@ -103,7 +104,7 @@ const RepaymentHistory = memo(({
               <th>Date</th>
               <th>Amount</th>
               <th>Method</th>
-              <th>Late Fee</th>
+              <th>Type</th>
               <th>Recorded By</th>
               {showRemarks && <th>Remarks</th>}
             </tr>
@@ -119,7 +120,7 @@ const RepaymentHistory = memo(({
                     {paymentMethodLabel(repayment.paymentMethod)}
                   </span>
                 </td>
-                <td>{repayment.isSystemGenerated ? '-' : (repayment.isLateFee ? 'Yes' : 'No')}</td>
+                <td>{repayment.isSystemGenerated ? '-' : repaymentTypeLabel(repayment.repaymentType)}</td>
                 <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
                 {showRemarks && <td className="remarks-cell">{repayment.remarks || '-'}</td>}
               </tr>

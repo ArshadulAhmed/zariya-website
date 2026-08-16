@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchOngoingLoans, closeSnackbar, setSnackbar, setFilters, setPagination } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
 import './RepaymentRecords.scss'
@@ -111,10 +112,13 @@ const RepaymentRecords = () => {
           paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
-          isLateFee: false,
+          repaymentType: REPAYMENT_TYPE.EDI,
         }
       } else {
-        forms[loanId] = repaymentForms[loanId]
+        forms[loanId] = {
+          repaymentType: REPAYMENT_TYPE.EDI,
+          ...repaymentForms[loanId],
+        }
       }
     })
     if (Object.keys(forms).length > 0) {
@@ -179,12 +183,12 @@ const RepaymentRecords = () => {
     }))
   }
 
-  const handleLateFeeChange = (loanId, checked) => {
+  const handleRepaymentTypeChange = (loanId, value) => {
     setRepaymentForms(prev => ({
       ...prev,
       [loanId]: {
         ...prev[loanId],
-        isLateFee: checked,
+        repaymentType: value,
       }
     }))
   }
@@ -250,13 +254,11 @@ const RepaymentRecords = () => {
         paymentDate: paymentDateISO,
         paymentMethod: form.paymentMethod || 'cash',
         remarks: form.remarks?.trim() || undefined,
-        isLateFee: Boolean(form.isLateFee),
+        repaymentType: form.repaymentType || REPAYMENT_TYPE.EDI,
       })
       
       if (response.success) {
-        const message = form.isLateFee
-          ? `Late fee of ${formatCurrency(paymentAmount)} recorded successfully`
-          : `Repayment of ${formatCurrency(paymentAmount)} recorded successfully`
+        const message = `Recorded ${repaymentTypeLabel(form.repaymentType || REPAYMENT_TYPE.EDI)} of ${formatCurrency(paymentAmount)}`
         dispatch(setSnackbar({
           message,
           severity: 'success'
@@ -270,7 +272,7 @@ const RepaymentRecords = () => {
             paymentDate: getLocalDateString(),
             paymentMethod: 'cash',
             remarks: '',
-            isLateFee: false,
+            repaymentType: REPAYMENT_TYPE.EDI,
           }
         }))
         setErrors(prev => {
@@ -311,7 +313,7 @@ const RepaymentRecords = () => {
         paymentDate: getLocalDateString(),
         paymentMethod: 'cash',
         remarks: '',
-        isLateFee: false,
+        repaymentType: REPAYMENT_TYPE.EDI,
       }
       return {
         ...loan,
@@ -411,20 +413,22 @@ const RepaymentRecords = () => {
       ),
     },
     {
-      key: 'isLateFee',
-      header: 'Late Fee',
-      width: '72px',
+      key: 'repaymentType',
+      header: 'Type',
+      width: '160px',
       render: (value, row) => (
-        <label className="late-fee-checkbox-label">
-          <input
-            type="checkbox"
-            className="late-fee-checkbox"
-            checked={Boolean(row.form.isLateFee)}
-            onChange={(e) => handleLateFeeChange(row.loanId, e.target.checked)}
-            disabled={row.isSubmitting}
-          />
-          <span className="late-fee-label-text">Late fee</span>
-        </label>
+        <select
+          className="repayment-method-select"
+          value={row.form.repaymentType || REPAYMENT_TYPE.EDI}
+          onChange={(e) => handleRepaymentTypeChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+        >
+          {REPAYMENT_TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       ),
     },
     {

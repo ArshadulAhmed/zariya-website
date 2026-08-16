@@ -9,7 +9,7 @@ const formatCurrency = (amount) => {
  * Reusable Repayment Summary card.
  * Used on Repayment Details and Loan Report pages.
  * @param {number} loanAmount
- * @param {number} totalPaid - Principal paid (excludes late fee)
+ * @param {number} totalPaid - EDI + pre-closer discount (excludes late fee and legal notice)
  * @param {number} totalLateFeePaid
  * @param {number} remainingAmount - loanAmount - totalPaid
  * @param {number} [additionalAmountPaid] - Optional, shown only when > 0
@@ -34,7 +34,7 @@ const RepaymentSummaryCard = ({
       label: 'Total EMI Paid',
       value: formatCurrency(totalPaid),
       valueClass: 'total-paid',
-      title: 'Total principal/EMI repaid. Late fee payments are not included here.',
+      title: 'EDI plus pre-closer discount. Late fee and legal notice are not included.',
     },
     {
       label: 'Total Late Fee Paid',
@@ -46,14 +46,14 @@ const RepaymentSummaryCard = ({
       label: 'Remaining Amount',
       value: formatCurrency(remaining),
       valueClass: remaining > 0 ? 'remaining' : 'paid-full',
-      title: 'Outstanding principal (Loan Amount minus Total EMI Paid). Late fees do not reduce this.',
+      title: 'Loan amount minus EDI minus pre-closer discount. Late fee and legal notice do not reduce this.',
     },
     ...(Number(additionalAmountPaid) > 0
       ? [{
           label: 'Additional Amount Paid',
           value: formatCurrency(additionalAmountPaid),
           valueClass: 'additional-paid',
-          title: 'Total paid in excess of the loan principal (EMI overpayment + all late fees).',
+          title: 'Paid above the loan principal (EDI + pre-closer discount + late fees). Legal notice is not included.',
         }]
       : []),
   ]
