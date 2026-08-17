@@ -1102,5 +1102,33 @@ export const contactAPI = {
   },
 }
 
+export const holidaysAPI = {
+  getOrganisationHolidays: async (year) => {
+    const query = year ? `?year=${year}` : ''
+    return apiRequest(`/holidays/organisation${query}`, { method: 'GET' })
+  },
+
+  createOrganisationHoliday: async (payload) =>
+    apiRequest('/holidays/organisation', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteOrganisationHoliday: async (id) =>
+    apiRequest(`/holidays/organisation/${id}`, { method: 'DELETE' }),
+
+  getMemberHolidays: async (membershipId) =>
+    apiRequest(`/holidays/members/${membershipId}`, { method: 'GET' }),
+
+  createMemberHoliday: async (membershipId, payload) =>
+    apiRequest(`/holidays/members/${membershipId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteMemberHoliday: async (membershipId, holidayId) =>
+    apiRequest(`/holidays/members/${membershipId}/${holidayId}`, { method: 'DELETE' }),
+}
+
 export default apiRequest
 

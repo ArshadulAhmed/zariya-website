@@ -7,6 +7,7 @@ import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import SecureDocumentImage from '../../components/SecureDocumentImage'
+import MemberHolidaysCard from '../../components/dashboard/MemberHolidaysCard'
 import { formatMobileNumber } from '../../utils/dashboardUtils'
 import './MembershipDetails.scss'
 
@@ -509,6 +510,11 @@ const MembershipDetails = () => {
             </div>
           )}
         </div>
+
+        <MemberHolidaysCard
+          membershipId={membership.userId || membership.id}
+          isAdmin={isAdmin}
+        />
       </div>
       ) : null}
 

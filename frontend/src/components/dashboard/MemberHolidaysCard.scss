@@ -1,0 +1,177 @@
+@use '../../styles/main.scss' as *;
+
+.member-holidays-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  padding: 1.4rem 1.6rem;
+  margin-top: 1.6rem;
+}
+
+.member-holidays-header {
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+}
+
+.member-holidays-form {
+  display: grid;
+  grid-template-columns: 160px 1fr 1.4fr auto;
+  gap: 0.7rem;
+  align-items: end;
+  margin-bottom: 0.8rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #374151;
+
+    input {
+      padding: 9px 11px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-family: 'Poppins', sans-serif;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+      }
+    }
+  }
+
+  .btn-primary {
+    height: 40px;
+    padding: 0 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.member-holidays-error {
+  margin: 0 0 0.8rem;
+  color: #dc2626;
+  font-size: 0.74rem;
+}
+
+.member-holidays-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.member-holidays-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid #f3f4f6;
+
+    &:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    div {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.45rem 0.7rem;
+      min-width: 0;
+
+      strong {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+    }
+  }
+
+  .holiday-name {
+    font-size: 0.78rem;
+    color: var(--text-primary);
+  }
+
+  .holiday-reason {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    width: 100%;
+  }
+
+  .past-badge {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .btn-remove {
+    flex-shrink: 0;
+    padding: 0.35rem 0.7rem;
+    background: white;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+
+    &:hover {
+      background: #fef2f2;
+    }
+  }
+}

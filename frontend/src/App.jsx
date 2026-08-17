@@ -30,6 +30,7 @@ const Users = lazy(() => import('./pages/dashboard/Users'))
 const UserNew = lazy(() => import('./pages/dashboard/UserNew'))
 const UserProfile = lazy(() => import('./pages/dashboard/UserProfile'))
 const BlacklistMembers = lazy(() => import('./pages/dashboard/BlacklistMembers'))
+const OrganisationHolidays = lazy(() => import('./pages/dashboard/OrganisationHolidays'))
 const Reports = lazy(() => import('./pages/dashboard/Reports'))
 const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
 const DailyCollectionReport = lazy(() => import('./pages/dashboard/DailyCollectionReport'))
@@ -310,6 +311,16 @@ function App() {
             <AdminRoute>
               <Suspense fallback={<PageLoader />}>
                 <BlacklistMembers />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="management/holidays"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<PageLoader />}>
+                <OrganisationHolidays />
               </Suspense>
             </AdminRoute>
           }

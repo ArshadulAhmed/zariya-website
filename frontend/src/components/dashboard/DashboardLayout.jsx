@@ -31,6 +31,13 @@ const blacklistIcon = (
   </svg>
 )
 
+const calendarIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+    <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+)
+
 const DashboardLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -150,6 +157,11 @@ const DashboardLayout = () => {
       key: '/dashboard/management/blacklist-members',
       label: 'Blacklist Members',
       icon: blacklistIcon,
+    },
+    {
+      key: '/dashboard/management/holidays',
+      label: 'Holiday Calendar',
+      icon: calendarIcon,
     },
   ]
 
