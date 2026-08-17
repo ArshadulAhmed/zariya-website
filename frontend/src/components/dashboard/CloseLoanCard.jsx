@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { updateLoan, fetchLoan, setSnackbar } from '../../store/slices/loansSlice'
 import { fetchRepayments } from '../../store/slices/repaymentRecordsSlice'
 import ConfirmationModal from './ConfirmationModal'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
 import './CloseLoanCard.scss'
 
 const CloseLoanCard = memo(() => {
@@ -35,6 +36,10 @@ const CloseLoanCard = memo(() => {
   
   // Don't show if loan is already closed
   if (loanStatus === 'closed') {
+    return null
+  }
+
+  if (!isLoanDisbursed(loanInfoFromRepayments) && !isLoanDisbursed(selectedLoan)) {
     return null
   }
   

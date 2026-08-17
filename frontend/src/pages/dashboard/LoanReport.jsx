@@ -17,7 +17,20 @@ import {
 import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
 import './LoanReport.scss'
+
+const loanStatusClass = (loan) => (
+  loan.status === 'active' && !isLoanDisbursed(loan)
+    ? 'status-awaiting-disbursement'
+    : `status-${loan.status}`
+)
+
+const loanStatusLabel = (loan) => (
+  loan.status === 'active' && !isLoanDisbursed(loan)
+    ? 'Awaiting disbursement'
+    : (loan.status ? loan.status.charAt(0).toUpperCase() + loan.status.slice(1) : 'N/A')
+)
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -30,6 +43,20 @@ const formatDate = (dateString) => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
+    })
+  } catch (e) {
+    return dateString
+  }
+}
+
+const formatDateOnly = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     })
   } catch (e) {
     return dateString
@@ -326,8 +353,8 @@ const LoanReport = () => {
             <div className="details-card">
               <div className="card-header">
                 <div>
-                  <span className={`status-badge status-${loan.status}`}>
-                    {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                  <span className={`status-badge ${loanStatusClass(loan)}`}>
+                    {loanStatusLabel(loan)}
                   </span>
                 </div>
                 <div className="loan-id">
@@ -387,13 +414,19 @@ const LoanReport = () => {
                   <h3>Application Details</h3>
                   <div className="detail-row">
                     <span className="detail-label">Status</span>
-                    <span className={`status-badge status-${loan.status}`}>
-                      {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                    <span className={`status-badge ${loanStatusClass(loan)}`}>
+                      {loanStatusLabel(loan)}
                     </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Created At</span>
                     <span className="detail-value">{formatDate(loan.createdAt)}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Disbursed At</span>
+                    <span className="detail-value">
+                      {isLoanDisbursed(loan) ? formatDateOnly(loan.startDate) : 'Awaiting disbursement'}
+                    </span>
                   </div>
                   {loan.reviewedBy && (
                     <>

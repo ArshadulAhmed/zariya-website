@@ -423,11 +423,25 @@ const LoanApplicationDetails = () => {
         onClose={handleApproveCancel}
         onConfirm={handleApproveConfirm}
         title="Approve application"
-        message="Are you sure you want to approve this application?"
         confirmText="Approve"
         cancelText="Cancel"
-        variant="info"
         isLoading={isLoading}
+        className="approve-application-modal"
+        message={(
+          <div className="approve-modal-body">
+            <p className="approve-modal-lead">This creates the loan. It does not give cash to the member.</p>
+            <div className="approve-modal-steps">
+              <div className="approve-modal-step">
+                <h3>Now</h3>
+                <p>The loan account is created and the agreement can be downloaded.</p>
+              </div>
+              <div className="approve-modal-step">
+                <h3>After you disburse</h3>
+                <p>Record the cash date on the loan page. EDI starts the next day. The receipt becomes available.</p>
+              </div>
+            </div>
+          </div>
+        )}
       />
 
       <Snackbar />

@@ -109,6 +109,21 @@ export const updateLoan = createAsyncThunk(
   }
 )
 
+export const disburseLoan = createAsyncThunk(
+  'loans/disburseLoan',
+  async ({ id, disbursementDate }, { rejectWithValue }) => {
+    try {
+      const response = await loansAPI.disburseLoan(id, disbursementDate)
+      if (response.success) {
+        return response.data.loan
+      }
+      return rejectWithValue(response.message || 'Failed to disburse loan')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to disburse loan')
+    }
+  }
+)
+
 
 const loansSlice = createSlice({
   name: 'loans',
@@ -204,6 +219,7 @@ const loansSlice = createSlice({
             remainingAmount: remainingAmount,
             status: String(loan.status || 'pending'),
             createdAt: String(createdAtFormatted),
+            startDate: loan.startDate || null,
             id: String(loanId),
             membership: loan.membership, // Preserve membership object for memberName access
           }
@@ -271,6 +287,7 @@ const loansSlice = createSlice({
             remainingAmount: remainingAmount,
             status: String(loan.status || 'pending'),
             createdAt: String(createdAtFormatted),
+            startDate: loan.startDate || null,
             id: String(loanId),
             membership: loan.membership, // Preserve membership object for memberName access
           }
@@ -371,6 +388,55 @@ const loansSlice = createSlice({
         state.snackbar = {
           open: true,
           message: action.payload || 'Failed to update loan',
+          severity: 'error',
+        }
+      })
+      .addCase(disburseLoan.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(disburseLoan.fulfilled, (state, action) => {
+        state.isLoading = false
+        const updatedLoan = action.payload
+        if (updatedLoan.membership) {
+          updatedLoan.membership = {
+            ...updatedLoan.membership,
+            aadharUpload: (updatedLoan.membership.aadharUpload && typeof updatedLoan.membership.aadharUpload === 'object')
+              ? updatedLoan.membership.aadharUpload
+              : (typeof updatedLoan.membership.aadharUpload === 'string' ? updatedLoan.membership.aadharUpload : null),
+            aadharUploadBack: (updatedLoan.membership.aadharUploadBack && typeof updatedLoan.membership.aadharUploadBack === 'object')
+              ? updatedLoan.membership.aadharUploadBack
+              : (typeof updatedLoan.membership.aadharUploadBack === 'string' ? updatedLoan.membership.aadharUploadBack : null),
+            panUpload: (updatedLoan.membership.panUpload && typeof updatedLoan.membership.panUpload === 'object')
+              ? updatedLoan.membership.panUpload
+              : (typeof updatedLoan.membership.panUpload === 'string' ? updatedLoan.membership.panUpload : null),
+            passportPhoto: (updatedLoan.membership.passportPhoto && typeof updatedLoan.membership.passportPhoto === 'object')
+              ? updatedLoan.membership.passportPhoto
+              : (typeof updatedLoan.membership.passportPhoto === 'string' ? updatedLoan.membership.passportPhoto : null),
+          }
+        }
+        state.selectedLoan = updatedLoan
+        const loanId = safeToString(updatedLoan._id) || safeToString(updatedLoan.id) || ''
+        const index = state.loans.findIndex((l) => l.id === String(loanId) || l.loanAccountNumber === updatedLoan.loanAccountNumber)
+        if (index !== -1) {
+          state.loans[index] = {
+            ...state.loans[index],
+            status: String(updatedLoan.status || state.loans[index].status),
+            startDate: updatedLoan.startDate || null,
+          }
+        }
+        state.snackbar = {
+          open: true,
+          message: 'Loan disbursed successfully',
+          severity: 'success',
+        }
+      })
+      .addCase(disburseLoan.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || 'Failed to disburse loan'
+        state.snackbar = {
+          open: true,
+          message: action.payload || 'Failed to disburse loan',
           severity: 'error',
         }
       })

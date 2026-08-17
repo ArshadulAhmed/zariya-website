@@ -4,7 +4,39 @@
   display: flex;
   gap: 12px;
   align-items: center;
+
+  .btn-disburse-loan {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+  }
+
+  .btn-disburse-loan:hover {
+    background: var(--primary-dark);
+  }
 }
+
+.disburse-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+}
+
 
 
 

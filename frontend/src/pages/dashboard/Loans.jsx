@@ -40,11 +40,14 @@ const columns = [
     key: 'status',
     header: 'Status',
     width: '120px',
-    render: (value) => (
-      <span className={`status-badge status-${value}`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    ),
+    render: (value, row) => {
+      const awaiting = value === 'active' && !row.startDate
+      return (
+        <span className={`status-badge ${awaiting ? 'status-awaiting-disbursement' : `status-${value}`}`}>
+          {awaiting ? 'Awaiting disbursement' : (value ? value.charAt(0).toUpperCase() + value.slice(1) : value)}
+        </span>
+      )
+    },
   },
   {
     key: 'createdAt',
@@ -143,7 +146,7 @@ const Loans = memo(() => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Loans</h1>
-          <p className="page-subtitle">Manage disbursed loans (active, closed, defaulted)</p>
+          <p className="page-subtitle">Manage loans (including awaiting disbursement)</p>
         </div>
         <button 
           className="btn-primary"
@@ -174,6 +177,7 @@ const Loans = memo(() => {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             placeholder="All Status"
             options={[
+              { value: 'awaiting_disbursement', label: 'Awaiting disbursement' },
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
               { value: 'defaulted', label: 'Defaulted' }

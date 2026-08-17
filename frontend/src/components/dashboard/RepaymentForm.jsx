@@ -8,6 +8,7 @@ import TextField from '../TextField'
 import Select from '../Select'
 import DatePicker from '../DatePicker'
 import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS } from '../../utils/repaymentType'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
 import './RepaymentForm.scss'
 
 
@@ -27,7 +28,8 @@ const RepaymentForm = () => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
   const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
-  const loanStatus = useAppSelector((state) => state.loans.selectedLoan?.status)
+  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+  const loanStatus = selectedLoan?.status
   
   const [repaymentForm, setRepaymentForm] = useState({
     amount: '',
@@ -131,7 +133,7 @@ const RepaymentForm = () => {
 
   const isActive = ['approved', 'active'].includes(loanStatus)
 
-  if (!isActive) {
+  if (!isActive || !isLoanDisbursed(selectedLoan)) {
     return null
   }
 

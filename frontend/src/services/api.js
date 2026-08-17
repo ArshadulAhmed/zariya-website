@@ -366,6 +366,19 @@ export const loansAPI = {
     }
   },
 
+  disburseLoan: async (id, disbursementDate) => {
+    try {
+      const data = await apiRequest(`/loans/${id}/disburse`, {
+        method: 'POST',
+        body: JSON.stringify({ disbursementDate }),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API disburseLoan error:', error)
+      throw error
+    }
+  },
+
   downloadContract: async (id) => {
     try {
       const token = getToken()
