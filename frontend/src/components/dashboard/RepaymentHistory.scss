@@ -129,6 +129,31 @@
             }
           }
         }
+
+        &.system-holiday-row {
+          background: #eff6ff;
+
+          &:hover {
+            background: #dbeafe;
+          }
+
+          td {
+            color: #1e40af;
+
+            .payment-method-badge {
+              background: #bfdbfe;
+              color: #1e3a8a;
+            }
+          }
+        }
+
+        &.paid-on-holiday-row {
+          background: #f8fafc;
+
+          &:hover {
+            background: #eff6ff;
+          }
+        }
       }
     }
   }

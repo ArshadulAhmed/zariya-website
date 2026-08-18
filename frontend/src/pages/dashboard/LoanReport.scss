@@ -545,6 +545,48 @@
                   background: #f9fafb;
                 }
 
+                &.system-missed-row {
+                  background: #fef2f2;
+
+                  &:hover {
+                    background: #fee2e2;
+                  }
+
+                  td {
+                    color: #991b1b;
+
+                    .payment-method-badge {
+                      background: #fecaca;
+                      color: #7f1d1d;
+                    }
+                  }
+                }
+
+                &.system-holiday-row {
+                  background: #eff6ff;
+
+                  &:hover {
+                    background: #dbeafe;
+                  }
+
+                  td {
+                    color: #1e40af;
+
+                    .payment-method-badge {
+                      background: #bfdbfe;
+                      color: #1e3a8a;
+                    }
+                  }
+                }
+
+                &.paid-on-holiday-row {
+                  background: #f8fafc;
+
+                  &:hover {
+                    background: #eff6ff;
+                  }
+                }
+
                 td {
                   padding: 0.8rem;
                   font-size: 0.76rem;

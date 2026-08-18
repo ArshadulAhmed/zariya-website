@@ -27,10 +27,17 @@ const getDateConstraints = () => {
   }
 }
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, { dateOnly = false } = {}) => {
   if (!dateString) return 'N/A'
   try {
     const date = new Date(dateString)
+    if (dateOnly) {
+      return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    }
     return date.toLocaleString('en-IN', {
       year: 'numeric',
       month: 'long',
@@ -48,11 +55,42 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+const isHolidayRow = (repayment) => Boolean(repayment?.isHoliday) || repayment?.paymentMethod === 'holiday'
+
+const repaymentRowClass = (repayment) => {
+  if (isHolidayRow(repayment)) return 'system-holiday-row'
+  if (repayment?.onHoliday) return 'paid-on-holiday-row'
+  if (repayment?.isSystemGenerated) return 'system-missed-row'
+  return ''
+}
+
 const paymentMethodLabel = (method) => {
   if (method === 'cash') return 'Cash'
   if (method === 'bank_transfer') return 'Bank Transfer'
   if (method === 'upi') return 'UPI'
+  if (method === 'system') return 'System'
+  if (method === 'holiday') return 'Holiday'
   return method || 'Other'
+}
+
+const repaymentTypeDisplay = (repayment) => {
+  if (isHolidayRow(repayment)) return 'Holiday'
+  if (repayment?.isSystemGenerated) return '-'
+  return repaymentTypeLabel(repayment.repaymentType)
+}
+
+const remarksDisplay = (repayment) => {
+  const remarks = String(repayment?.remarks || '').trim()
+  const holidayName = String(repayment?.holidayName || '').trim()
+  if (remarks && remarks !== '-' && holidayName && remarks !== holidayName) {
+    return `${remarks} · ${holidayName}`
+  }
+  return remarks || holidayName || '-'
+}
+
+const amountDisplay = (repayment) => {
+  if (isHolidayRow(repayment)) return '—'
+  return formatCurrency(repayment.amount)
 }
 
 const RepaymentEdit = () => {
@@ -294,18 +332,18 @@ const RepaymentEdit = () => {
                   </thead>
                   <tbody>
                     {repayments.map((repayment, index) => (
-                      <tr key={repayment._id || repayment.id} className={repayment.isSystemGenerated ? 'system-missed-row' : ''}>
+                      <tr key={repayment._id || repayment.id} className={repaymentRowClass(repayment)}>
                         <td>{index + 1}</td>
-                        <td>{formatDate(repayment.paymentDate)}</td>
-                        <td>{formatCurrency(repayment.amount)}</td>
+                        <td>{formatDate(repayment.paymentDate, { dateOnly: Boolean(repayment.isSystemGenerated) })}</td>
+                        <td>{amountDisplay(repayment)}</td>
                         <td>
                           <span className="payment-method-badge">
                             {paymentMethodLabel(repayment.paymentMethod)}
                           </span>
                         </td>
-                        <td>{repayment.isSystemGenerated ? '-' : repaymentTypeLabel(repayment.repaymentType)}</td>
+                        <td>{repaymentTypeDisplay(repayment)}</td>
                         <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
-                        <td className="remarks-cell">{repayment.remarks || '-'}</td>
+                        <td className="remarks-cell">{remarksDisplay(repayment)}</td>
                         {isAdmin && (
                           <td className="actions-cell">
                             {repayment.isSystemGenerated ? (
