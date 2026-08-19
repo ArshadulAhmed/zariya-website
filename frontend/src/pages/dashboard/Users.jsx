@@ -6,6 +6,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './Users.scss'
 
 const Users = memo(() => {
@@ -13,6 +14,7 @@ const Users = memo(() => {
   const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const usersState = useAppSelector((state) => state.users)
+  const { pageRef, filterRef } = useStickyFilterBar()
 
   useEffect(() => {
     if (currentUser && currentUser.role !== 'admin') {
@@ -139,7 +141,7 @@ const Users = memo(() => {
   }
 
   return (
-    <div className="users-page">
+    <div className="users-page sticky-filter-page" ref={pageRef}>
       <Snackbar
         open={snackbar.open}
         onClose={() => dispatch(closeSnackbar())}
@@ -164,7 +166,7 @@ const Users = memo(() => {
         </button>
       </div>
 
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"

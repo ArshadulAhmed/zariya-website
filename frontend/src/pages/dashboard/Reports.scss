@@ -92,12 +92,36 @@
       }
     }
 
+    .report-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 0 0 6px 0;
+    }
+
     .report-title {
       font-size: 1rem;
       font-weight: 600;
       color: #111827;
-      margin: 0 0 6px 0;
+      margin: 0;
       font-family: 'Poppins', sans-serif;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .report-info-icon {
+      flex-shrink: 0;
+      margin-top: 2px;
+      font-size: 0.9rem;
+      color: #9ca3af;
+      cursor: help;
+      line-height: 1;
+      border-radius: 50%;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: var(--primary-color);
+      }
     }
 
     .report-description {

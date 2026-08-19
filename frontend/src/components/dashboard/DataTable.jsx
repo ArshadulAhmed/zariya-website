@@ -62,10 +62,14 @@ const DataTable = memo(({
           <tr>
             {columns.map((column, index) => (
               <th key={index} style={{ width: column.width }}>
-                {column.header}
+                <div className="data-table-th-inner">{column.header}</div>
               </th>
             ))}
-            {actions && <th style={{ width: '120px' }}>Actions</th>}
+            {actions && (
+              <th style={{ width: '120px' }}>
+                <div className="data-table-th-inner">Actions</div>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

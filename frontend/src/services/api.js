@@ -916,6 +916,65 @@ export const loanDueTrackingAPI = {
       throw error
     }
   },
+
+  getOutstandingLoans: async (params = {}) => {
+    try {
+      const { page = 1, limit = 25, search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      query.set('page', String(page))
+      query.set('limit', String(limit))
+      if (search) query.set('search', search)
+      if (status) query.set('status', status)
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const data = await apiRequest(`/loan-due-tracking/outstanding?${query.toString()}`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan outstanding API error:', error)
+      throw error
+    }
+  },
+
+  downloadOutstandingCsv: async (params = {}) => {
+    try {
+      const { search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      if (search) query.set('search', search)
+      if (status) query.set('status', status)
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loan-due-tracking/outstanding/export?${query.toString()}`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download outstanding loans')
+      }
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = 'loan-outstanding-fine.csv'
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i)
+        if (filenameMatch) filename = filenameMatch[1]
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      return { success: true, message: 'Download started' }
+    } catch (error) {
+      console.error('Loan outstanding CSV error:', error)
+      throw error
+    }
+  },
 }
 
 // Upload API

@@ -6,6 +6,7 @@ import DataTable from '../../components/dashboard/DataTable'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './BlacklistMembers.scss'
 
 const mapMember = (membership) => ({
@@ -34,6 +35,7 @@ const BlacklistMembers = memo(function BlacklistMembers() {
   const [remarkError, setRemarkError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [unmarkConfirm, setUnmarkConfirm] = useState({ open: false, member: null })
+  const { pageRef, filterRef } = useStickyFilterBar()
   const hasFetchedRef = useRef(false)
 
   useEffect(() => {
@@ -208,7 +210,7 @@ const BlacklistMembers = memo(function BlacklistMembers() {
   const showSkeleton = isLoading || !hasFetchedRef.current
 
   return (
-    <div className="blacklist-members-page">
+    <div className="blacklist-members-page sticky-filter-page" ref={pageRef}>
       <Snackbar
         open={snackbar.open}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
@@ -230,7 +232,7 @@ const BlacklistMembers = memo(function BlacklistMembers() {
         </button>
       </div>
 
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { ReportInfoIcon, NOT_REPAID_INFO, OUTSTANDING_INFO } from './reportInfoTooltips'
 import './Reports.scss'
 
 const Reports = () => {
@@ -71,11 +72,36 @@ const Reports = () => {
               <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h3 className="report-title">Loans Not Repaid Up To Date</h3>
+          <div className="report-title-row">
+            <h3 className="report-title">Loans Not Repaid Up To Date</h3>
+            <ReportInfoIcon title={NOT_REPAID_INFO} />
+          </div>
           <p className="report-description">Active loans with pending EMIs, accumulated fines, and principal repaid</p>
           <button 
             className="report-btn"
             onClick={() => navigate('/dashboard/reports/loans-not-up-to-date')}
+          >
+            View Report
+          </button>
+        </div>
+
+        <div className="report-card">
+          <div className="report-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="report-title-row">
+            <h3 className="report-title">Loan Outstanding & Fine</h3>
+            <ReportInfoIcon title={OUTSTANDING_INFO} />
+          </div>
+          <p className="report-description">Daily remaining principal and unpaid fine for every loan, with CSV download</p>
+          <button
+            className="report-btn"
+            onClick={() => navigate('/dashboard/reports/loan-outstanding')}
           >
             View Report
           </button>

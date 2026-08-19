@@ -7,6 +7,7 @@ import { getLocalDateString } from '../../utils/dashboardUtils'
 import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './RepaymentRecords.scss'
 
 const formatCurrency = (amount) => {
@@ -48,6 +49,7 @@ const RepaymentRecords = () => {
   const [submittingLoanId, setSubmittingLoanId] = useState(null)
   const [errors, setErrors] = useState({})
   const [searchInput, setSearchInput] = useState(filters.search || '')
+  const { pageRef, filterRef } = useStickyFilterBar()
   
   const dateLimits = getDateLimits()
   const hasFetchedRef = useRef(false)
@@ -486,7 +488,7 @@ const RepaymentRecords = () => {
   }
   
   return (
-    <div className="repayment-records-page">
+    <div className="repayment-records-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Repayment Records</h1>
@@ -494,7 +496,7 @@ const RepaymentRecords = () => {
         </div>
       </div>
       
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"

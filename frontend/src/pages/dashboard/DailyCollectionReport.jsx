@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Tooltip from '@mui/material/Tooltip'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchDailyCollections, downloadDailyCollectionPDF, clearDailyCollection, setError } from '../../store/slices/dailyCollectionSlice'
 import Snackbar from '../../components/Snackbar'
-import TableSkeleton from '../../components/dashboard/TableSkeleton'
+import DataTable from '../../components/dashboard/DataTable'
 import { getLocalDateString } from '../../utils/dashboardUtils'
 import { repaymentTypeLabel } from '../../utils/repaymentType'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './DailyCollectionReport.scss'
 
 const formatDate = (dateString) => {
@@ -47,6 +48,18 @@ const sortPaymentMethods = (methods) => {
   })
 }
 
+const SummaryMetric = ({ label, tooltip, value, valueClass = '' }) => (
+  <div className="summary-item">
+    <span className="summary-label">
+      {label}
+      <Tooltip title={tooltip} placement="left" arrow enterDelay={200} leaveDelay={0}>
+        <span className="summary-info-icon" aria-label="More info">ⓘ</span>
+      </Tooltip>
+    </span>
+    <span className={`summary-value ${valueClass}`.trim()}>{value}</span>
+  </div>
+)
+
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -54,6 +67,8 @@ const DailyCollectionReport = () => {
   
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
+  const [summaryDrawerOpen, setSummaryDrawerOpen] = useState(false)
+  const { pageRef, filterRef } = useStickyFilterBar()
   const todayLocal = getLocalDateString()
   const paymentMethodOptions = sortPaymentMethods([...new Set([...paymentMethodOrder, ...Object.keys(collectionByMethod || {})])])
   const hasCollectionSummary = Boolean(date) && (totalCount > 0 || totalCollection > 0 || totalLateFee > 0 || emiCollection > 0 || legalNoticeCollection > 0)
@@ -83,6 +98,7 @@ const DailyCollectionReport = () => {
 
     // Fetch first page
     setSelectedPaymentMethod('')
+    setSummaryDrawerOpen(false)
     dispatch(fetchDailyCollections({ date: selectedDate, page: 1, limit: pagination?.limit || 50 }))
   }
 
@@ -103,38 +119,75 @@ const DailyCollectionReport = () => {
   }
 
   const dailyCollectionColumns = [
-    { header: 'S.No', width: '60px' },
-    { header: 'Loan Account Number', width: '180px' },
-    { header: 'Member Name', width: '200px' },
-    { header: 'Amount', width: '150px' },
-    { header: 'Payment Method', width: '150px' },
-    { header: 'Recorded By', width: '180px' },
-    { header: 'Remarks', width: '200px' },
+    { header: 'S.No', key: '_sno', width: '60px' },
+    { header: 'Loan Account Number', key: 'loanAccountNumber', width: '180px' },
+    { header: 'Member Name', key: 'memberName', width: '200px' },
+    {
+      header: 'Amount',
+      key: 'amount',
+      width: '150px',
+      render: (value) => <span className="amount-cell">{formatCurrency(value)}</span>,
+    },
+    {
+      header: 'Payment Method',
+      key: 'paymentMethod',
+      width: '150px',
+      render: (value) => (
+        <span className="payment-method-badge">{paymentMethodLabel(value)}</span>
+      ),
+    },
+    {
+      header: 'Type',
+      key: 'repaymentType',
+      width: '140px',
+      render: (value) => repaymentTypeLabel(value),
+    },
+    { header: 'Recorded By', key: 'recordedByName', width: '180px' },
+    {
+      header: 'Remarks',
+      key: 'remarks',
+      width: '200px',
+      render: (value) => <span className="remarks-cell">{value || '-'}</span>,
+    },
   ]
 
-  const sentinelRef = useRef(null)
+  const tableData = collections.map((repayment, index) => ({
+    ...repayment,
+    _sno: index + 1,
+    loanAccountNumber: repayment.loan?.loanAccountNumber || 'N/A',
+    memberName: repayment.loan?.membership?.fullName || 'N/A',
+    recordedByName: repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A',
+  }))
 
-  // Infinite scroll sentinel observer
-  useEffect(() => {
-    if (!date || !sentinelRef.current) return
+  const handleLoadMore = useCallback(() => {
+    if (!date) return
     if (pagination?.page >= pagination?.pages) return
     if (isLoadingMore || isLoading) return
-    const el = sentinelRef.current
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          // Load next page
-          dispatch(fetchDailyCollections({ date, page: (pagination.page || 1) + 1, limit: pagination.limit || 50, paymentMethod: selectedPaymentMethod }))
-        }
-      },
-      { rootMargin: '300px', threshold: 0.1 }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [date, pagination?.page, pagination?.pages, pagination?.limit, isLoadingMore, isLoading, selectedPaymentMethod, dispatch])
+    dispatch(fetchDailyCollections({
+      date,
+      page: (pagination.page || 1) + 1,
+      limit: pagination.limit || 50,
+      paymentMethod: selectedPaymentMethod,
+    }))
+  }, [date, pagination, isLoadingMore, isLoading, selectedPaymentMethod, dispatch])
+
+  useEffect(() => {
+    if (!summaryDrawerOpen) return
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setSummaryDrawerOpen(false)
+    }
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [summaryDrawerOpen])
 
   return (
-    <div className="daily-collection-report-page">
+    <div className="daily-collection-report-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <button className="back-button" onClick={() => navigate('/dashboard/reports')}>
@@ -149,233 +202,193 @@ const DailyCollectionReport = () => {
         </div>
       </div>
 
-      <div className="search-section">
+      <div className="search-section sticky-filter-bar" ref={filterRef}>
         <div className="search-card">
           <form
+            className="toolbar-left"
             onSubmit={(e) => {
               e.preventDefault()
               handleSearch()
             }}
             autoComplete="off"
           >
-            <div className="search-input-group">
-              <label htmlFor="date">Select Date</label>
+            <div className="toolbar-field">
+              <label htmlFor="date">Select date</label>
               <input
                 type="date"
                 id="date"
-                className="date-input"
+                className="toolbar-control"
                 autoComplete="off"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 max={todayLocal}
                 required
               />
+            </div>
+            <button
+              type="submit"
+              className="btn-primary toolbar-btn"
+              disabled={isLoading || !selectedDate}
+            >
+              {isLoading ? 'Searching...' : 'Search'}
+            </button>
+            {hasCollectionSummary && (
+              <div className="toolbar-field">
+                <label htmlFor="paymentMethodFilter">Payment method</label>
+                <select
+                  id="paymentMethodFilter"
+                  className="toolbar-control"
+                  value={selectedPaymentMethod}
+                  onChange={handlePaymentMethodFilterChange}
+                  disabled={isLoading || paymentMethodOptions.length === 0}
+                >
+                  <option value="">All Methods</option>
+                  {paymentMethodOptions.map((method) => (
+                    <option key={method} value={method}>
+                      {paymentMethodLabel(method)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </form>
+          {hasCollectionSummary && (
+            <div className="toolbar-right">
+              <div className="toolbar-field toolbar-total">
+                <span className="toolbar-field-label">Total collection</span>
+                <div className="toolbar-total-line">
+                  <span className="toolbar-total-amount">{formatCurrency(totalCollection)}</span>
+                  <span className="toolbar-total-count">{totalCount} txn</span>
+                </div>
+              </div>
               <button
-                type="submit"
-                className="btn-primary"
-                disabled={isLoading || !selectedDate}
+                type="button"
+                className="btn-secondary toolbar-btn"
+                onClick={() => setSummaryDrawerOpen(true)}
               >
-                {isLoading ? 'Searching...' : 'Search'}
+                Summary
+              </button>
+              <button
+                type="button"
+                className="btn-primary toolbar-btn"
+                onClick={handlePrint}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <>
+                    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
+                        <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                      </circle>
+                    </svg>
+                    Generating PDF...
+                  </>
+                ) : (
+                  'Print Report'
+                )}
               </button>
             </div>
-          </form>
+          )}
         </div>
+        {error && (
+          <div className="error-container">
+            <p>{error}</p>
+          </div>
+        )}
       </div>
 
-      {error && (
-        <div className="error-container">
-          <p>{error}</p>
-        </div>
+      {(date || isLoading) && (
+        <DataTable
+          columns={dailyCollectionColumns}
+          data={tableData}
+          loading={isLoading && collections.length === 0}
+          emptyMessage={
+            selectedPaymentMethod
+              ? 'No collections found for the selected payment method'
+              : 'No collections found for the selected date'
+          }
+          skeletonRowCount={5}
+          hasMore={pagination?.page < pagination?.pages}
+          onLoadMore={handleLoadMore}
+          loadingMore={isLoadingMore}
+        />
       )}
 
-      {isLoading && collections.length === 0 ? (
-        <TableSkeleton
-          columns={dailyCollectionColumns}
-          rowCount={5}
-          showActions={false}
-        />
-      ) : hasCollectionSummary ? (
+      {summaryDrawerOpen && (
         <>
-          <div className="summary-section">
-            <div className="summary-card">
+          <div
+            className="collection-summary-drawer-overlay"
+            onClick={() => setSummaryDrawerOpen(false)}
+            aria-hidden="true"
+          />
+          <aside className="collection-summary-drawer" role="dialog" aria-label="Collection summary">
+            <div className="collection-summary-drawer-header">
               <h3>Collection Summary</h3>
+              <button
+                type="button"
+                className="collection-summary-drawer-close"
+                onClick={() => setSummaryDrawerOpen(false)}
+                aria-label="Close summary"
+              >
+                ×
+              </button>
+            </div>
+            <div className="collection-summary-drawer-body">
+              <div className="summary-hero">
+                <span className="summary-hero-label">Total collection</span>
+                <span className="summary-hero-value">{formatCurrency(totalCollection)}</span>
+                <span className="summary-hero-meta">{formatDate(date)} · {totalCount} transactions</span>
+              </div>
               <div className="summary-grid">
-                <div className="summary-item">
-                  <span className="summary-label">
-                    Date
-                    <Tooltip title="The date for which this collection report is generated." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value">{formatDate(date)}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">
-                    Total Transactions
-                    <Tooltip title="Number of repayment transactions recorded on this date." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value">{totalCount}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">
-                    EDI Collection
-                    <Tooltip title="Total EDI collected on this date (excludes late fee, legal notice, and pre-closer discount)." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value emi">{formatCurrency(emiCollection)}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">
-                    Total Late Fee
-                    <Tooltip title="Total amount collected as late fees on this date." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value late-fee">{formatCurrency(totalLateFee)}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">
-                    Legal Notice charges
-                    <Tooltip title="Legal notice charges collected on this date. Not counted as EDI or late fee." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value">{formatCurrency(legalNoticeCollection)}</span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">
-                    Total Collection
-                    <Tooltip title="Cash collected: EDI + Late Fee + Legal Notice. Pre-closer discount is not included." placement="top" arrow enterDelay={200} leaveDelay={0}>
-                      <span className="summary-info-icon" aria-label="More info">ⓘ</span>
-                    </Tooltip>
-                  </span>
-                  <span className="summary-value total">{formatCurrency(totalCollection)}</span>
-                </div>
-                <div className="summary-item summary-methods">
-                  <span className="summary-value methods-inline">
-                    {collectionByMethod && Object.keys(collectionByMethod).length > 0 ? (
-                      paymentMethodOptions.map((method) => {
-                        const data = collectionByMethod[method]
-                        const amount = data?.total ?? data ?? 0
-                        const count = data?.count ?? 0
-                        const label = paymentMethodLabel(method)
-                        return (
-                          <span key={method} className="method-inline">
-                            <span className="method-label">{label}</span>
-                            <span className="method-amount">{formatCurrency(amount)} ({count})</span>
-                          </span>
-                        )
-                      })
-                    ) : (
-                      <span>—</span>
-                    )}
-                  </span>
+                <SummaryMetric
+                  label="Total Transactions"
+                  tooltip="Number of repayment transactions recorded on this date."
+                  value={totalCount}
+                />
+                <SummaryMetric
+                  label="EDI Collection"
+                  tooltip="Total EDI collected on this date (excludes late fee, legal notice, and pre-closer discount)."
+                  value={formatCurrency(emiCollection)}
+                  valueClass="emi"
+                />
+                <SummaryMetric
+                  label="Total Late Fee"
+                  tooltip="Total amount collected as late fees on this date."
+                  value={formatCurrency(totalLateFee)}
+                  valueClass="late-fee"
+                />
+                <SummaryMetric
+                  label="Legal Notice charges"
+                  tooltip="Legal notice charges collected on this date. Not counted as EDI or late fee."
+                  value={formatCurrency(legalNoticeCollection)}
+                />
+              </div>
+              <div className="summary-methods">
+                <span className="summary-methods-heading">By payment method</span>
+                <div className="summary-methods-grid">
+                  {collectionByMethod && Object.keys(collectionByMethod).length > 0 ? (
+                    paymentMethodOptions.map((method) => {
+                      const data = collectionByMethod[method]
+                      const amount = data?.total ?? data ?? 0
+                      const count = data?.count ?? 0
+                      return (
+                        <div key={method} className="method-card">
+                          <span className="method-label">{paymentMethodLabel(method)}</span>
+                          <span className="method-amount">{formatCurrency(amount)}</span>
+                          <span className="method-count">{count} txn</span>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <span className="method-amount">—</span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="actions-section">
-            <div className="payment-filter">
-              <label htmlFor="paymentMethodFilter">Filter by Payment Method</label>
-              <select
-                id="paymentMethodFilter"
-                value={selectedPaymentMethod}
-                onChange={handlePaymentMethodFilterChange}
-                disabled={isLoading || paymentMethodOptions.length === 0}
-              >
-                <option value="">All Methods</option>
-                {paymentMethodOptions.map((method) => (
-                  <option key={method} value={method}>
-                    {paymentMethodLabel(method)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              className="btn-primary"
-              onClick={handlePrint}
-              disabled={isDownloading}
-            >
-              {isDownloading ? (
-                <>
-                  <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
-                      <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
-                      <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
-                    </circle>
-                  </svg>
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 9V2H18V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M6 18H18V22H6V18Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M10 14H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Print Report
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="data-table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>S.No</th>
-                  <th>Loan Account Number</th>
-                  <th>Member Name</th>
-                  <th>Amount</th>
-                  <th>Payment Method</th>
-                  <th>Type</th>
-                  <th>Recorded By</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {collections.length > 0 ? (
-                  collections.map((repayment, index) => (
-                    <tr key={repayment._id}>
-                      <td>{index + 1}</td>
-                      <td>{repayment.loan?.loanAccountNumber || 'N/A'}</td>
-                      <td>{repayment.loan?.membership?.fullName || 'N/A'}</td>
-                      <td className="amount-cell">{formatCurrency(repayment.amount)}</td>
-                      <td>
-                        <span className="payment-method-badge">
-                          {paymentMethodLabel(repayment.paymentMethod)}
-                        </span>
-                      </td>
-                      <td>{repaymentTypeLabel(repayment.repaymentType)}</td>
-                      <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
-                      <td className="remarks-cell">{repayment.remarks || '-'}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="8" className="table-empty-cell">
-                      No collections found for the selected payment method
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          {pagination?.page < pagination?.pages && (
-            <div ref={sentinelRef} className="data-table-sentinel">
-              {isLoadingMore && <div className="data-table-loading-more">Loading more…</div>}
-            </div>
-          )}
+          </aside>
         </>
-      ) : date && !isLoading ? (
-        <div className="empty-state">
-          <p>No collections found for the selected date</p>
-        </div>
-      ) : null}
+      )}
 
       <Snackbar />
     </div>

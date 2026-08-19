@@ -6,7 +6,7 @@
   background: #f9fafb;
 
   .page-header {
-    margin-bottom: 1.6rem;
+    margin-bottom: 0.5rem;
 
     .back-button {
       display: flex;
@@ -32,10 +32,27 @@
     }
 
     .page-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-size: 1.6rem;
       font-weight: 700;
       color: var(--text-primary);
       margin: 0 0 0.4rem 0;
+    }
+
+    .report-info-icon {
+      flex-shrink: 0;
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #9ca3af;
+      cursor: help;
+      line-height: 1;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: var(--primary-color);
+      }
     }
 
     .page-subtitle {
@@ -46,8 +63,6 @@
   }
 
   .search-section {
-    margin-bottom: 1.6rem;
-
     .search-card {
       background: white;
       border-radius: 12px;
@@ -194,7 +209,7 @@
     border: 1px solid #fecaca;
     border-radius: 8px;
     padding: 1rem;
-    margin-bottom: 1.6rem;
+    margin-top: 0.75rem;
 
     p {
       color: #dc2626;
@@ -268,6 +283,30 @@
 
       &.fine {
         color: #b91c1c;
+      }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+
+      &.status-active {
+        background: #dbeafe;
+        color: #2563eb;
+      }
+
+      &.status-closed {
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      &.status-defaulted {
+        background: #fee2e2;
+        color: #dc2626;
       }
     }
   }

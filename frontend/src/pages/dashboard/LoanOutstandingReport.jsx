@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
-  fetchLoansNotRepaidUpToDate,
-  clearLoanDueTracking,
-} from '../../store/slices/loanDueTrackingSlice'
+  fetchOutstandingLoans,
+  downloadOutstandingCsv,
+  clearLoanOutstanding,
+} from '../../store/slices/loanOutstandingSlice'
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
-import { ReportInfoIcon, NOT_REPAID_INFO } from './reportInfoTooltips'
+import { ReportInfoIcon, OUTSTANDING_INFO } from './reportInfoTooltips'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoansNotUpToDateReport.scss'
 
@@ -27,11 +28,15 @@ const formatDate = (dateString) => {
   }
 }
 
-const formatCurrency = (amount) => {
-  return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const formatCurrency = (amount) =>
+  `₹${Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+const statusLabel = (value) => {
+  if (!value) return 'N/A'
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
-const COLUMNS_WITHOUT_LAST_CALC = [
+const COLUMNS = [
   { header: 'S.No', key: '_sno', width: '60px' },
   { header: 'Member Name', key: 'member_name', width: '180px' },
   {
@@ -40,71 +45,78 @@ const COLUMNS_WITHOUT_LAST_CALC = [
     width: '140px',
     render: (v, row) => row.loan_account_number || row.loan_id || 'N/A',
   },
-  { header: 'Loan Amount', key: 'loan_amount', width: '120px', render: (v) => formatCurrency(v) },
-  { header: 'EMI Amount', key: 'emi_amount', width: '110px', render: (v) => formatCurrency(v) },
-  { header: 'Pending EMI', key: 'pending_emi_count', width: '120px' },
-  { header: 'Principal Paid', key: 'total_principal_paid', width: '120px', render: (v) => formatCurrency(v) },
   {
-    header: 'Fine Accumulated',
+    header: 'Status',
+    key: 'loan_status',
+    width: '110px',
+    render: (v) => <span className={`status-badge status-${v}`}>{statusLabel(v)}</span>,
+  },
+  { header: 'Loan Amount', key: 'loan_amount', width: '120px', render: (v) => formatCurrency(v) },
+  {
+    header: 'Remaining Principal',
+    key: 'remaining_amount',
+    width: '150px',
+    render: (v) => formatCurrency(v),
+  },
+  {
+    header: 'Total EDI Missed',
+    key: 'pending_emi_count',
+    width: '140px',
+    render: (v) => Number(v || 0),
+  },
+  {
+    header: 'Fine Outstanding',
     key: 'total_fine_accumulated',
-    width: '130px',
+    width: '140px',
     render: (v) => <span className="amount-cell fine">{formatCurrency(v)}</span>,
   },
 ]
 
-const LAST_CALCULATED_COLUMN = {
-  header: 'Last Calculated',
-  key: 'last_calculated_at',
-  width: '160px',
-  render: (v) => formatDate(v),
-}
-
-const LoansNotUpToDateReport = () => {
+const LoanOutstandingReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const {
-    items,
-    pagination,
-    isLoading,
-    isLoadingMore,
-    error,
-  } = useAppSelector((state) => state.loanDueTracking)
+  const { items, pagination, isLoading, isLoadingMore, isDownloading, error } = useAppSelector(
+    (state) => state.loanOutstanding
+  )
 
   const [searchInput, setSearchInput] = useState('')
-  const [minPendingInput, setMinPendingInput] = useState('')
+  const [statusInput, setStatusInput] = useState('')
   const { pageRef, filterRef } = useStickyFilterBar()
 
+  const queryArgs = (page = 1) => ({
+    page,
+    limit: pagination?.limit || 25,
+    search: searchInput.trim(),
+    status: statusInput,
+    sortBy: 'remaining_amount',
+    sortOrder: 'desc',
+  })
+
   useEffect(() => {
-    dispatch(clearLoanDueTracking())
+    dispatch(clearLoanOutstanding())
   }, [dispatch])
 
   useEffect(() => {
     return () => {
-      dispatch(clearLoanDueTracking())
+      dispatch(clearLoanOutstanding())
     }
   }, [dispatch])
 
   useEffect(() => {
     dispatch(
-      fetchLoansNotRepaidUpToDate({
+      fetchOutstandingLoans({
         page: 1,
         limit: 25,
         search: '',
-        sortBy: 'last_calculated_at',
+        status: '',
+        sortBy: 'remaining_amount',
         sortOrder: 'desc',
       })
     )
   }, [dispatch])
 
   const applyFilters = (page = 1) => {
-    dispatch(
-      fetchLoansNotRepaidUpToDate({
-        page,
-        limit: pagination?.limit || 25,
-        search: searchInput.trim(),
-        minPendingEmi: minPendingInput.trim() ? parseInt(minPendingInput, 10) : undefined,
-      })
-    )
+    dispatch(fetchOutstandingLoans(queryArgs(page)))
   }
 
   const handleSearch = (e) => {
@@ -114,12 +126,15 @@ const LoansNotUpToDateReport = () => {
 
   const handleReset = () => {
     setSearchInput('')
-    setMinPendingInput('')
+    setStatusInput('')
     dispatch(
-      fetchLoansNotRepaidUpToDate({
+      fetchOutstandingLoans({
         page: 1,
         limit: pagination?.limit || 25,
         search: '',
+        status: '',
+        sortBy: 'remaining_amount',
+        sortOrder: 'desc',
       })
     )
   }
@@ -129,8 +144,19 @@ const LoansNotUpToDateReport = () => {
     applyFilters((pagination?.page || 1) + 1)
   }
 
-  const hasMore = pagination?.page < pagination?.pages
+  const handleDownload = () => {
+    if (isDownloading) return
+    dispatch(
+      downloadOutstandingCsv({
+        search: searchInput.trim(),
+        status: statusInput,
+        sortBy: 'remaining_amount',
+        sortOrder: 'desc',
+      })
+    )
+  }
 
+  const hasMore = pagination?.page < pagination?.pages
   const tableData = (items || []).map((row, i) => ({ ...row, _sno: i + 1 }))
 
   const lastCalculatedValues = (items || []).map((i) => {
@@ -140,9 +166,6 @@ const LoansNotUpToDateReport = () => {
   })
   const uniqueDates = [...new Set(lastCalculatedValues.filter((t) => !Number.isNaN(t)))]
   const sameLastCalculated = items.length > 0 && uniqueDates.length === 1
-  const columns = sameLastCalculated
-    ? COLUMNS_WITHOUT_LAST_CALC
-    : [...COLUMNS_WITHOUT_LAST_CALC, LAST_CALCULATED_COLUMN]
   const snapshotDate = sameLastCalculated && items[0]?.last_calculated_at ? items[0].last_calculated_at : null
 
   return (
@@ -157,11 +180,11 @@ const LoansNotUpToDateReport = () => {
             Back
           </button>
           <h1 className="page-title">
-            Loans Not Repaid Up To Date
-            <ReportInfoIcon title={NOT_REPAID_INFO} />
+            Loan Outstanding & Fine
+            <ReportInfoIcon title={OUTSTANDING_INFO} />
           </h1>
           <p className="page-subtitle">
-            Active loans where expected EMI till today is greater than EMI paid equivalent. Data is updated daily by the system.
+            Remaining principal and unpaid fine as of the last daily snapshot. Download CSV for the full list.
           </p>
         </div>
       </div>
@@ -172,10 +195,10 @@ const LoansNotUpToDateReport = () => {
             <div className="search-filters-row">
               <div className="search-filters-left">
                 <div className="filter-group">
-                  <label htmlFor="search">Member name / Loan ID</label>
+                  <label htmlFor="outstanding-search">Member name / Loan ID</label>
                   <input
                     type="text"
-                    id="search"
+                    id="outstanding-search"
                     className="filter-input"
                     placeholder="Search..."
                     value={searchInput}
@@ -183,29 +206,32 @@ const LoansNotUpToDateReport = () => {
                   />
                 </div>
                 <div className="filter-group">
-                  <label htmlFor="minPending">Min. pending EMIs</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    id="minPending"
-                    className="filter-input"
-                    placeholder="Any"
-                    min={0}
-                    value={minPendingInput}
-                    onChange={(e) => setMinPendingInput(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                  />
+                  <label htmlFor="outstanding-status">Status</label>
+                  <select
+                    id="outstanding-status"
+                    className="filter-select"
+                    value={statusInput}
+                    onChange={(e) => setStatusInput(e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="closed">Closed</option>
+                    <option value="defaulted">Defaulted</option>
+                  </select>
                 </div>
                 <button type="submit" className="btn-primary" disabled={isLoading}>
                   {isLoading && items.length === 0 ? 'Loading...' : 'Apply'}
                 </button>
+                <button type="button" className="btn-secondary" onClick={handleReset} disabled={isLoading}>
+                  Reset
+                </button>
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={handleReset}
-                  disabled={isLoading}
+                  onClick={handleDownload}
+                  disabled={isDownloading || isLoading}
                 >
-                  Reset
+                  {isDownloading ? 'Downloading...' : 'Download CSV'}
                 </button>
               </div>
               {snapshotDate && !isLoading && (
@@ -217,27 +243,30 @@ const LoansNotUpToDateReport = () => {
                     </svg>
                   </div>
                   <div className="report-snapshot-text">
-                    <span className="report-snapshot-label">Dues and fines below are as of</span>
+                    <span className="report-snapshot-label">Figures below are as of</span>
                     <span className="report-snapshot-date">{formatDate(snapshotDate)}</span>
-                    <span className="report-snapshot-hint">Updated daily at 2:00 PM</span>
+                    <span className="report-snapshot-hint">
+                      {pagination?.total != null ? `${pagination.total} loans · ` : ''}Updated daily at 2:00 PM
+                    </span>
                   </div>
                 </div>
               )}
             </div>
           </form>
         </div>
-        {error && (
-          <div className="error-container">
-            <p>{error}</p>
-          </div>
-        )}
       </div>
 
+      {error && (
+        <div className="error-container">
+          <p>{error}</p>
+        </div>
+      )}
+
       <DataTable
-        columns={columns}
+        columns={COLUMNS}
         data={tableData}
         loading={isLoading}
-        emptyMessage="No active loans with pending EMIs. All loans are repaid up to date."
+        emptyMessage="No loans with remaining principal or unpaid fine."
         skeletonRowCount={6}
         hasMore={hasMore}
         onLoadMore={handleLoadMore}
@@ -262,4 +291,4 @@ const LoansNotUpToDateReport = () => {
   )
 }
 
-export default LoansNotUpToDateReport
+export default LoanOutstandingReport

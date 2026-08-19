@@ -18,6 +18,7 @@ import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCar
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoanReport.scss'
 
 const loanStatusClass = (loan) => (
@@ -71,6 +72,7 @@ const LoanReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
+  const { pageRef, filterRef } = useStickyFilterBar()
   
   const {
     loanAccountNumber,
@@ -202,7 +204,7 @@ const LoanReport = () => {
   const mockSelectedLoan = loan
 
   return (
-    <div className="loan-report-page">
+    <div className="loan-report-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <button className="back-button" onClick={() => navigate('/dashboard/reports')}>
@@ -249,7 +251,7 @@ const LoanReport = () => {
       </div>
 
       {/* Search Section */}
-      <div className="search-section">
+      <div className="search-section sticky-filter-bar" ref={filterRef}>
         <div className="search-card">
           <div className="search-copy">
             <h2>Search Loan</h2>

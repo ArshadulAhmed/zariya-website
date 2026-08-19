@@ -137,13 +137,13 @@ const RepaymentHistory = memo(({
         <table className="repayment-table">
           <thead>
             <tr>
-              {showSNo && <th>S.No</th>}
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Type</th>
-              <th>Recorded By</th>
-              {showRemarks && <th>Remarks</th>}
+              {showSNo && <th><div className="data-table-th-inner">S.No</div></th>}
+              <th><div className="data-table-th-inner">Date</div></th>
+              <th><div className="data-table-th-inner">Amount</div></th>
+              <th><div className="data-table-th-inner">Method</div></th>
+              <th><div className="data-table-th-inner">Type</div></th>
+              <th><div className="data-table-th-inner">Recorded By</div></th>
+              {showRemarks && <th><div className="data-table-th-inner">Remarks</div></th>}
             </tr>
           </thead>
           <tbody>

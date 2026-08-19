@@ -1,4 +1,5 @@
 @use '../../styles/main.scss' as *;
+@use '../../styles/stickyFilterPage.scss';
 
 .data-table-wrapper {
   background: white;
@@ -6,6 +7,10 @@
   overflow: hidden;
   border: 1px solid #e5e7eb;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.data-table-th-inner {
+  padding: 13px;
 }
 
 .data-table {
@@ -17,7 +22,7 @@
     border-bottom: 2px solid #e5e7eb;
 
     th {
-      padding: 13px;
+      padding: 0;
       text-align: left;
       font-size: 0.7rem;
       font-weight: 600;

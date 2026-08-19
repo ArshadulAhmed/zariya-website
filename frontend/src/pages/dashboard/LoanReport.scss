@@ -1,4 +1,5 @@
 @use '../../styles/main.scss' as *;
+@use '../../styles/stickyFilterPage.scss';
 
 .loan-report-page {
   padding: 1.6rem;
@@ -494,10 +495,9 @@
       }
 
       .repayment-history-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        // padding: 1.6rem;
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
 
         .loading-text,
         .empty-state {
@@ -518,24 +518,8 @@
 
         .repayment-table-container,
         .repayment-list {
-          overflow-x: auto;
-
           .repayment-table {
             width: 100%;
-            border-collapse: collapse;
-
-            thead {
-              background: #f9fafb;
-
-              th {
-                padding: 0.6rem 0.8rem;
-                text-align: left;
-                font-size: 0.7rem;
-                font-weight: 600;
-                color: var(--text-secondary);
-                border-bottom: 1px solid #e5e7eb;
-              }
-            }
 
             tbody {
               tr {
