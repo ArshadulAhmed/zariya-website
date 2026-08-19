@@ -5,6 +5,8 @@ import { updateLoan, fetchLoan, setSnackbar } from '../../store/slices/loansSlic
 import { fetchRepayments } from '../../store/slices/repaymentRecordsSlice'
 import ConfirmationModal from './ConfirmationModal'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './CloseLoanCard.scss'
 
 const CloseLoanCard = memo(() => {
@@ -15,17 +17,14 @@ const CloseLoanCard = memo(() => {
   const loanInfoFromRepayments = useAppSelector((state) => state.repaymentRecords.loanInfo)
   const missedEmiCount = useAppSelector((state) => state.repaymentRecords.missedEmiCount || 0)
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
-  const userRole = useAppSelector((state) => state.auth.user?.role)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
-  
+  const { can } = useCan()
+  const isAdmin = can(P.LOANS_CLOSE)
   const [closeConfirm, setCloseConfirm] = useState({
     open: false,
     isEligibleForNextLoan: true,
     closureRemark: '',
   })
-  
-  const isAdmin = userRole === 'admin'
-  // Use loan info from repayments if available, otherwise use selectedLoan
   const currentLoan = loanInfoFromRepayments || selectedLoan
   const loanStatus = currentLoan?.status
   

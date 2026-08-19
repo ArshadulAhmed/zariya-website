@@ -1193,5 +1193,18 @@ export const holidaysAPI = {
     apiRequest(`/holidays/members/${membershipId}/${holidayId}`, { method: 'DELETE' }),
 }
 
+export const rolesAPI = {
+  list: async () => apiRequest('/roles', { method: 'GET' }),
+  get: async (key) => apiRequest(`/roles/${key}`, { method: 'GET' }),
+  create: async (payload) =>
+    apiRequest('/roles', { method: 'POST', body: JSON.stringify(payload) }),
+  update: async (key, payload) =>
+    apiRequest(`/roles/${key}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  reset: async (key) =>
+    apiRequest(`/roles/${key}/reset`, { method: 'POST' }),
+  remove: async (key) =>
+    apiRequest(`/roles/${key}`, { method: 'DELETE' }),
+}
+
 export default apiRequest
 

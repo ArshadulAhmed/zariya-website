@@ -12,6 +12,8 @@ import Select from '../../components/Select'
 import DatePicker from '../../components/DatePicker'
 import { getLocalDateString } from '../../utils/dashboardUtils'
 import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import '../../components/dashboard/RepaymentHistory.scss'
 import './RepaymentEdit.scss'
 
@@ -108,7 +110,8 @@ const RepaymentEdit = () => {
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.REPAYMENTS_UPDATE)
 
   const lastLoanIdRef = useRef('')
   const sentinelRef = useRef(null)
@@ -121,7 +124,7 @@ const RepaymentEdit = () => {
 
   // Repayment edit is admin-only; redirect non-admin to repayment details view
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !isAdmin) {
       navigate(id ? `/dashboard/repayment-records/${id}` : '/dashboard/repayment-records', { replace: true })
     }
   }, [user, id, navigate])
@@ -175,7 +178,7 @@ const RepaymentEdit = () => {
   }, [pagination.page, pagination.pages, isLoadingMore, isLoadingRepayments, id, handleLoadMore])
 
   // Don't render for non-admin (redirect will run)
-  if (user && user.role !== 'admin') {
+  if (user && !isAdmin) {
     return null
   }
 

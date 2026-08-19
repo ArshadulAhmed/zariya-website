@@ -7,6 +7,8 @@ import MobileNumberField from '../../components/MobileNumberField'
 import Select from '../../components/Select'
 import Snackbar from '../../components/Snackbar'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import { getMobileNumberValidationError, stripMobileDigits } from '../../utils/dashboardUtils'
 import { ASSAM_DISTRICTS } from '../../constants/assamDistricts'
 import { RELATIONSHIPS } from '../../constants/relationships'
@@ -91,11 +93,14 @@ const EditLoan = () => {
   const [formErrors, setFormErrors] = useState({})
 
   // Edit loan is admin-only; redirect non-admin to view
+  const { can } = useCan()
+  const allowed = can(P.LOANS_UPDATE)
+
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !allowed) {
       navigate(id ? `/dashboard/loans/${id}` : '/dashboard/loans', { replace: true })
     }
-  }, [user, id, navigate])
+  }, [user, allowed, id, navigate])
 
   useEffect(() => {
     if (id) dispatch(fetchLoan(id))
@@ -108,7 +113,7 @@ const EditLoan = () => {
   const detailPath = `/dashboard/loans/${id}`
 
   // Don't render for non-admin (redirect will run)
-  if (user && user.role !== 'admin') {
+  if (user && !allowed) {
     return null
   }
 

@@ -13,6 +13,8 @@ import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import { usersAPI, employeesAPI } from '../../services/api'
 import { deleteUser } from '../../store/slices/usersSlice'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import '../../components/dashboard/EmployeeForm.scss'
 
 const UserProfile = () => {
@@ -33,11 +35,14 @@ const UserProfile = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const usersPath = '/dashboard/management/users'
 
+  const { can } = useCan()
+  const allowed = can(P.USERS_MANAGE)
+
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    if (currentUser && !allowed) {
       navigate('/dashboard', { replace: true })
     }
-  }, [currentUser, navigate])
+  }, [currentUser, allowed, navigate])
 
   useEffect(() => {
     if (!id) return undefined
@@ -63,7 +68,7 @@ const UserProfile = () => {
     }
   }, [id])
 
-  if (!currentUser || currentUser.role !== 'admin') return null
+  if (!currentUser || !allowed) return null
 
   const employeeId = user?.employeeId || user?.employee?.employeeId
   const subtitleParts = [employeeId, user?.username ? `@${user.username}` : ''].filter(Boolean)

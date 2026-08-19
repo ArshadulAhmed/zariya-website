@@ -6,6 +6,8 @@ import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './Loans.scss'
 
 const columns = [
@@ -74,6 +76,7 @@ const Loans = memo(() => {
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
   
   const showSkeleton = isLoading || !hasFetchedRef.current
 
@@ -176,6 +179,7 @@ const Loans = memo(() => {
             ]}
           />
         </div>
+        {can(P.LOAN_APPLICATIONS_WRITE) && (
         <button
           className="btn-primary filter-create-btn"
           onClick={() => navigate('/dashboard/loans/new')}
@@ -186,6 +190,7 @@ const Loans = memo(() => {
           </svg>
           New Loan
         </button>
+        )}
       </div>
 
       <DataTable

@@ -6,6 +6,8 @@ import { setFormDataFromMembership } from '../../store/slices/membershipSlice'
 import MembershipFormContainer from '../../components/membership/MembershipFormContainer'
 import Snackbar from '../../components/Snackbar'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './EditMembership.scss'
 
 const EditMembership = () => {
@@ -19,11 +21,14 @@ const EditMembership = () => {
   const formPopulatedRef = useRef(false)
 
   // Edit membership is admin-only; redirect non-admin to view
+  const { can } = useCan()
+  const allowed = can(P.MEMBERSHIPS_UPDATE)
+
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !allowed) {
       navigate(id ? `/dashboard/memberships/${id}` : '/dashboard/memberships', { replace: true })
     }
-  }, [user, id, navigate])
+  }, [user, allowed, id, navigate])
 
   useEffect(() => {
     if (id) {
@@ -44,7 +49,7 @@ const EditMembership = () => {
   const detailPath = `/dashboard/memberships/${id}`
 
   // Don't render edit form for non-admin (redirect will run)
-  if (user && user.role !== 'admin') {
+  if (user && !allowed) {
     return null
   }
 

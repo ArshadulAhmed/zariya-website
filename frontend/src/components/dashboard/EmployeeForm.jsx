@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TextField from '../TextField'
 import Select from '../Select'
 import FileUpload from '../FileUpload'
@@ -6,6 +6,7 @@ import MobileNumberField from '../MobileNumberField'
 import DatePicker from '../DatePicker'
 import EmployeeDocumentThumb from './EmployeeDocumentThumb'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { rolesAPI } from '../../services/api'
 import './EmployeeForm.scss'
 
 export const emptyEmployeeForm = {
@@ -163,6 +164,25 @@ const EmployeeForm = ({
   existingDocs = {},
 }) => {
   const [enlargedImage, setEnlargedImage] = useState(null)
+  const [roleOptions, setRoleOptions] = useState([
+    { value: 'employee', label: 'Employee' },
+    { value: 'admin', label: 'Admin' },
+  ])
+
+  useEffect(() => {
+    let cancelled = false
+    rolesAPI.list()
+      .then((response) => {
+        const roles = response.data?.roles || []
+        if (!cancelled && roles.length) {
+          setRoleOptions(roles.map((role) => ({ value: role.key, label: role.name })))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleImageClick = (url) => {
     if (url && !String(url).toLowerCase().includes('.pdf')) {
@@ -224,10 +244,7 @@ const EmployeeForm = ({
             name="role"
             value={form.role}
             onChange={handleChange}
-            options={[
-              { value: 'employee', label: 'Employee' },
-              { value: 'admin', label: 'Admin' },
-            ]}
+            options={roleOptions}
             required
             disabled={isSubmitting}
             error={errors.role}

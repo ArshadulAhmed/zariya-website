@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { logout } from '../../store/slices/authSlice'
+import { logout, sessionUser } from '../../store/slices/authSlice'
 import { closeSnackbar } from '../../store/slices/loansSlice'
 import { closeSnackbar as closeLoanApplicationsSnackbar } from '../../store/slices/loanApplicationsSlice'
 import { closeSnackbar as closeMembershipsSnackbar } from '../../store/slices/membershipsSlice'
+import { authAPI } from '../../services/api'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import logoImage from '../../assets/logo.png'
 import './DashboardLayout.scss'
 
@@ -38,6 +41,13 @@ const calendarIcon = (
   </svg>
 )
 
+const settingsIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+)
+
 const DashboardLayout = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -55,22 +65,30 @@ const DashboardLayout = () => {
   }, [location.pathname, dispatch])
 
   useEffect(() => {
-    if (location.pathname.startsWith('/dashboard/management')) {
+    if (location.pathname.startsWith('/dashboard/management') || location.pathname.startsWith('/dashboard/settings')) {
       setManagementExpanded(true)
     }
   }, [location.pathname])
 
-  const isAdmin = user?.role === 'admin'
-
-  const handleLogout = () => {
-    dispatch(logout())
-    navigate('/login')
-  }
+  useEffect(() => {
+    let cancelled = false
+    authAPI.getMe()
+      .then((response) => {
+        if (!cancelled && response?.data?.user) {
+          dispatch(sessionUser(response.data.user))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [dispatch])
 
   const menuItems = [
     {
       key: '/dashboard',
       label: 'Dashboard',
+      permission: P.DASHBOARD_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -81,6 +99,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/loan-queue',
       label: 'Loan Queue',
+      permission: P.LOAN_QUEUE_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
@@ -91,6 +110,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/memberships',
       label: 'Memberships',
+      permission: P.MEMBERSHIPS_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -103,6 +123,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/loan-applications',
       label: 'Loan Applications',
+      permission: P.LOAN_APPLICATIONS_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -115,6 +136,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/loans',
       label: 'Loans',
+      permission: P.LOANS_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -125,6 +147,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/repayment-records',
       label: 'Repayment records',
+      permission: P.REPAYMENTS_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -135,6 +158,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/reports',
       label: 'Reports',
+      permission: P.REPORTS_READ,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -147,25 +171,44 @@ const DashboardLayout = () => {
     },
   ]
 
+  const handleLogout = () => {
+    dispatch(logout())
+    navigate('/login')
+  }
+
+  const visibleMenuItems = menuItems.filter((item) => hasPermission(user, item.permission))
+
   const managementItems = [
     {
       key: '/dashboard/management/users',
       label: 'Users',
       icon: usersIcon,
+      permission: P.USERS_MANAGE,
+    },
+    {
+      key: '/dashboard/settings',
+      label: 'Settings',
+      icon: settingsIcon,
+      permission: P.ROLES_MANAGE,
     },
     {
       key: '/dashboard/management/blacklist-members',
       label: 'Blacklist Members',
       icon: blacklistIcon,
+      permission: P.MEMBERSHIPS_BLACKLIST,
     },
     {
       key: '/dashboard/management/holidays',
       label: 'Holiday Calendar',
       icon: calendarIcon,
+      permission: P.HOLIDAYS_WRITE,
     },
-  ]
+  ].filter((item) => hasPermission(user, item.permission))
 
-  const isManagementActive = location.pathname.startsWith('/dashboard/management')
+  const showManagement = managementItems.length > 0
+  const isManagementActive =
+    location.pathname.startsWith('/dashboard/management') ||
+    location.pathname.startsWith('/dashboard/settings')
 
   const renderNavItem = (item) => {
     const isActive = location.pathname === item.key
@@ -201,16 +244,16 @@ const DashboardLayout = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map(renderNavItem)}
+          {visibleMenuItems.map(renderNavItem)}
 
-          {isAdmin && (
+          {showManagement && (
             <div className={`nav-group ${isManagementActive ? 'active-group' : ''}`}>
               <button
                 type="button"
                 className={`nav-item nav-group-toggle ${isManagementActive ? 'active' : ''}`}
                 onClick={() => {
                   if (sidebarCollapsed) {
-                    navigate('/dashboard/management/users')
+                    navigate(managementItems[0].key)
                     return
                   }
                   setManagementExpanded((prev) => !prev)
@@ -234,7 +277,9 @@ const DashboardLayout = () => {
                   {managementItems.map((item) => {
                     const isActive = item.key === '/dashboard/management/users'
                       ? location.pathname.startsWith('/dashboard/management/users')
-                      : location.pathname === item.key
+                      : item.key === '/dashboard/settings'
+                        ? location.pathname.startsWith('/dashboard/settings')
+                        : location.pathname === item.key
                     return (
                       <button
                         key={item.key}
@@ -261,7 +306,7 @@ const DashboardLayout = () => {
             {!sidebarCollapsed && (
               <div className="user-details">
                 <div className="user-name">{user?.fullName || user?.email}</div>
-                <div className="user-role">{user?.role === 'admin' ? 'Administrator' : 'Staff'}</div>
+                <div className="user-role">{user?.roleName || (user?.role === 'admin' ? 'Administrator' : 'Staff')}</div>
               </div>
             )}
           </div>

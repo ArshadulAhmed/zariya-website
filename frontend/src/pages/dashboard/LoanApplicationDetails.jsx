@@ -8,6 +8,8 @@ import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import PromptModal from '../../components/dashboard/PromptModal'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './LoanApplicationDetails.scss'
 
 const LoanApplicationDetails = () => {
@@ -37,8 +39,10 @@ const LoanApplicationDetails = () => {
     return () => dispatch(clearSelectedApplication())
   }, [dispatch])
 
-  const isAdmin = user?.role === 'admin'
-  const isEmployee = user?.role === 'employee'
+  const { can } = useCan()
+  const canUpdate = can(P.LOAN_APPLICATIONS_UPDATE)
+  const canReview = can(P.LOAN_APPLICATIONS_REVIEW)
+  const canRead = can(P.LOAN_APPLICATIONS_READ)
   const underReview = application?.status === 'under_review'
   const [downloading, setDownloading] = useState(false)
   const [approveModal, setApproveModal] = useState(false)
@@ -241,7 +245,7 @@ const LoanApplicationDetails = () => {
           <p className="page-subtitle">View and manage application</p>
         </div>
         <div className="header-actions">
-          {application?.status === 'under_review' && isAdmin && (
+          {application?.status === 'under_review' && canUpdate && (
             <button
               type="button"
               className="btn-secondary"
@@ -250,7 +254,7 @@ const LoanApplicationDetails = () => {
               Edit
             </button>
           )}
-          {underReview && isAdmin && (
+          {underReview && canReview && (
             <>
               <button className="btn-primary" onClick={handleApproveOpen} disabled={isLoading}>
                 Approve
@@ -260,7 +264,7 @@ const LoanApplicationDetails = () => {
               </button>
             </>
           )}
-          {(isAdmin || isEmployee) && (
+          {canRead && (
             <button
               className="btn-secondary"
               onClick={handleDownload}

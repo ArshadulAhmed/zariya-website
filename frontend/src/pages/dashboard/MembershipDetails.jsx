@@ -9,6 +9,8 @@ import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import SecureDocumentImage from '../../components/SecureDocumentImage'
 import MemberHolidaysCard from '../../components/dashboard/MemberHolidaysCard'
 import { formatMobileNumber } from '../../utils/dashboardUtils'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './MembershipDetails.scss'
 
 // Guard so Strict Mode's double effect doesn't trigger two membership fetches
@@ -21,7 +23,8 @@ const MembershipDetails = () => {
   const dispatch = useAppDispatch()
   const { selectedMembership, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.MEMBERSHIPS_UPDATE)
 
   const [approveConfirm, setApproveConfirm] = useState({ open: false })
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
@@ -172,7 +175,7 @@ const MembershipDetails = () => {
   const membership = selectedMembership
   const isPending = membership?.status === 'pending'
   const isApproved = membership?.status === 'approved'
-  const canReview = isPending
+  const canReview = isPending && can(P.MEMBERSHIPS_REVIEW)
   const hasMembership = !!membership
 
   return (
@@ -230,7 +233,7 @@ const MembershipDetails = () => {
               </button>
             </>
           )}
-          {!isLoading && isApproved && (
+          {!isLoading && isApproved && can(P.LOAN_APPLICATIONS_WRITE) && (
             <button
               className="btn-primary"
               onClick={handleApplyLoanClick}
@@ -513,7 +516,7 @@ const MembershipDetails = () => {
 
         <MemberHolidaysCard
           membershipId={membership.userId || membership.id}
-          isAdmin={isAdmin}
+          isAdmin={can(P.HOLIDAYS_WRITE)}
         />
       </div>
       ) : null}

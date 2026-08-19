@@ -6,6 +6,8 @@ import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './Memberships.scss'
 
 const columns = [
@@ -57,6 +59,8 @@ const Memberships = memo(() => {
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
+  const canCreateMembership = can(P.MEMBERSHIPS_WRITE)
   
   // Show skeleton if loading OR if we haven't fetched yet (initial load) - always show skeleton on first render
   const showSkeleton = isLoading || !hasFetchedRef.current
@@ -167,6 +171,7 @@ const Memberships = memo(() => {
               ]}
             />
           </div>
+        {canCreateMembership && (
         <button
           className="btn-primary filter-create-btn"
           onClick={(e) => {
@@ -181,6 +186,7 @@ const Memberships = memo(() => {
           </svg>
           New Membership
         </button>
+        )}
       </div>
 
       <DataTable

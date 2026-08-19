@@ -20,6 +20,8 @@ import {
   stripMobileDigits,
 } from '../../utils/dashboardUtils'
 import { formatLoanCurrency } from '../../utils/previousLoanUtils'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './LoanQueue.scss'
 
 function statusLabel(value) {
@@ -37,8 +39,8 @@ const initialForm = {
 
 const LoanQueue = memo(function LoanQueue() {
   const dispatch = useAppDispatch()
-  const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const canReviewQueue = can(P.LOAN_QUEUE_REVIEW)
   const { dateGroups, isLoading, isLoadingMore, isSubmitting, filters, pagination, snackbar } =
     useAppSelector((state) => state.loanQueue)
   const paginationSafe = pagination || { page: 1, limit: 15, total: 0, pages: 0 }
@@ -283,7 +285,7 @@ const LoanQueue = memo(function LoanQueue() {
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        {isAdmin && (
+        {canReviewQueue && (
           <>
             <button
               type="button"

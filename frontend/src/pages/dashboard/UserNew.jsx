@@ -8,6 +8,8 @@ import EmployeeForm, {
 } from '../../components/dashboard/EmployeeForm'
 import Snackbar from '../../components/Snackbar'
 import { employeesAPI } from '../../services/api'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import '../ApplyMembership.scss'
 import '../../components/dashboard/EmployeeForm.scss'
 
@@ -20,13 +22,16 @@ const UserNew = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const usersPath = '/dashboard/management/users'
 
+  const { can } = useCan()
+  const allowed = can(P.USERS_MANAGE)
+
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    if (currentUser && !allowed) {
       navigate('/dashboard', { replace: true })
     }
-  }, [currentUser, navigate])
+  }, [currentUser, allowed, navigate])
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser || !allowed) {
     return null
   }
 

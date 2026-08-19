@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchUsers, setFilters, closeSnackbar } from '../../store/slices/usersSlice'
@@ -7,6 +7,9 @@ import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
+import { rolesAPI } from '../../services/api'
 import './Users.scss'
 
 const Users = memo(() => {
@@ -15,14 +18,31 @@ const Users = memo(() => {
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const usersState = useAppSelector((state) => state.users)
   const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
+  const canManageUsers = can(P.USERS_MANAGE)
+  const [roleOptions, setRoleOptions] = useState([
+    { value: 'admin', label: 'Admin' },
+    { value: 'employee', label: 'Employee' },
+  ])
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    rolesAPI.list()
+      .then((response) => {
+        const roles = response.data?.roles || []
+        if (roles.length) {
+          setRoleOptions(roles.map((role) => ({ value: role.key, label: role.name })))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (currentUser && !canManageUsers) {
       navigate('/dashboard', { replace: true })
     }
-  }, [currentUser, navigate])
+  }, [currentUser, canManageUsers, navigate])
 
-  if (currentUser && currentUser.role !== 'admin') {
+  if (currentUser && !canManageUsers) {
     return null
   }
 
@@ -115,7 +135,7 @@ const Users = memo(() => {
       width: '120px',
       render: (value) => (
         <span className={`role-badge role-${value}`}>
-          {value ? value.charAt(0).toUpperCase() + value.slice(1) : '-'}
+          {value ? String(value).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
         </span>
       ),
     },
@@ -172,10 +192,7 @@ const Users = memo(() => {
             value={filters.role}
             onChange={(e) => handleFilterChange('role', e.target.value)}
             placeholder="All Roles"
-            options={[
-              { value: 'admin', label: 'Admin' },
-              { value: 'employee', label: 'Employee' }
-            ]}
+            options={roleOptions}
           />
           <FilterSelect
             value={filters.isActive}

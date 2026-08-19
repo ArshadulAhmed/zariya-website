@@ -8,6 +8,8 @@ import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCar
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import TableSkeleton from '../../components/dashboard/TableSkeleton'
 import CloseLoanCard from '../../components/dashboard/CloseLoanCard'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './RepaymentDetails.scss'
 
 const RepaymentDetails = () => {
@@ -25,7 +27,8 @@ const RepaymentDetails = () => {
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.REPAYMENTS_UPDATE)
 
   const lastLoanIdRef = useRef('')
   const hasFetchedRef = useRef(false)

@@ -5,10 +5,11 @@ import Login from './pages/Login'
 import ApplyMembership from './pages/ApplyMembership'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import PermissionRoute from './components/PermissionRoute'
 import PublicRoute from './components/PublicRoute'
 import DashboardLayout from './components/dashboard/DashboardLayout'
-// Import DashboardHome directly (not lazy) since it's the index route
 import DashboardHome from './pages/dashboard/DashboardHome'
+import { P } from './constants/permissions'
 import './styles/App.scss'
 
 // Lazy load other dashboard pages
@@ -36,6 +37,9 @@ const LoanReport = lazy(() => import('./pages/dashboard/LoanReport'))
 const DailyCollectionReport = lazy(() => import('./pages/dashboard/DailyCollectionReport'))
 const LoansNotUpToDateReport = lazy(() => import('./pages/dashboard/LoansNotUpToDateReport'))
 const LoanOutstandingReport = lazy(() => import('./pages/dashboard/LoanOutstandingReport'))
+const Settings = lazy(() => import('./pages/dashboard/Settings'))
+const Roles = lazy(() => import('./pages/dashboard/Roles'))
+const RoleDetail = lazy(() => import('./pages/dashboard/RoleDetail'))
 
 // Loading component - Skeleton loader for lazy-loaded routes
 const PageLoader = () => (
@@ -159,121 +163,151 @@ function App() {
         <Route
           path="memberships"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <Memberships />
-            </Suspense>
+            <PermissionRoute permission={P.MEMBERSHIPS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <Memberships />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="memberships/new"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <ApplyMembership hideHeader={true} successRedirectPath="/dashboard/memberships" />
-            </Suspense>
+            <PermissionRoute permission={P.MEMBERSHIPS_WRITE}>
+              <Suspense fallback={<PageLoader />}>
+                <ApplyMembership hideHeader={true} successRedirectPath="/dashboard/memberships" />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="memberships/:id/edit"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <EditMembership />
-            </Suspense>
+            <PermissionRoute permission={P.MEMBERSHIPS_UPDATE}>
+              <Suspense fallback={<PageLoader />}>
+                <EditMembership />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="memberships/:id"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <MembershipDetails />
-            </Suspense>
+            <PermissionRoute permission={P.MEMBERSHIPS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <MembershipDetails />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loan-queue"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanQueue />
-            </Suspense>
+            <PermissionRoute permission={P.LOAN_QUEUE_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanQueue />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loan-applications"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanApplications />
-            </Suspense>
+            <PermissionRoute permission={P.LOAN_APPLICATIONS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanApplications />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loan-applications/:id/edit"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <EditLoanApplication />
-            </Suspense>
+            <PermissionRoute permission={P.LOAN_APPLICATIONS_UPDATE}>
+              <Suspense fallback={<PageLoader />}>
+                <EditLoanApplication />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loan-applications/:id"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanApplicationDetails />
-            </Suspense>
+            <PermissionRoute permission={P.LOAN_APPLICATIONS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanApplicationDetails />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loans"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <Loans />
-            </Suspense>
+            <PermissionRoute permission={P.LOANS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <Loans />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loans/new"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <NewLoan />
-            </Suspense>
+            <PermissionRoute permission={P.LOAN_APPLICATIONS_WRITE}>
+              <Suspense fallback={<PageLoader />}>
+                <NewLoan />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loans/:id/edit"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <EditLoan />
-            </Suspense>
+            <PermissionRoute permission={P.LOANS_UPDATE}>
+              <Suspense fallback={<PageLoader />}>
+                <EditLoan />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="loans/:id"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanDetails />
-            </Suspense>
+            <PermissionRoute permission={P.LOANS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanDetails />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="repayment-records"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <RepaymentRecords />
-            </Suspense>
+            <PermissionRoute permission={P.REPAYMENTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <RepaymentRecords />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="repayment-records/:id/edit"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <RepaymentEdit />
-            </Suspense>
+            <PermissionRoute permission={P.REPAYMENTS_UPDATE}>
+              <Suspense fallback={<PageLoader />}>
+                <RepaymentEdit />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="repayment-records/:id"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <RepaymentDetails />
-            </Suspense>
+            <PermissionRoute permission={P.REPAYMENTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <RepaymentDetails />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
@@ -309,62 +343,102 @@ function App() {
         <Route
           path="management/blacklist-members"
           element={
-            <AdminRoute>
+            <PermissionRoute permission={P.MEMBERSHIPS_BLACKLIST}>
               <Suspense fallback={<PageLoader />}>
                 <BlacklistMembers />
               </Suspense>
-            </AdminRoute>
+            </PermissionRoute>
           }
         />
         <Route
           path="management/holidays"
           element={
-            <AdminRoute>
+            <PermissionRoute permission={P.HOLIDAYS_WRITE}>
               <Suspense fallback={<PageLoader />}>
                 <OrganisationHolidays />
               </Suspense>
-            </AdminRoute>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/roles/:key"
+          element={
+            <PermissionRoute permission={P.ROLES_MANAGE}>
+              <Suspense fallback={<PageLoader />}>
+                <RoleDetail />
+              </Suspense>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings/roles"
+          element={
+            <PermissionRoute permission={P.ROLES_MANAGE}>
+              <Suspense fallback={<PageLoader />}>
+                <Roles />
+              </Suspense>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <PermissionRoute permission={P.ROLES_MANAGE}>
+              <Suspense fallback={<PageLoader />}>
+                <Settings />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route path="users" element={<Navigate to="/dashboard/management/users" replace />} />
         <Route
           path="reports"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <Reports />
-            </Suspense>
+            <PermissionRoute permission={P.REPORTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <Reports />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="reports/loan"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanReport />
-            </Suspense>
+            <PermissionRoute permission={P.REPORTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanReport />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="reports/daily-collection"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <DailyCollectionReport />
-            </Suspense>
+            <PermissionRoute permission={P.REPORTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <DailyCollectionReport />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="reports/loans-not-up-to-date"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoansNotUpToDateReport />
-            </Suspense>
+            <PermissionRoute permission={P.REPORTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoansNotUpToDateReport />
+              </Suspense>
+            </PermissionRoute>
           }
         />
         <Route
           path="reports/loan-outstanding"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <LoanOutstandingReport />
-            </Suspense>
+            <PermissionRoute permission={P.REPORTS_READ}>
+              <Suspense fallback={<PageLoader />}>
+                <LoanOutstandingReport />
+              </Suspense>
+            </PermissionRoute>
           }
         />
       </Route>

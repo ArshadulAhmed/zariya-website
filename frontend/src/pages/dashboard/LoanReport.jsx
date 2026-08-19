@@ -18,6 +18,8 @@ import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCar
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoanReport.scss'
 
@@ -92,8 +94,8 @@ const LoanReport = () => {
     repaymentHistoryError,
   } = useAppSelector((state) => state.loanReport)
 
-  const userRole = useAppSelector((state) => state.auth.user?.role)
-  const isAdmin = userRole === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.LOANS_NOC)
 
   const handleLoadMoreRepayments = useCallback(() => {
     if (!loan) return

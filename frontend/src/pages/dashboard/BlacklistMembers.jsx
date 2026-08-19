@@ -7,6 +7,8 @@ import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './BlacklistMembers.scss'
 
 const mapMember = (membership) => ({
@@ -35,16 +37,18 @@ const BlacklistMembers = memo(function BlacklistMembers() {
   const [remarkError, setRemarkError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [unmarkConfirm, setUnmarkConfirm] = useState({ open: false, member: null })
+  const { can } = useCan()
+  const allowed = can(P.MEMBERSHIPS_BLACKLIST)
   const { pageRef, filterRef } = useStickyFilterBar()
   const hasFetchedRef = useRef(false)
 
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !allowed) {
       navigate('/dashboard', { replace: true })
     }
-  }, [user, navigate])
+  }, [user, allowed, navigate])
 
-  if (user && user.role !== 'admin') {
+  if (user && !allowed) {
     return null
   }
 

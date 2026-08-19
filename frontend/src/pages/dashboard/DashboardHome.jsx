@@ -5,12 +5,15 @@ import { fetchDashboardStats, fetchRecentActivity } from '../../store/slices/das
 import { formatIndianCurrency, formatNumber, getTimeAgo } from '../../utils/dashboardUtils'
 import StatCard from '../../components/dashboard/StatCard'
 import ActivitySkeleton from '../../components/dashboard/ActivitySkeleton'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './DashboardHome.scss'
 
 const DashboardHome = memo(() => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { stats, activities, isLoading, isLoadingActivities } = useAppSelector((state) => state.dashboard)
+  const { can } = useCan()
 
   useEffect(() => {
     // Fetch dashboard data on component mount
@@ -155,6 +158,7 @@ const DashboardHome = memo(() => {
           </div>
           <div className="card-body">
             <div className="quick-actions">
+              {can(P.MEMBERSHIPS_WRITE) && (
               <button className="action-btn" onClick={() => navigate('/dashboard/memberships/new')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -162,6 +166,8 @@ const DashboardHome = memo(() => {
                 </svg>
                 <span>New Membership</span>
               </button>
+              )}
+              {can(P.LOAN_APPLICATIONS_WRITE) && (
               <button className="action-btn" onClick={() => navigate('/dashboard/loans/new')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -169,6 +175,8 @@ const DashboardHome = memo(() => {
                 </svg>
                 <span>New Loan Application</span>
               </button>
+              )}
+              {can(P.LOAN_APPLICATIONS_READ) && (
               <button className="action-btn" onClick={() => navigate('/dashboard/loan-applications')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -178,6 +186,8 @@ const DashboardHome = memo(() => {
                 </svg>
                 <span>Loan Applications</span>
               </button>
+              )}
+              {can(P.MEMBERSHIPS_READ) && (
               <button className="action-btn" onClick={() => navigate('/dashboard/memberships')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -185,6 +195,7 @@ const DashboardHome = memo(() => {
                 </svg>
                 <span>Search Member</span>
               </button>
+              )}
             </div>
           </div>
         </div>

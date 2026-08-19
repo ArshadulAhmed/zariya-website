@@ -1,18 +1,8 @@
-import { Navigate } from 'react-router-dom'
-import { useAppSelector } from '../store/hooks'
+import PermissionRoute from './PermissionRoute'
+import { P } from '../constants/permissions'
 
-const AdminRoute = ({ children }) => {
-  const { isAuthenticated, token, user } = useAppSelector((state) => state.auth)
-
-  if (!isAuthenticated || !token) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (user?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />
-  }
-
-  return children
-}
+const AdminRoute = ({ children }) => (
+  <PermissionRoute permission={P.USERS_MANAGE}>{children}</PermissionRoute>
+)
 
 export default AdminRoute

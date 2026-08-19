@@ -6,6 +6,8 @@ import ConfirmationModal from './ConfirmationModal'
 import DatePicker from '../DatePicker'
 import { getLocalDateString } from '../../utils/dashboardUtils'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './LoanActions.scss'
 
 const LoanActions = () => {
@@ -13,8 +15,8 @@ const LoanActions = () => {
   const dispatch = useAppDispatch()
   const loan = useAppSelector((state) => state.loans.selectedLoan)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
-  const userRole = useAppSelector((state) => state.auth.user?.role)
-  const isAdmin = userRole === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.LOANS_DISBURSE)
 
   const [open, setOpen] = useState(false)
   const [disbursementDate, setDisbursementDate] = useState(getLocalDateString())
