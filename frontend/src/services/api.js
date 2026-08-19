@@ -955,7 +955,11 @@ export const loanDueTrackingAPI = {
         throw new Error(errorData.message || 'Failed to download outstanding loans')
       }
       const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = 'loan-outstanding-fine.csv'
+      const now = new Date()
+      const dd = String(now.getDate()).padStart(2, '0')
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const yyyy = now.getFullYear()
+      let filename = `${dd}_${mm}_${yyyy}_Loan_outstanding_fine.csv`
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i)
         if (filenameMatch) filename = filenameMatch[1]

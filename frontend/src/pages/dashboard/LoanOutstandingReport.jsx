@@ -53,6 +53,21 @@ const COLUMNS = [
   },
   { header: 'Loan Amount', key: 'loan_amount', width: '120px', render: (v) => formatCurrency(v) },
   {
+    header: 'Pending till today',
+    key: 'pending_amount_till_today',
+    width: '160px',
+    render: (v) => {
+      const amount = Number(v || 0)
+      if (amount < 0) {
+        return <span className="amount-cell">{formatCurrency(Math.abs(amount))} advance</span>
+      }
+      if (amount > 0) {
+        return <span className="amount-cell fine">{formatCurrency(amount)}</span>
+      }
+      return formatCurrency(0)
+    },
+  },
+  {
     header: 'Remaining Principal',
     key: 'remaining_amount',
     width: '150px',

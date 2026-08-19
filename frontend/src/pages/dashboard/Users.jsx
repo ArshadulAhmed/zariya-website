@@ -154,16 +154,6 @@ const Users = memo(() => {
           <h1 className="page-title">Users</h1>
           <p className="page-subtitle">Enroll employees, manage KYC records, and control dashboard access</p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => navigate('/dashboard/management/users/new')}
-        >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            New Employee
-        </button>
       </div>
 
       <div className="page-filters sticky-filter-bar" ref={filterRef}>
@@ -197,6 +187,16 @@ const Users = memo(() => {
             ]}
           />
         </div>
+        <button
+          className="btn-primary filter-create-btn"
+          onClick={() => navigate('/dashboard/management/users/new')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          New Employee
+        </button>
       </div>
 
       <DataTable
@@ -204,6 +204,18 @@ const Users = memo(() => {
         data={filteredUsers}
         loading={showSkeleton}
         onRowClick={handleRowClick}
+        actions={(row) => (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/dashboard/management/users/${row.id}`)
+            }}
+          >
+            View
+          </button>
+        )}
         emptyMessage="No users found"
       />
     </div>
