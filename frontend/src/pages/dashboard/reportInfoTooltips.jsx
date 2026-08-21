@@ -4,7 +4,7 @@ export const NOT_REPAID_INFO =
   'Active loans that missed EDI days versus the tenure schedule (pending EMI > 0). Remaining principal can be ₹0 if tenure slots are still unpaid. On-time loans that still have remaining principal or unpaid fine appear only in Loan Outstanding & Fine.'
 
 export const OUTSTANDING_INFO =
-  'Loans with remaining principal or unpaid fine (any status). Pending till today is expected EDI rupees on working days (holidays skipped) minus principal paid. Negative shows as advance. On-time loans with a remaining balance appear here. Closed loans with unpaid fine appear when Status is All.'
+  'Loans with remaining principal or unpaid fine (any status). Pending till today is expected EDI rupees on working days (holidays skipped, tenure-bounded) minus principal paid, and never exceeds remaining principal. Negative shows as advance. Fine is separate and is not capped by remaining principal. Closed loans with unpaid fine appear when Status is All.'
 
 const TOOLTIP_PROPS = {
   placement: 'top',
