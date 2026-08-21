@@ -46,7 +46,6 @@ const OrganisationHolidays = () => {
   const [year, setYear] = useState(String(currentYear))
   const [holidays, setHolidays] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [date, setDate] = useState('')
   const [name, setName] = useState('')
   const [formError, setFormError] = useState('')
@@ -112,40 +111,86 @@ const OrganisationHolidays = () => {
       return
     }
     setFormError('')
-    setIsSubmitting(true)
+    const optimisticDate = date
+    const optimisticName = name.trim()
+    const tempId = `temp-${Date.now()}`
+    const optimisticHoliday = {
+      id: tempId,
+      date: optimisticDate,
+      year: Number(year),
+      name: optimisticName,
+      reason: '',
+      isPast: optimisticDate < getLocalDateString(),
+      createdBy: {
+        fullName: user?.fullName || '',
+        username: user?.username || '',
+      },
+    }
+
+    setDate('')
+    setName('')
+    setHolidays((prev) =>
+      [...prev.filter((item) => item.date !== optimisticDate), optimisticHoliday].sort((a, b) =>
+        String(a.date).localeCompare(String(b.date))
+      )
+    )
+    setSnackbar({ open: true, message: 'Holiday added', severity: 'success' })
+
     try {
-      const response = await holidaysAPI.createOrganisationHoliday({ date, name: name.trim() })
-      if (response.success) {
-        setDate('')
-        setName('')
-        setSnackbar({ open: true, message: 'Holiday added', severity: 'success' })
-        fetchHolidays(year)
+      const response = await holidaysAPI.createOrganisationHoliday({
+        date: optimisticDate,
+        name: optimisticName,
+      })
+      if (response.success && response.data?.holiday) {
+        const created = response.data.holiday
+        setHolidays((prev) =>
+          [...prev.filter((item) => item.id !== tempId && item.id !== created.id), created].sort(
+            (a, b) => String(a.date).localeCompare(String(b.date))
+          )
+        )
       } else {
+        setHolidays((prev) => prev.filter((item) => item.id !== tempId))
         setFormError(response.message || 'Failed to add holiday')
+        setSnackbar({ open: true, message: response.message || 'Failed to add holiday', severity: 'error' })
       }
     } catch (error) {
+      setHolidays((prev) => prev.filter((item) => item.id !== tempId))
       setFormError(error.message || 'Failed to add holiday')
-    } finally {
-      setIsSubmitting(false)
+      setSnackbar({ open: true, message: error.message || 'Failed to add holiday', severity: 'error' })
     }
   }
 
   const handleDelete = async () => {
     if (!canCreate || !deleteConfirm.holiday) return
-    setIsSubmitting(true)
+    const removed = deleteConfirm.holiday
+    const removedId = removed.id
+    setDeleteConfirm({ open: false, holiday: null })
+    setHolidays((prev) => prev.filter((item) => item.id !== removedId))
+    setSnackbar({ open: true, message: 'Holiday removed', severity: 'success' })
+
+    if (String(removedId).startsWith('temp-')) return
+
     try {
-      const response = await holidaysAPI.deleteOrganisationHoliday(deleteConfirm.holiday.id)
-      if (response.success) {
-        setSnackbar({ open: true, message: 'Holiday removed', severity: 'success' })
-        setDeleteConfirm({ open: false, holiday: null })
-        fetchHolidays(year)
-      } else {
-        setSnackbar({ open: true, message: response.message || 'Failed to remove holiday', severity: 'error' })
+      const response = await holidaysAPI.deleteOrganisationHoliday(removedId)
+      if (!response.success) {
+        setHolidays((prev) =>
+          [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+        )
+        setSnackbar({
+          open: true,
+          message: response.message || 'Failed to remove holiday',
+          severity: 'error',
+        })
       }
     } catch (error) {
-      setSnackbar({ open: true, message: error.message || 'Failed to remove holiday', severity: 'error' })
-    } finally {
-      setIsSubmitting(false)
+      setHolidays((prev) =>
+        [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+      )
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to remove holiday',
+        severity: 'error',
+      })
     }
   }
 
@@ -222,7 +267,6 @@ const OrganisationHolidays = () => {
                 min={yearStart}
                 max={yearEnd}
                 onChange={(event) => setDate(event.target.value)}
-                disabled={isSubmitting}
               />
             </label>
             <label className="holiday-name-field">
@@ -233,10 +277,9 @@ const OrganisationHolidays = () => {
                 onChange={(event) => setName(event.target.value)}
                 placeholder="e.g. Diwali"
                 maxLength={120}
-                disabled={isSubmitting}
               />
             </label>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button type="submit" className="btn-primary">
               Add holiday
             </button>
           </div>
@@ -262,14 +305,13 @@ const OrganisationHolidays = () => {
 
       <ConfirmationModal
         open={deleteConfirm.open}
-        onClose={() => !isSubmitting && setDeleteConfirm({ open: false, holiday: null })}
+        onClose={() => setDeleteConfirm({ open: false, holiday: null })}
         onConfirm={handleDelete}
         title="Remove holiday"
         message={`Remove "${deleteConfirm.holiday?.name || 'this holiday'}" on ${formatHolidayDate(deleteConfirm.holiday?.date)} from the organisation calendar?`}
         confirmText="Remove"
         cancelText="Cancel"
         variant="danger"
-        isLoading={isSubmitting}
       />
     </div>
   )

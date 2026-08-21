@@ -25,7 +25,6 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
   const today = getLocalDateString()
   const [holidays, setHolidays] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [date, setDate] = useState('')
   const [name, setName] = useState('')
   const [reason, setReason] = useState('')
@@ -84,43 +83,90 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
     }
 
     setFormError('')
-    setIsSubmitting(true)
+    const optimisticDate = date
+    const optimisticName = name.trim()
+    const optimisticReason = reason.trim()
+    const tempId = `temp-${Date.now()}`
+    const optimisticHoliday = {
+      id: tempId,
+      date: optimisticDate,
+      name: optimisticName,
+      reason: optimisticReason,
+      isPast: optimisticDate < today,
+    }
+
+    resetForm()
+    setHolidays((prev) =>
+      [...prev.filter((item) => item.date !== optimisticDate), optimisticHoliday].sort((a, b) =>
+        String(a.date).localeCompare(String(b.date))
+      )
+    )
+    setSnackbar({ open: true, message: 'Member holiday added', severity: 'success' })
+
     try {
       const response = await holidaysAPI.createMemberHoliday(membershipId, {
-        date,
-        name: name.trim(),
-        reason: reason.trim(),
+        date: optimisticDate,
+        name: optimisticName,
+        reason: optimisticReason,
       })
-      if (response.success) {
-        resetForm()
-        setSnackbar({ open: true, message: 'Member holiday added', severity: 'success' })
-        fetchHolidays()
+      if (response.success && response.data?.holiday) {
+        const created = response.data.holiday
+        setHolidays((prev) =>
+          [...prev.filter((item) => item.id !== tempId && item.id !== created.id), created].sort(
+            (a, b) => String(a.date).localeCompare(String(b.date))
+          )
+        )
       } else {
+        setHolidays((prev) => prev.filter((item) => item.id !== tempId))
         setFormError(response.message || 'Failed to add holiday')
+        setSnackbar({
+          open: true,
+          message: response.message || 'Failed to add holiday',
+          severity: 'error',
+        })
       }
     } catch (error) {
+      setHolidays((prev) => prev.filter((item) => item.id !== tempId))
       setFormError(error.message || 'Failed to add holiday')
-    } finally {
-      setIsSubmitting(false)
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to add holiday',
+        severity: 'error',
+      })
     }
   }
 
   const handleDelete = async () => {
     if (!deleteConfirm.holiday) return
-    setIsSubmitting(true)
+    const removed = deleteConfirm.holiday
+    const removedId = removed.id
+    setDeleteConfirm({ open: false, holiday: null })
+    setHolidays((prev) => prev.filter((item) => item.id !== removedId))
+    setSnackbar({ open: true, message: 'Member holiday removed', severity: 'success' })
+
+    if (String(removedId).startsWith('temp-')) return
+
     try {
-      const response = await holidaysAPI.deleteMemberHoliday(membershipId, deleteConfirm.holiday.id)
-      if (response.success) {
-        setSnackbar({ open: true, message: 'Member holiday removed', severity: 'success' })
-        setDeleteConfirm({ open: false, holiday: null })
-        fetchHolidays()
-      } else {
-        setSnackbar({ open: true, message: response.message || 'Failed to remove holiday', severity: 'error' })
+      const response = await holidaysAPI.deleteMemberHoliday(membershipId, removedId)
+      if (!response.success) {
+        setHolidays((prev) =>
+          [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+        )
+        setSnackbar({
+          open: true,
+          message: response.message || 'Failed to remove holiday',
+          severity: 'error',
+        })
       }
     } catch (error) {
-      setSnackbar({ open: true, message: error.message || 'Failed to remove holiday', severity: 'error' })
-    } finally {
-      setIsSubmitting(false)
+      setHolidays((prev) =>
+        [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+      )
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to remove holiday',
+        severity: 'error',
+      })
     }
   }
 
@@ -147,7 +193,6 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
-              disabled={isSubmitting}
             />
           </label>
           <label>
@@ -158,7 +203,6 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
               onChange={(event) => setName(event.target.value)}
               placeholder="e.g. Village festival"
               maxLength={120}
-              disabled={isSubmitting}
             />
           </label>
           <label className="reason-field">
@@ -169,10 +213,9 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
               onChange={(event) => setReason(event.target.value)}
               placeholder={isPastDate ? 'Why this past day should not count' : 'Optional note'}
               maxLength={500}
-              disabled={isSubmitting}
             />
           </label>
-          <button type="submit" className="btn-primary" disabled={isSubmitting}>
+          <button type="submit" className="btn-primary">
             Add
           </button>
         </form>
@@ -209,14 +252,13 @@ const MemberHolidaysCard = ({ membershipId, isAdmin }) => {
 
       <ConfirmationModal
         open={deleteConfirm.open}
-        onClose={() => !isSubmitting && setDeleteConfirm({ open: false, holiday: null })}
+        onClose={() => setDeleteConfirm({ open: false, holiday: null })}
         onConfirm={handleDelete}
         title="Remove member holiday"
         message={`Remove "${deleteConfirm.holiday?.name || 'this holiday'}" on ${formatHolidayDate(deleteConfirm.holiday?.date)}?`}
         confirmText="Remove"
         cancelText="Cancel"
         variant="danger"
-        isLoading={isSubmitting}
       />
     </div>
   )
