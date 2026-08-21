@@ -4,10 +4,13 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchOngoingLoans, closeSnackbar, setSnackbar, setFilters, setPagination } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import { getLocalDateString } from '../../utils/dashboardUtils'
-import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
+import { REPAYMENT_TYPE, getAllowedRepaymentTypeOptions, repaymentTypeLabel } from '../../utils/repaymentType'
+import { getAllowedPaymentMethodOptions } from '../../utils/paymentMethod'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './RepaymentRecords.scss'
 
 const formatCurrency = (amount) => {
@@ -33,6 +36,23 @@ const RepaymentRecords = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const loansState = useAppSelector((state) => state.loans)
+  const user = useAppSelector((state) => state.auth.user)
+  const typeOptions = useMemo(
+    () =>
+      getAllowedRepaymentTypeOptions({
+        canLegalNotice: hasPermission(user, P.REPAYMENTS_LEGAL_NOTICE),
+        canPreCloseDiscount: hasPermission(user, P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+      }),
+    [user]
+  )
+  const paymentMethodOptions = useMemo(
+    () =>
+      getAllowedPaymentMethodOptions({
+        canFundTransfer: hasPermission(user, P.REPAYMENTS_FUND_TRANSFER),
+        includeOther: false,
+      }),
+    [user]
+  )
   
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
@@ -408,9 +428,11 @@ const RepaymentRecords = () => {
           onChange={(e) => handlePaymentMethodChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
         >
-          <option value="cash">Cash</option>
-          <option value="bank_transfer">Bank Transfer</option>
-          <option value="upi">UPI</option>
+          {paymentMethodOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       ),
     },
@@ -425,7 +447,7 @@ const RepaymentRecords = () => {
           onChange={(e) => handleRepaymentTypeChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
         >
-          {REPAYMENT_TYPE_OPTIONS.map((option) => (
+          {typeOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
@@ -449,7 +471,7 @@ const RepaymentRecords = () => {
         />
       ),
     },
-  ], [repaymentForms, submittingLoanId, errors, dateLimits.min, dateLimits.max])
+  ], [repaymentForms, submittingLoanId, errors, dateLimits.min, dateLimits.max, typeOptions, paymentMethodOptions])
 
   // Define actions for DataTable
   const handleActions = (row) => {

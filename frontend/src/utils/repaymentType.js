@@ -16,3 +16,14 @@ export const repaymentTypeLabel = (type) => {
   const match = REPAYMENT_TYPE_OPTIONS.find((option) => option.value === type)
   return match?.label || 'EDI'
 }
+
+/** Filter Type options by role permissions (Legal Notice / Pre-closer). */
+export const getAllowedRepaymentTypeOptions = ({
+  canLegalNotice = false,
+  canPreCloseDiscount = false,
+} = {}) =>
+  REPAYMENT_TYPE_OPTIONS.filter((option) => {
+    if (option.value === REPAYMENT_TYPE.LEGAL_NOTICE) return canLegalNotice
+    if (option.value === REPAYMENT_TYPE.PRE_CLOSE_DISCOUNT) return canPreCloseDiscount
+    return true
+  })

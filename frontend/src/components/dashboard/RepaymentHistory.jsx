@@ -42,7 +42,7 @@ const repaymentRowClass = (repayment) => {
 
 const paymentMethodLabel = (method) => {
   if (method === 'cash') return 'Cash'
-  if (method === 'bank_transfer') return 'Bank Transfer'
+  if (method === 'bank_transfer') return 'Fund Transfer'
   if (method === 'upi') return 'UPI'
   if (method === 'system') return 'System'
   if (method === 'holiday') return 'Holiday'

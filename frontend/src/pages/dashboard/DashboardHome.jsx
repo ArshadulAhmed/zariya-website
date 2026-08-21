@@ -52,15 +52,17 @@ const DashboardHome = memo(() => {
       ),
     },
     {
-      title: 'Pending Approvals',
-      value: stats.pendingApprovals ? formatNumber(stats.pendingApprovals.value) : '0',
-      trend: stats.pendingApprovals?.trend || 'neutral',
-      trendValue: stats.pendingApprovals?.trendValue || '',
+      title: 'To Recover from Market',
+      value: stats.marketRecoverable
+        ? formatIndianCurrency(stats.marketRecoverable.value)
+        : '₹0',
+      trend: stats.marketRecoverable?.trend || 'neutral',
+      trendValue: stats.marketRecoverable?.trendValue || 'From daily snapshot',
       color: 'warning',
       icon: (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <polyline points="12 6 12 12 16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M12 1v22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
     },

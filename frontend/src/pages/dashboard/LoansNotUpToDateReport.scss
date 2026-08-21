@@ -74,7 +74,7 @@
           display: flex;
           flex-wrap: wrap;
           gap: 1.25rem;
-          align-items: stretch;
+          align-items: center;
           justify-content: space-between;
 
           @media (max-width: 900px) {
@@ -87,7 +87,7 @@
           display: flex;
           flex-wrap: wrap;
           gap: 1rem;
-          align-items: flex-end;
+          align-items: center;
           flex: 1;
           min-width: 0;
 
@@ -192,6 +192,61 @@
             &:hover:not(:disabled) {
               background: #f9fafb;
               border-color: #d1d5db;
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+
+          .download-dropdown {
+            position: relative;
+            display: inline-flex;
+            align-items: stretch;
+          }
+
+          .download-dropdown-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding-right: 16px;
+
+            svg {
+              flex-shrink: 0;
+            }
+          }
+
+          .download-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            z-index: 50;
+            min-width: 100%;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            padding: 4px;
+            overflow: hidden;
+          }
+
+          .download-dropdown-item {
+            display: block;
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-primary);
+            cursor: pointer;
+
+            &:hover:not(:disabled) {
+              background: #f3f4f6;
             }
 
             &:disabled {

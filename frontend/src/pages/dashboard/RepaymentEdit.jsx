@@ -11,7 +11,8 @@ import TextField from '../../components/TextField'
 import Select from '../../components/Select'
 import DatePicker from '../../components/DatePicker'
 import { getLocalDateString } from '../../utils/dashboardUtils'
-import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, repaymentTypeLabel } from '../../utils/repaymentType'
+import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, getAllowedRepaymentTypeOptions, repaymentTypeLabel } from '../../utils/repaymentType'
+import { PAYMENT_METHOD_OPTIONS, getAllowedPaymentMethodOptions, paymentMethodLabel } from '../../utils/paymentMethod'
 import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
 import '../../components/dashboard/RepaymentHistory.scss'
@@ -66,15 +67,6 @@ const repaymentRowClass = (repayment) => {
   return ''
 }
 
-const paymentMethodLabel = (method) => {
-  if (method === 'cash') return 'Cash'
-  if (method === 'bank_transfer') return 'Bank Transfer'
-  if (method === 'upi') return 'UPI'
-  if (method === 'system') return 'System'
-  if (method === 'holiday') return 'Holiday'
-  return method || 'Other'
-}
-
 const repaymentTypeDisplay = (repayment) => {
   if (isHolidayRow(repayment)) return 'Holiday'
   if (repayment?.isSystemGenerated) return '-'
@@ -122,6 +114,32 @@ const RepaymentEdit = () => {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [repaymentToDelete, setRepaymentToDelete] = useState(null)
+
+  const typeOptions = (() => {
+    const allowed = getAllowedRepaymentTypeOptions({
+      canLegalNotice: can(P.REPAYMENTS_LEGAL_NOTICE),
+      canPreCloseDiscount: can(P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+    })
+    const current = editForm.repaymentType
+    if (current && !allowed.some((option) => option.value === current)) {
+      const existing = REPAYMENT_TYPE_OPTIONS.find((option) => option.value === current)
+      if (existing) return [...allowed, existing]
+    }
+    return allowed
+  })()
+
+  const paymentMethodOptions = (() => {
+    const allowed = getAllowedPaymentMethodOptions({
+      canFundTransfer: can(P.REPAYMENTS_FUND_TRANSFER),
+      includeOther: true,
+    })
+    const current = editForm.paymentMethod
+    if (current && !allowed.some((option) => option.value === current)) {
+      const existing = PAYMENT_METHOD_OPTIONS.find((option) => option.value === current)
+      if (existing) return [...allowed, existing]
+    }
+    return allowed
+  })()
 
   // Repayment edit is admin-only; redirect non-admin to repayment details view
   useEffect(() => {
@@ -432,12 +450,7 @@ const RepaymentEdit = () => {
                   name="paymentMethod"
                   value={editForm.paymentMethod}
                   onChange={handleEditChange}
-                  options={[
-                    { value: 'cash', label: 'Cash' },
-                    { value: 'bank_transfer', label: 'Bank Transfer' },
-                    { value: 'upi', label: 'UPI' },
-                    { value: 'other', label: 'Other' },
-                  ]}
+                  options={paymentMethodOptions}
                 />
                 <TextField
                   label="Remarks (Optional)"
@@ -452,7 +465,7 @@ const RepaymentEdit = () => {
                   name="repaymentType"
                   value={editForm.repaymentType}
                   onChange={handleEditChange}
-                  options={REPAYMENT_TYPE_OPTIONS}
+                  options={typeOptions}
                   required
                 />
                 {editErrors.submit && <div className="form-error">{editErrors.submit}</div>}

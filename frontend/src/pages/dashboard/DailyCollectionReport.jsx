@@ -32,7 +32,7 @@ const formatCurrency = (amount) => {
 
 const paymentMethodLabel = (method) => {
   if (method === 'cash') return 'Cash'
-  if (method === 'bank_transfer') return 'Bank Transfer'
+  if (method === 'bank_transfer') return 'Fund Transfer'
   if (method === 'upi') return 'UPI'
   return method || 'Other'
 }

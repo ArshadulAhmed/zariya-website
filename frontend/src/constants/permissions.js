@@ -28,6 +28,9 @@ export const P = Object.freeze({
   REPAYMENTS_WRITE: 'repayments:write',
   REPAYMENTS_UPDATE: 'repayments:update',
   REPAYMENTS_DELETE: 'repayments:delete',
+  REPAYMENTS_LEGAL_NOTICE: 'repayments:legal_notice',
+  REPAYMENTS_PRE_CLOSE_DISCOUNT: 'repayments:pre_close_discount',
+  REPAYMENTS_FUND_TRANSFER: 'repayments:fund_transfer',
   REPORTS_LOAN: 'reports:loan',
   REPORTS_DAILY_COLLECTION: 'reports:daily_collection',
   REPORTS_NOT_UP_TO_DATE: 'reports:not_up_to_date',
@@ -35,6 +38,7 @@ export const P = Object.freeze({
   REPORTS_DOWNLOAD_REPAYMENT_PDF: 'reports:download_repayment_pdf',
   REPORTS_DOWNLOAD_DAILY_COLLECTION_PDF: 'reports:download_daily_collection_pdf',
   REPORTS_DOWNLOAD_OUTSTANDING_CSV: 'reports:download_outstanding_csv',
+  REPORTS_DOWNLOAD_OUTSTANDING_PDF: 'reports:download_outstanding_pdf',
   HOLIDAYS_READ: 'holidays:read',
   HOLIDAYS_WRITE: 'holidays:write',
   USERS_MANAGE: 'users:manage',
@@ -53,6 +57,7 @@ export const ALL_REPORT_DOWNLOAD_PERMISSIONS = [
   P.REPORTS_DOWNLOAD_REPAYMENT_PDF,
   P.REPORTS_DOWNLOAD_DAILY_COLLECTION_PDF,
   P.REPORTS_DOWNLOAD_OUTSTANDING_CSV,
+  P.REPORTS_DOWNLOAD_OUTSTANDING_PDF,
 ]
 
 export const ALL_PERMISSIONS = Object.values(P)

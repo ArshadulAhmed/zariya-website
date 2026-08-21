@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
   fetchOutstandingLoans,
   downloadOutstandingCsv,
+  downloadOutstandingPdf,
   clearLoanOutstanding,
 } from '../../store/slices/loanOutstandingSlice'
 import DataTable from '../../components/dashboard/DataTable'
@@ -39,24 +40,23 @@ const statusLabel = (value) => {
 }
 
 const COLUMNS = [
-  { header: 'S.No', key: '_sno', width: '6%' },
-  { header: 'Member', headerTitle: 'Member name', key: 'member_name', width: '14%' },
+  { header: 'S.No', key: '_sno', width: '5%' },
+  { header: 'Member Name', key: 'member_name', width: '13%' },
   {
     header: 'Loan ID',
     key: 'loan_account_number',
-    width: '12%',
+    width: '11%',
     render: (v, row) => row.loan_account_number || row.loan_id || 'N/A',
   },
   {
     header: 'Status',
     key: 'loan_status',
-    width: '9%',
+    width: '8%',
     render: (v) => <span className={`status-badge status-${v}`}>{statusLabel(v)}</span>,
   },
-  { header: 'Loan Amount', key: 'loan_amount', width: '12%', render: (v) => formatCurrency(v) },
+  { header: 'Loan Amount', key: 'loan_amount', width: '11%', render: (v) => formatCurrency(v) },
   {
-    header: 'Pending',
-    headerTitle: 'Pending till today',
+    header: 'Pending till today',
     key: 'pending_amount_till_today',
     width: '12%',
     render: (v) => {
@@ -71,22 +71,19 @@ const COLUMNS = [
     },
   },
   {
-    header: 'Remaining',
-    headerTitle: 'Remaining principal',
+    header: 'Remaining Principal',
     key: 'remaining_amount',
     width: '12%',
     render: (v) => formatCurrency(v),
   },
   {
-    header: 'EDI missed',
-    headerTitle: 'Total EDI missed',
+    header: 'Total EDI Missed',
     key: 'pending_emi_count',
-    width: '8%',
+    width: '9%',
     render: (v) => Number(v || 0),
   },
   {
-    header: 'Fine',
-    headerTitle: 'Fine outstanding',
+    header: 'Fine Outstanding',
     key: 'total_fine_accumulated',
     width: '11%',
     render: (v) => <span className="amount-cell fine">{formatCurrency(v)}</span>,
@@ -98,13 +95,18 @@ const LoanOutstandingReport = () => {
   const dispatch = useAppDispatch()
   const user = useAppSelector((state) => state.auth.user)
   const canDownloadCsv = hasPermission(user, P.REPORTS_DOWNLOAD_OUTSTANDING_CSV)
-  const { items, pagination, isLoading, isLoadingMore, isDownloading, error } = useAppSelector(
+  const canDownloadPdf = hasPermission(user, P.REPORTS_DOWNLOAD_OUTSTANDING_PDF)
+  const canDownload = canDownloadCsv || canDownloadPdf
+  const { items, pagination, isLoading, isLoadingMore, isDownloading, isDownloadingPdf, error } = useAppSelector(
     (state) => state.loanOutstanding
   )
 
   const [searchInput, setSearchInput] = useState('')
   const [statusInput, setStatusInput] = useState('')
+  const [downloadOpen, setDownloadOpen] = useState(false)
+  const downloadMenuRef = useRef(null)
   const { pageRef, filterRef } = useStickyFilterBar()
+  const isExporting = isDownloading || isDownloadingPdf
 
   const queryArgs = (page = 1) => ({
     page,
@@ -138,6 +140,24 @@ const LoanOutstandingReport = () => {
     )
   }, [dispatch])
 
+  useEffect(() => {
+    if (!downloadOpen) return
+    const onPointerDown = (e) => {
+      if (!downloadMenuRef.current?.contains(e.target)) {
+        setDownloadOpen(false)
+      }
+    }
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setDownloadOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [downloadOpen])
+
   const applyFilters = (page = 1) => {
     dispatch(fetchOutstandingLoans(queryArgs(page)))
   }
@@ -167,16 +187,23 @@ const LoanOutstandingReport = () => {
     applyFilters((pagination?.page || 1) + 1)
   }
 
-  const handleDownload = () => {
-    if (isDownloading) return
-    dispatch(
-      downloadOutstandingCsv({
-        search: searchInput.trim(),
-        status: statusInput,
-        sortBy: 'remaining_amount',
-        sortOrder: 'desc',
-      })
-    )
+  const downloadArgs = () => ({
+    search: searchInput.trim(),
+    status: statusInput,
+    sortBy: 'remaining_amount',
+    sortOrder: 'desc',
+  })
+
+  const handleDownloadCsv = () => {
+    if (isExporting) return
+    setDownloadOpen(false)
+    dispatch(downloadOutstandingCsv(downloadArgs()))
+  }
+
+  const handleDownloadPdf = () => {
+    if (isExporting) return
+    setDownloadOpen(false)
+    dispatch(downloadOutstandingPdf(downloadArgs()))
   }
 
   const hasMore = pagination?.page < pagination?.pages
@@ -207,7 +234,7 @@ const LoanOutstandingReport = () => {
             <ReportInfoIcon title={OUTSTANDING_INFO} />
           </h1>
           <p className="page-subtitle">
-            Remaining principal and unpaid fine as of the last daily snapshot. Download CSV for the full list.
+            Remaining principal and unpaid fine as of the last daily snapshot.
           </p>
         </div>
       </div>
@@ -218,25 +245,25 @@ const LoanOutstandingReport = () => {
             <div className="search-filters-row">
               <div className="search-filters-left">
                 <div className="filter-group">
-                  <label htmlFor="outstanding-search">Member name / Loan ID</label>
                   <input
                     type="text"
                     id="outstanding-search"
                     className="filter-input"
-                    placeholder="Search..."
+                    placeholder="Member name / Loan ID"
+                    aria-label="Member name / Loan ID"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
                 </div>
                 <div className="filter-group">
-                  <label htmlFor="outstanding-status">Status</label>
                   <select
                     id="outstanding-status"
                     className="filter-select"
                     value={statusInput}
                     onChange={(e) => setStatusInput(e.target.value)}
+                    aria-label="Status"
                   >
-                    <option value="">All</option>
+                    <option value="">Status: All</option>
                     <option value="active">Active</option>
                     <option value="closed">Closed</option>
                     <option value="defaulted">Defaulted</option>
@@ -248,15 +275,54 @@ const LoanOutstandingReport = () => {
                 <button type="button" className="btn-secondary" onClick={handleReset} disabled={isLoading}>
                   Reset
                 </button>
-                {canDownloadCsv && (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={handleDownload}
-                    disabled={isDownloading || isLoading}
-                  >
-                    {isDownloading ? 'Downloading...' : 'Download CSV'}
-                  </button>
+                {canDownload && (
+                  <div className="download-dropdown" ref={downloadMenuRef}>
+                    <button
+                      type="button"
+                      className="btn-secondary download-dropdown-trigger"
+                      onClick={() => setDownloadOpen((open) => !open)}
+                      disabled={isExporting || isLoading}
+                      aria-expanded={downloadOpen}
+                      aria-haspopup="menu"
+                    >
+                      {isExporting ? 'Downloading...' : 'Download'}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M6 9l6 6 6-6"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    {downloadOpen && (
+                      <div className="download-dropdown-menu" role="menu">
+                        {canDownloadCsv && (
+                          <button
+                            type="button"
+                            className="download-dropdown-item"
+                            role="menuitem"
+                            onClick={handleDownloadCsv}
+                            disabled={isExporting}
+                          >
+                            CSV
+                          </button>
+                        )}
+                        {canDownloadPdf && (
+                          <button
+                            type="button"
+                            className="download-dropdown-item"
+                            role="menuitem"
+                            onClick={handleDownloadPdf}
+                            disabled={isExporting}
+                          >
+                            PDF
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
               {snapshotDate && !isLoading && (

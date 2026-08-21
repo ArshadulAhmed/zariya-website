@@ -41,12 +41,25 @@ export const downloadOutstandingCsv = createAsyncThunk(
   }
 )
 
+export const downloadOutstandingPdf = createAsyncThunk(
+  'loanOutstanding/downloadOutstandingPdf',
+  async ({ search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' }, { rejectWithValue }) => {
+    try {
+      await loanDueTrackingAPI.downloadOutstandingPdf({ search, status, sortBy, sortOrder })
+      return { success: true }
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to download PDF')
+    }
+  }
+)
+
 const initialState = {
   items: [],
   pagination: { page: 1, limit: 25, total: 0, pages: 0 },
   isLoading: false,
   isLoadingMore: false,
   isDownloading: false,
+  isDownloadingPdf: false,
   error: null,
 }
 
@@ -100,6 +113,17 @@ const loanOutstandingSlice = createSlice({
       .addCase(downloadOutstandingCsv.rejected, (state, action) => {
         state.isDownloading = false
         state.error = action.payload || 'Failed to download CSV'
+      })
+      .addCase(downloadOutstandingPdf.pending, (state) => {
+        state.isDownloadingPdf = true
+        state.error = null
+      })
+      .addCase(downloadOutstandingPdf.fulfilled, (state) => {
+        state.isDownloadingPdf = false
+      })
+      .addCase(downloadOutstandingPdf.rejected, (state, action) => {
+        state.isDownloadingPdf = false
+        state.error = action.payload || 'Failed to download PDF'
       })
   },
 })

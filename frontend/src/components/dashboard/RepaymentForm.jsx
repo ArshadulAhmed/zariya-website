@@ -7,8 +7,11 @@ import { getLocalDateString } from '../../utils/dashboardUtils'
 import TextField from '../TextField'
 import Select from '../Select'
 import DatePicker from '../DatePicker'
-import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS } from '../../utils/repaymentType'
+import { REPAYMENT_TYPE, getAllowedRepaymentTypeOptions } from '../../utils/repaymentType'
+import { getAllowedPaymentMethodOptions } from '../../utils/paymentMethod'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './RepaymentForm.scss'
 
 
@@ -27,9 +30,18 @@ const getDateConstraints = () => {
 const RepaymentForm = () => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
+  const user = useAppSelector((state) => state.auth.user)
   const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
   const loanStatus = selectedLoan?.status
+  const typeOptions = getAllowedRepaymentTypeOptions({
+    canLegalNotice: hasPermission(user, P.REPAYMENTS_LEGAL_NOTICE),
+    canPreCloseDiscount: hasPermission(user, P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+  })
+  const paymentMethodOptions = getAllowedPaymentMethodOptions({
+    canFundTransfer: hasPermission(user, P.REPAYMENTS_FUND_TRANSFER),
+    includeOther: true,
+  })
   
   const [repaymentForm, setRepaymentForm] = useState({
     amount: '',
@@ -174,12 +186,7 @@ const RepaymentForm = () => {
             name="paymentMethod"
             value={repaymentForm.paymentMethod}
             onChange={handleRepaymentChange}
-            options={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'bank_transfer', label: 'Bank Transfer' },
-              { value: 'upi', label: 'UPI' },
-              { value: 'other', label: 'Other' },
-            ]}
+            options={paymentMethodOptions}
             required
           />
 
@@ -198,7 +205,7 @@ const RepaymentForm = () => {
             name="repaymentType"
             value={repaymentForm.repaymentType}
             onChange={handleRepaymentChange}
-            options={REPAYMENT_TYPE_OPTIONS}
+            options={typeOptions}
             required
           />
         </div>
