@@ -95,6 +95,17 @@ const PersonalInfoSection = () => {
         </div>
 
         <div className="form-group">
+          <MobileNumberField
+            label="Alternate Mobile Number"
+            name="alternateMobileNumber"
+            value={formData.alternateMobileNumber}
+            onChange={handleChange}
+            error={validationErrors.alternateMobileNumber}
+            helperText={validationErrors.alternateMobileNumber || 'Optional'}
+          />
+        </div>
+
+        <div className="form-group">
           <TextField
             label="Email"
             name="email"

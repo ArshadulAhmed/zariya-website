@@ -7,6 +7,11 @@ import { getLocalDateString } from '../../utils/dashboardUtils'
 import TextField from '../TextField'
 import Select from '../Select'
 import DatePicker from '../DatePicker'
+import { REPAYMENT_TYPE, getAllowedRepaymentTypeOptions } from '../../utils/repaymentType'
+import { getAllowedPaymentMethodOptions } from '../../utils/paymentMethod'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './RepaymentForm.scss'
 
 
@@ -25,15 +30,25 @@ const getDateConstraints = () => {
 const RepaymentForm = () => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
+  const user = useAppSelector((state) => state.auth.user)
   const loanId = useAppSelector((state) => state.loans.selectedLoan?._id || state.loans.selectedLoan?.id)
-  const loanStatus = useAppSelector((state) => state.loans.selectedLoan?.status)
+  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+  const loanStatus = selectedLoan?.status
+  const typeOptions = getAllowedRepaymentTypeOptions({
+    canLegalNotice: hasPermission(user, P.REPAYMENTS_LEGAL_NOTICE),
+    canPreCloseDiscount: hasPermission(user, P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+  })
+  const paymentMethodOptions = getAllowedPaymentMethodOptions({
+    canFundTransfer: hasPermission(user, P.REPAYMENTS_FUND_TRANSFER),
+    includeOther: true,
+  })
   
   const [repaymentForm, setRepaymentForm] = useState({
     amount: '',
     paymentDate: getLocalDateString(),
     paymentMethod: 'cash',
     remarks: '',
-    isLateFee: false,
+    repaymentType: REPAYMENT_TYPE.EDI,
   })
   const [repaymentErrors, setRepaymentErrors] = useState({})
   const [isSubmittingRepayment, setIsSubmittingRepayment] = useState(false)
@@ -97,7 +112,7 @@ const RepaymentForm = () => {
         paymentDate: paymentDateISO,
         paymentMethod: repaymentForm.paymentMethod,
         remarks: repaymentForm.remarks.trim() || undefined,
-        isLateFee: Boolean(repaymentForm.isLateFee),
+        repaymentType: repaymentForm.repaymentType || REPAYMENT_TYPE.EDI,
       })
 
       if (response.success) {
@@ -107,7 +122,7 @@ const RepaymentForm = () => {
           paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
-          isLateFee: false,
+          repaymentType: REPAYMENT_TYPE.EDI,
         })
         setRepaymentErrors({})
         // Refresh loan and repayments
@@ -130,7 +145,7 @@ const RepaymentForm = () => {
 
   const isActive = ['approved', 'active'].includes(loanStatus)
 
-  if (!isActive) {
+  if (!isActive || !isLoanDisbursed(selectedLoan)) {
     return null
   }
 
@@ -171,12 +186,7 @@ const RepaymentForm = () => {
             name="paymentMethod"
             value={repaymentForm.paymentMethod}
             onChange={handleRepaymentChange}
-            options={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'bank_transfer', label: 'Bank Transfer' },
-              { value: 'upi', label: 'UPI' },
-              { value: 'other', label: 'Other' },
-            ]}
+            options={paymentMethodOptions}
             required
           />
 
@@ -190,17 +200,14 @@ const RepaymentForm = () => {
             rows={2}
           />
 
-          <div className="form-field checkbox-field">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="isLateFee"
-                checked={Boolean(repaymentForm.isLateFee)}
-                onChange={(e) => setRepaymentForm((prev) => ({ ...prev, isLateFee: e.target.checked }))}
-              />
-              <span>Late fee payment</span>
-            </label>
-          </div>
+          <Select
+            label="Type"
+            name="repaymentType"
+            value={repaymentForm.repaymentType}
+            onChange={handleRepaymentChange}
+            options={typeOptions}
+            required
+          />
         </div>
 
         {repaymentErrors.submit && (

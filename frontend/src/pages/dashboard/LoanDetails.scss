@@ -218,6 +218,11 @@
       font-weight: 600;
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
+
+      &.status-awaiting-disbursement {
+        background: #fef3c7;
+        color: #92400e;
+      }
     }
 
     .loan-id {
@@ -382,6 +387,11 @@
         border-radius: 6px;
         font-size: 0.7rem;
         font-weight: 600;
+
+        &.status-awaiting-disbursement {
+          background: #fef3c7;
+          color: #92400e;
+        }
 
         &.status-active {
           background: #dbeafe;

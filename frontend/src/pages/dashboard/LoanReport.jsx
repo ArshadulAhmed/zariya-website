@@ -7,8 +7,6 @@ import {
   resetLoanReport,
   clearError,
   setError,
-  clearNOCError,
-  clearRepaymentHistoryError,
   fetchLoanByAccountNumber,
   fetchLoanRepayments,
   downloadNOC,
@@ -17,7 +15,23 @@ import {
 import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCard'
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoanReport.scss'
+
+const loanStatusClass = (loan) => (
+  loan.status === 'active' && !isLoanDisbursed(loan)
+    ? 'status-awaiting-disbursement'
+    : `status-${loan.status}`
+)
+
+const loanStatusLabel = (loan) => (
+  loan.status === 'active' && !isLoanDisbursed(loan)
+    ? 'Awaiting disbursement'
+    : (loan.status ? loan.status.charAt(0).toUpperCase() + loan.status.slice(1) : 'N/A')
+)
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
@@ -36,6 +50,20 @@ const formatDate = (dateString) => {
   }
 }
 
+const formatDateOnly = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  } catch (e) {
+    return dateString
+  }
+}
+
 const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -44,6 +72,7 @@ const LoanReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
+  const { pageRef, filterRef } = useStickyFilterBar()
   
   const {
     loanAccountNumber,
@@ -52,6 +81,8 @@ const LoanReport = () => {
     totalPaid,
     totalLateFeePaid,
     additionalAmountPaid,
+    preCloseDiscount,
+    effectiveLoanAmount,
     isLoading,
     isLoadingRepayments,
     isLoadingMore,
@@ -59,12 +90,14 @@ const LoanReport = () => {
     isDownloadingNOC,
     isDownloadingRepaymentHistory,
     error,
-    nocError,
-    repaymentHistoryError,
   } = useAppSelector((state) => state.loanReport)
 
-  const userRole = useAppSelector((state) => state.auth.user?.role)
-  const isAdmin = userRole === 'admin'
+  const user = useAppSelector((state) => state.auth.user)
+  const canDownloadNoc = hasPermission(user, P.LOANS_NOC)
+  const canPrintRepaymentPdf = (
+    hasPermission(user, P.REPORTS_DOWNLOAD_REPAYMENT_PDF)
+    || hasPermission(user, P.LOANS_DOWNLOAD_REPAYMENT_HISTORY)
+  )
 
   const handleLoadMoreRepayments = useCallback(() => {
     if (!loan) return
@@ -111,22 +144,6 @@ const LoanReport = () => {
       dispatch(resetLoanReport())
     }
   }, [dispatch])
-
-  // Show NOC error if any
-  useEffect(() => {
-    if (nocError) {
-      alert(nocError)
-      dispatch(clearNOCError())
-    }
-  }, [nocError, dispatch])
-
-  // Show Repayment History error if any
-  useEffect(() => {
-    if (repaymentHistoryError) {
-      alert(repaymentHistoryError)
-      dispatch(clearRepaymentHistoryError())
-    }
-  }, [repaymentHistoryError, dispatch])
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -175,7 +192,7 @@ const LoanReport = () => {
   const mockSelectedLoan = loan
 
   return (
-    <div className="loan-report-page">
+    <div className="loan-report-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <button className="back-button" onClick={() => navigate('/dashboard/reports')}>
@@ -188,13 +205,46 @@ const LoanReport = () => {
           <h1 className="page-title">Loan Report</h1>
           <p className="page-subtitle">View comprehensive loan details and repayment history</p>
         </div>
+        {loan?.status === 'closed' && canDownloadNoc && (
+          <div className="header-actions">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleDownloadNOC}
+              disabled={isDownloadingNOC}
+            >
+              {isDownloadingNOC ? (
+                <>
+                  <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
+                      <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                      <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                    </circle>
+                  </svg>
+                  Generating NOC...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Generate NOC
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Search Section */}
-      <div className="search-section">
+      <div className="search-section sticky-filter-bar" ref={filterRef}>
         <div className="search-card">
-          <h2>Search Loan</h2>
-          <p className="search-hint">Enter the loan account number to generate a detailed report</p>
+          <div className="search-copy">
+            <h2>Search Loan</h2>
+            <p className="search-hint">Enter the loan account number to generate a detailed report</p>
+          </div>
           <form onSubmit={handleSearch} className="search-form" autoComplete="off">
             <div className="search-input-group">
               <input
@@ -256,78 +306,15 @@ const LoanReport = () => {
         </div>
       </div>
 
-      {/* Loan Details Section */}
       {loan && (
         <>
-          <div className="report-actions">
-            {loan.status === 'closed' && isAdmin && (
-              <button
-                className="btn-primary"
-                onClick={handleDownloadNOC}
-                disabled={isDownloadingNOC}
-              >
-                {isDownloadingNOC ? (
-                  <>
-                    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
-                        <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
-                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
-                      </circle>
-                    </svg>
-                    Generating NOC...
-                  </>
-                ) : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Generate NOC
-                  </>
-                )}
-              </button>
-            )}
-            {['active', 'closed'].includes(loan.status) && repayments.length > 0 && (
-              <button
-                className="btn-primary"
-                onClick={handleDownloadRepaymentHistory}
-                disabled={isDownloadingRepaymentHistory}
-              >
-                {isDownloadingRepaymentHistory ? (
-                  <>
-                    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
-                        <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
-                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
-                      </circle>
-                    </svg>
-                    Generating PDF...
-                  </>
-                ) : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Print Repayment History
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Loan Info - We'll need to create a report-specific version or pass loan via context */}
           <div className="loan-details-section">
             {/* We'll render loan details here directly since LoanInfo expects Redux state */}
             <div className="details-card">
               <div className="card-header">
                 <div>
-                  <span className={`status-badge status-${loan.status}`}>
-                    {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                  <span className={`status-badge ${loanStatusClass(loan)}`}>
+                    {loanStatusLabel(loan)}
                   </span>
                 </div>
                 <div className="loan-id">
@@ -387,13 +374,19 @@ const LoanReport = () => {
                   <h3>Application Details</h3>
                   <div className="detail-row">
                     <span className="detail-label">Status</span>
-                    <span className={`status-badge status-${loan.status}`}>
-                      {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                    <span className={`status-badge ${loanStatusClass(loan)}`}>
+                      {loanStatusLabel(loan)}
                     </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Created At</span>
                     <span className="detail-value">{formatDate(loan.createdAt)}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Disbursed At</span>
+                    <span className="detail-value">
+                      {isLoanDisbursed(loan) ? formatDateOnly(loan.startDate) : 'Awaiting disbursement'}
+                    </span>
                   </div>
                   {loan.reviewedBy && (
                     <>
@@ -417,13 +410,51 @@ const LoanReport = () => {
             {['active', 'closed'].includes(loan.status) && (
               <div className="repayment-history-section">
                 <RepaymentSummaryCard
-                  loanAmount={loan.loanAmount}
+                  loanAmount={
+                    effectiveLoanAmount != null
+                      ? Number(effectiveLoanAmount)
+                      : Math.max(0, Number(loan.loanAmount || 0) - Number(preCloseDiscount || 0))
+                  }
                   totalPaid={totalPaid}
                   totalLateFeePaid={totalLateFeePaid}
                   additionalAmountPaid={additionalAmountPaid}
+                  preCloseDiscount={preCloseDiscount}
                 />
                 <div className="repayment-history-wrapper">
-                  <h2>Repayment History</h2>
+                  <div className="section-heading">
+                    <h2>Repayment History</h2>
+                    {repayments.length > 0 && canPrintRepaymentPdf && (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={handleDownloadRepaymentHistory}
+                        disabled={isDownloadingRepaymentHistory}
+                      >
+                        {isDownloadingRepaymentHistory ? (
+                          <>
+                            <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
+                                <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                                <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                              </circle>
+                            </svg>
+                            Generating PDF...
+                          </>
+                        ) : (
+                          <>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Print PDF
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                   <RepaymentHistory
                     repayments={repayments}
                     isLoading={isLoadingRepayments}

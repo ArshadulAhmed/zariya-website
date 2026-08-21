@@ -54,6 +54,24 @@
       }
     }
 
+    .member-credit-score-section {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .member-loan-ineligible-warning {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+      font-size: 0.72rem;
+      font-family: 'Poppins', sans-serif;
+      line-height: 1.4;
+    }
+
     .documents-section {
       margin-top: 1.2rem;
       padding-top: 1.2rem;

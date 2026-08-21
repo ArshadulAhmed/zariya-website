@@ -1,9 +1,22 @@
+import { getMobileNumberValidationError, stripMobileDigits } from './dashboardUtils'
+
+export const getAlternateMobileValidationError = (alternate, primary) => {
+  const digits = stripMobileDigits(alternate)
+  if (!digits) return ''
+  if (digits.length !== 10) {
+    return getMobileNumberValidationError(alternate)
+  }
+  if (stripMobileDigits(primary) && digits === stripMobileDigits(primary)) {
+    return 'Alternate number cannot be the same as primary mobile number'
+  }
+  return ''
+}
+
 /**
  * Calculate age from date of birth
  * @param {string} dateOfBirth - Date string in YYYY-MM-DD format
  * @returns {string} - Age as string
  */
-import { getMobileNumberValidationError, stripMobileDigits } from './dashboardUtils'
 export const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return ''
   const today = new Date()
@@ -46,6 +59,8 @@ export const validateMembershipForm = (formData) => {
 
   const mobileError = getMobileNumberValidationError(formData.mobileNumber)
   if (mobileError) errors.mobileNumber = mobileError
+  const alternateMobileError = getAlternateMobileValidationError(formData.alternateMobileNumber, formData.mobileNumber)
+  if (alternateMobileError) errors.alternateMobileNumber = alternateMobileError
 
   // Email is optional, but if provided, validate format
   if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
@@ -118,6 +133,8 @@ export const validateMembershipFormForEdit = (formData) => {
   if (!formData.occupation?.trim()) errors.occupation = 'Occupation is required'
   const mobileError = getMobileNumberValidationError(formData.mobileNumber)
   if (mobileError) errors.mobileNumber = mobileError
+  const alternateMobileError = getAlternateMobileValidationError(formData.alternateMobileNumber, formData.mobileNumber)
+  if (alternateMobileError) errors.alternateMobileNumber = alternateMobileError
   if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) errors.email = 'Please enter a valid email address'
   if (!formData.aadhar?.trim()) errors.aadhar = 'Aadhar number is required'
   else if (!/^\d{12}$/.test(formData.aadhar.trim())) errors.aadhar = 'Aadhar number must be 12 digits'
@@ -142,6 +159,7 @@ export const buildMembershipUpdatePayload = (formData) => ({
   dateOfBirth: formData.dateOfBirth,
   occupation: formData.occupation?.trim(),
   mobileNumber: stripMobileDigits(formData.mobileNumber),
+  alternateMobileNumber: stripMobileDigits(formData.alternateMobileNumber),
   email: formData.email?.trim() || null,
   aadhar: formData.aadhar?.trim(),
   pan: formData.pan?.trim().toUpperCase(),
@@ -171,6 +189,10 @@ export const createMembershipFormData = (formData) => {
   submitData.append('dateOfBirth', formData.dateOfBirth)
   submitData.append('occupation', formData.occupation.trim())
   submitData.append('mobileNumber', stripMobileDigits(formData.mobileNumber))
+  const alternateMobile = stripMobileDigits(formData.alternateMobileNumber)
+  if (alternateMobile) {
+    submitData.append('alternateMobileNumber', alternateMobile)
+  }
   if (formData.email?.trim()) {
     submitData.append('email', formData.email.trim())
   }

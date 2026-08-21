@@ -5,6 +5,9 @@ import { fetchApplications, setFilters, setPagination, closeSnackbar } from '../
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './LoanApplications.scss'
 
 function statusLabel(value) {
@@ -45,6 +48,8 @@ const LoanApplications = memo(function LoanApplications() {
   const [searchInput, setSearchInput] = useState(filters?.search || '')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
+  const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
   const showSkeleton = isLoading || !hasFetchedRef.current
 
   useEffect(() => {
@@ -101,22 +106,15 @@ const LoanApplications = memo(function LoanApplications() {
   )
 
   return (
-    <div className="loan-applications-page">
+    <div className="loan-applications-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Loan Applications</h1>
           <p className="page-subtitle">Review and approve or reject loan applications</p>
         </div>
-        <button className="btn-primary" onClick={() => navigate('/dashboard/loans/new')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          New Application
-        </button>
       </div>
 
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"
@@ -142,6 +140,15 @@ const LoanApplications = memo(function LoanApplications() {
             ]}
           />
         </div>
+        {can(P.LOAN_APPLICATIONS_WRITE) && (
+        <button className="btn-primary filter-create-btn" onClick={() => navigate('/dashboard/loans/new')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          New Application
+        </button>
+        )}
       </div>
 
       <DataTable

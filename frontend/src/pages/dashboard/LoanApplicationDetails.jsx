@@ -8,6 +8,8 @@ import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import PromptModal from '../../components/dashboard/PromptModal'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './LoanApplicationDetails.scss'
 
 const LoanApplicationDetails = () => {
@@ -37,8 +39,10 @@ const LoanApplicationDetails = () => {
     return () => dispatch(clearSelectedApplication())
   }, [dispatch])
 
-  const isAdmin = user?.role === 'admin'
-  const isEmployee = user?.role === 'employee'
+  const canUpdate = hasPermission(user, P.LOAN_APPLICATIONS_UPDATE)
+  const canReview = hasPermission(user, P.LOAN_APPLICATIONS_REVIEW)
+  const canRead = hasPermission(user, P.LOAN_APPLICATIONS_READ)
+  const canDownloadContract = hasPermission(user, P.LOAN_APPLICATIONS_DOWNLOAD_CONTRACT)
   const underReview = application?.status === 'under_review'
   const [downloading, setDownloading] = useState(false)
   const [approveModal, setApproveModal] = useState(false)
@@ -241,7 +245,7 @@ const LoanApplicationDetails = () => {
           <p className="page-subtitle">View and manage application</p>
         </div>
         <div className="header-actions">
-          {application?.status === 'under_review' && isAdmin && (
+          {application?.status === 'under_review' && canUpdate && (
             <button
               type="button"
               className="btn-secondary"
@@ -250,7 +254,7 @@ const LoanApplicationDetails = () => {
               Edit
             </button>
           )}
-          {underReview && isAdmin && (
+          {underReview && canReview && (
             <>
               <button className="btn-primary" onClick={handleApproveOpen} disabled={isLoading}>
                 Approve
@@ -260,7 +264,7 @@ const LoanApplicationDetails = () => {
               </button>
             </>
           )}
-          {(isAdmin || isEmployee) && (
+          {canDownloadContract && (
             <button
               className="btn-secondary"
               onClick={handleDownload}
@@ -423,11 +427,25 @@ const LoanApplicationDetails = () => {
         onClose={handleApproveCancel}
         onConfirm={handleApproveConfirm}
         title="Approve application"
-        message="Are you sure you want to approve this application?"
         confirmText="Approve"
         cancelText="Cancel"
-        variant="info"
         isLoading={isLoading}
+        className="approve-application-modal"
+        message={(
+          <div className="approve-modal-body">
+            <p className="approve-modal-lead">This creates the loan. It does not give cash to the member.</p>
+            <div className="approve-modal-steps">
+              <div className="approve-modal-step">
+                <h3>Now</h3>
+                <p>The loan account is created and the agreement can be downloaded.</p>
+              </div>
+              <div className="approve-modal-step">
+                <h3>After you disburse</h3>
+                <p>Record the cash date on the loan page. EDI starts the next day. The receipt becomes available.</p>
+              </div>
+            </div>
+          </div>
+        )}
       />
 
       <Snackbar />

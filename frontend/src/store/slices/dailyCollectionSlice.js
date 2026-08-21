@@ -16,6 +16,7 @@ export const fetchDailyCollections = createAsyncThunk(
           totalCollection: response.data.totalCollection || 0,
           totalLateFee: response.data.totalLateFee ?? 0,
           emiCollection: response.data.emiCollection ?? 0,
+          legalNoticeCollection: response.data.legalNoticeCollection ?? 0,
           collectionByMethod: response.data.collectionByMethod || {},
           totalCount: response.data.totalCount || 0,
           pagination: response.data.pagination || { page, limit, total: 0, pages: 0 },
@@ -47,6 +48,7 @@ const initialState = {
   totalCollection: 0,
   totalLateFee: 0,
   emiCollection: 0,
+  legalNoticeCollection: 0,
   collectionByMethod: {},
   totalCount: 0,
   isLoading: false,
@@ -66,6 +68,7 @@ const dailyCollectionSlice = createSlice({
       state.totalCollection = 0
       state.totalLateFee = 0
       state.emiCollection = 0
+      state.legalNoticeCollection = 0
       state.collectionByMethod = {}
       state.totalCount = 0
       state.error = null
@@ -99,6 +102,7 @@ const dailyCollectionSlice = createSlice({
         state.totalCollection = action.payload.totalCollection
         state.totalLateFee = action.payload.totalLateFee ?? 0
         state.emiCollection = action.payload.emiCollection ?? 0
+        state.legalNoticeCollection = action.payload.legalNoticeCollection ?? 0
         state.collectionByMethod = action.payload.collectionByMethod
         state.totalCount = action.payload.totalCount
         state.error = null
@@ -113,6 +117,7 @@ const dailyCollectionSlice = createSlice({
           state.totalCollection = 0
           state.totalLateFee = 0
           state.emiCollection = 0
+          state.legalNoticeCollection = 0
           state.collectionByMethod = {}
           state.totalCount = 0
           state.pagination = initialState.pagination

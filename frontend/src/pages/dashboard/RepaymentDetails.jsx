@@ -8,6 +8,8 @@ import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCar
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import TableSkeleton from '../../components/dashboard/TableSkeleton'
 import CloseLoanCard from '../../components/dashboard/CloseLoanCard'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './RepaymentDetails.scss'
 
 const RepaymentDetails = () => {
@@ -21,11 +23,14 @@ const RepaymentDetails = () => {
   const totalPaid = repaymentRecordsState?.totalPaid || 0
   const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
   const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
+  const preCloseDiscount = repaymentRecordsState?.preCloseDiscount || 0
+  const missedEmiCount = repaymentRecordsState?.missedEmiCount ?? 0
   const loanInfo = repaymentRecordsState?.loanInfo
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.REPAYMENTS_UPDATE)
 
   const lastLoanIdRef = useRef('')
   const hasFetchedRef = useRef(false)
@@ -74,7 +79,10 @@ const RepaymentDetails = () => {
   // Show skeleton if loading AND no data yet - same pattern as LoanDetails (isLoading && !selectedLoan)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
 
-  const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const originalLoanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const loanAmount = loanInfo?.effectiveLoanAmount != null
+    ? Number(loanInfo.effectiveLoanAmount)
+    : Math.max(0, originalLoanAmount - preCloseDiscount)
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
 
   const handleLoadMore = () => {
@@ -149,7 +157,9 @@ const RepaymentDetails = () => {
             totalPaid={totalPaid}
             totalLateFeePaid={totalLateFeePaid}
             remainingAmount={remainingAmount}
+            preCloseDiscount={preCloseDiscount}
             additionalAmountPaid={additionalAmountPaid}
+            missedEmiCount={missedEmiCount}
           />
           <RepaymentHistory 
             hasMore={pagination.page < pagination.pages}

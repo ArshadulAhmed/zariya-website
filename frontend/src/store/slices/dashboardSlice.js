@@ -5,7 +5,7 @@ const initialState = {
   stats: {
     totalMembers: null,
     totalLoans: null,
-    pendingApprovals: null,
+    marketRecoverable: null,
     totalDisbursed: null,
   },
   activities: [],

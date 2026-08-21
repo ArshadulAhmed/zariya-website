@@ -6,6 +6,8 @@ import { setFormDataFromApplication } from '../../store/slices/newLoanSlice'
 import Snackbar from '../../components/Snackbar'
 import LoanFormContainer from '../../components/dashboard/newLoan/LoanFormContainer'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './EditLoanApplication.scss'
 
 const EditLoanApplication = () => {
@@ -20,11 +22,14 @@ const EditLoanApplication = () => {
   const detailPath = `/dashboard/loan-applications/${id}`
 
   // Edit application is admin-only; redirect non-admin to view
+  const { can } = useCan()
+  const allowed = can(P.LOAN_APPLICATIONS_UPDATE)
+
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !allowed) {
       navigate(id ? `/dashboard/loan-applications/${id}` : '/dashboard/loan-applications', { replace: true })
     }
-  }, [user, id, navigate])
+  }, [user, allowed, id, navigate])
 
   useEffect(() => {
     if (id) dispatch(fetchApplication(id))
@@ -40,7 +45,7 @@ const EditLoanApplication = () => {
   if (user == null) {
     return null // auth still loading – avoid flashing edit form
   }
-  if (user.role !== 'admin') {
+  if (!allowed) {
     return null
   }
 

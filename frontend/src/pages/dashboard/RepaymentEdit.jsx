@@ -11,6 +11,10 @@ import TextField from '../../components/TextField'
 import Select from '../../components/Select'
 import DatePicker from '../../components/DatePicker'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { REPAYMENT_TYPE, REPAYMENT_TYPE_OPTIONS, getAllowedRepaymentTypeOptions, repaymentTypeLabel } from '../../utils/repaymentType'
+import { PAYMENT_METHOD_OPTIONS, getAllowedPaymentMethodOptions, paymentMethodLabel } from '../../utils/paymentMethod'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import '../../components/dashboard/RepaymentHistory.scss'
 import './RepaymentEdit.scss'
 
@@ -26,10 +30,17 @@ const getDateConstraints = () => {
   }
 }
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, { dateOnly = false } = {}) => {
   if (!dateString) return 'N/A'
   try {
     const date = new Date(dateString)
+    if (dateOnly) {
+      return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    }
     return date.toLocaleString('en-IN', {
       year: 'numeric',
       month: 'long',
@@ -47,11 +58,33 @@ const formatCurrency = (amount) => {
   return `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-const paymentMethodLabel = (method) => {
-  if (method === 'cash') return 'Cash'
-  if (method === 'bank_transfer') return 'Bank Transfer'
-  if (method === 'upi') return 'UPI'
-  return method || 'Other'
+const isHolidayRow = (repayment) => Boolean(repayment?.isHoliday) || repayment?.paymentMethod === 'holiday'
+
+const repaymentRowClass = (repayment) => {
+  if (isHolidayRow(repayment)) return 'system-holiday-row'
+  if (repayment?.onHoliday) return 'paid-on-holiday-row'
+  if (repayment?.isSystemGenerated) return 'system-missed-row'
+  return ''
+}
+
+const repaymentTypeDisplay = (repayment) => {
+  if (isHolidayRow(repayment)) return 'Holiday'
+  if (repayment?.isSystemGenerated) return '-'
+  return repaymentTypeLabel(repayment.repaymentType)
+}
+
+const remarksDisplay = (repayment) => {
+  const remarks = String(repayment?.remarks || '').trim()
+  const holidayName = String(repayment?.holidayName || '').trim()
+  if (remarks && remarks !== '-' && holidayName && remarks !== holidayName) {
+    return `${remarks} · ${holidayName}`
+  }
+  return remarks || holidayName || '-'
+}
+
+const amountDisplay = (repayment) => {
+  if (isHolidayRow(repayment)) return '—'
+  return formatCurrency(repayment.amount)
 }
 
 const RepaymentEdit = () => {
@@ -65,24 +98,52 @@ const RepaymentEdit = () => {
   const totalPaid = repaymentRecordsState?.totalPaid || 0
   const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
   const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
+  const preCloseDiscount = repaymentRecordsState?.preCloseDiscount || 0
   const loanInfo = repaymentRecordsState?.loanInfo
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.REPAYMENTS_UPDATE)
 
   const lastLoanIdRef = useRef('')
   const sentinelRef = useRef(null)
   const [editingRepayment, setEditingRepayment] = useState(null)
-  const [editForm, setEditForm] = useState({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', isLateFee: false })
+  const [editForm, setEditForm] = useState({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', repaymentType: REPAYMENT_TYPE.EDI })
   const [editErrors, setEditErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [repaymentToDelete, setRepaymentToDelete] = useState(null)
 
+  const typeOptions = (() => {
+    const allowed = getAllowedRepaymentTypeOptions({
+      canLegalNotice: can(P.REPAYMENTS_LEGAL_NOTICE),
+      canPreCloseDiscount: can(P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+    })
+    const current = editForm.repaymentType
+    if (current && !allowed.some((option) => option.value === current)) {
+      const existing = REPAYMENT_TYPE_OPTIONS.find((option) => option.value === current)
+      if (existing) return [...allowed, existing]
+    }
+    return allowed
+  })()
+
+  const paymentMethodOptions = (() => {
+    const allowed = getAllowedPaymentMethodOptions({
+      canFundTransfer: can(P.REPAYMENTS_FUND_TRANSFER),
+      includeOther: true,
+    })
+    const current = editForm.paymentMethod
+    if (current && !allowed.some((option) => option.value === current)) {
+      const existing = PAYMENT_METHOD_OPTIONS.find((option) => option.value === current)
+      if (existing) return [...allowed, existing]
+    }
+    return allowed
+  })()
+
   // Repayment edit is admin-only; redirect non-admin to repayment details view
   useEffect(() => {
-    if (user && user.role !== 'admin') {
+    if (user && !isAdmin) {
       navigate(id ? `/dashboard/repayment-records/${id}` : '/dashboard/repayment-records', { replace: true })
     }
   }, [user, id, navigate])
@@ -105,7 +166,10 @@ const RepaymentEdit = () => {
     }
   }, [id, dispatch])
 
-  const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const originalLoanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const loanAmount = loanInfo?.effectiveLoanAmount != null
+    ? Number(loanInfo.effectiveLoanAmount)
+    : Math.max(0, originalLoanAmount - preCloseDiscount)
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
 
@@ -136,11 +200,12 @@ const RepaymentEdit = () => {
   }, [pagination.page, pagination.pages, isLoadingMore, isLoadingRepayments, id, handleLoadMore])
 
   // Don't render for non-admin (redirect will run)
-  if (user && user.role !== 'admin') {
+  if (user && !isAdmin) {
     return null
   }
 
   const openEditModal = (repayment) => {
+    if (repayment.isSystemGenerated) return
     const d = repayment.paymentDate ? new Date(repayment.paymentDate) : new Date()
     setEditingRepayment(repayment)
     setEditForm({
@@ -148,14 +213,14 @@ const RepaymentEdit = () => {
       paymentDate: getLocalDateString(d),
       paymentMethod: repayment.paymentMethod || 'cash',
       remarks: repayment.remarks ?? '',
-      isLateFee: Boolean(repayment.isLateFee),
+      repaymentType: repayment.repaymentType || REPAYMENT_TYPE.EDI,
     })
     setEditErrors({})
   }
 
   const closeEditModal = () => {
     setEditingRepayment(null)
-    setEditForm({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', isLateFee: false })
+    setEditForm({ amount: '', paymentDate: '', paymentMethod: 'cash', remarks: '', repaymentType: REPAYMENT_TYPE.EDI })
     setEditErrors({})
   }
 
@@ -180,7 +245,7 @@ const RepaymentEdit = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault()
-    if (!editingRepayment || !validateEditForm()) return
+    if (!editingRepayment || editingRepayment.isSystemGenerated || !validateEditForm()) return
     setSaving(true)
     try {
       const selectedDate = new Date(editForm.paymentDate + 'T00:00:00')
@@ -191,7 +256,7 @@ const RepaymentEdit = () => {
         paymentDate: selectedDate.toISOString(),
         paymentMethod: editForm.paymentMethod,
         remarks: editForm.remarks.trim() || '',
-        isLateFee: Boolean(editForm.isLateFee),
+        repaymentType: editForm.repaymentType || REPAYMENT_TYPE.EDI,
       }))
       if (response?.success) closeEditModal()
     } catch (err) {
@@ -202,6 +267,7 @@ const RepaymentEdit = () => {
   }
 
   const handleDeleteClick = (repayment) => {
+    if (repayment.isSystemGenerated) return
     setRepaymentToDelete(repayment)
   }
 
@@ -265,6 +331,7 @@ const RepaymentEdit = () => {
             totalPaid={totalPaid}
             totalLateFeePaid={totalLateFeePaid}
             remainingAmount={remainingAmount}
+            preCloseDiscount={preCloseDiscount}
             additionalAmountPaid={additionalAmountPaid}
           />
           <div className="repayment-history-card">
@@ -283,7 +350,7 @@ const RepaymentEdit = () => {
                       <th>Date</th>
                       <th>Amount</th>
                       <th>Method</th>
-                      <th>Late Fee</th>
+                      <th>Type</th>
                       <th>Recorded By</th>
                       <th>Remarks</th>
                       {isAdmin && <th>Actions</th>}
@@ -291,37 +358,43 @@ const RepaymentEdit = () => {
                   </thead>
                   <tbody>
                     {repayments.map((repayment, index) => (
-                      <tr key={repayment._id || repayment.id}>
+                      <tr key={repayment._id || repayment.id} className={repaymentRowClass(repayment)}>
                         <td>{index + 1}</td>
-                        <td>{formatDate(repayment.paymentDate)}</td>
-                        <td>{formatCurrency(repayment.amount)}</td>
+                        <td>{formatDate(repayment.paymentDate, { dateOnly: Boolean(repayment.isSystemGenerated) })}</td>
+                        <td>{amountDisplay(repayment)}</td>
                         <td>
                           <span className="payment-method-badge">
                             {paymentMethodLabel(repayment.paymentMethod)}
                           </span>
                         </td>
-                        <td>{repayment.isLateFee ? 'Yes' : 'No'}</td>
+                        <td>{repaymentTypeDisplay(repayment)}</td>
                         <td>{repayment.recordedBy?.fullName || repayment.recordedBy?.username || 'N/A'}</td>
-                        <td className="remarks-cell">{repayment.remarks || '-'}</td>
+                        <td className="remarks-cell">{remarksDisplay(repayment)}</td>
                         {isAdmin && (
                           <td className="actions-cell">
-                            <button
-                              type="button"
-                              className="btn-edit-row"
-                              onClick={() => openEditModal(repayment)}
-                              title="Edit"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-delete-row"
-                              onClick={() => handleDeleteClick(repayment)}
-                              disabled={deletingId === repayment._id}
-                              title="Delete"
-                            >
-                              {deletingId === repayment._id ? 'Deleting...' : 'Delete'}
-                            </button>
+                            {repayment.isSystemGenerated ? (
+                              <span className="system-missed-actions">—</span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-edit-row"
+                                  onClick={() => openEditModal(repayment)}
+                                  title="Edit"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-delete-row"
+                                  onClick={() => handleDeleteClick(repayment)}
+                                  disabled={deletingId === repayment._id}
+                                  title="Delete"
+                                >
+                                  {deletingId === repayment._id ? 'Deleting...' : 'Delete'}
+                                </button>
+                              </>
+                            )}
                           </td>
                         )}
                       </tr>
@@ -377,12 +450,7 @@ const RepaymentEdit = () => {
                   name="paymentMethod"
                   value={editForm.paymentMethod}
                   onChange={handleEditChange}
-                  options={[
-                    { value: 'cash', label: 'Cash' },
-                    { value: 'bank_transfer', label: 'Bank Transfer' },
-                    { value: 'upi', label: 'UPI' },
-                    { value: 'other', label: 'Other' },
-                  ]}
+                  options={paymentMethodOptions}
                 />
                 <TextField
                   label="Remarks (Optional)"
@@ -392,17 +460,14 @@ const RepaymentEdit = () => {
                   multiline
                   rows={2}
                 />
-                <div className="form-field checkbox-field">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="isLateFee"
-                      checked={editForm.isLateFee}
-                      onChange={(e) => setEditForm((prev) => ({ ...prev, isLateFee: e.target.checked }))}
-                    />
-                    <span>Late fee payment</span>
-                  </label>
-                </div>
+                <Select
+                  label="Type"
+                  name="repaymentType"
+                  value={editForm.repaymentType}
+                  onChange={handleEditChange}
+                  options={typeOptions}
+                  required
+                />
                 {editErrors.submit && <div className="form-error">{editErrors.submit}</div>}
               </div>
               <div className="edit-repayment-modal-actions">

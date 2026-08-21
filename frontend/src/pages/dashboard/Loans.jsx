@@ -5,6 +5,9 @@ import { fetchLoans, setFilters, closeSnackbar, setPagination } from '../../stor
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './Loans.scss'
 
 const columns = [
@@ -40,11 +43,14 @@ const columns = [
     key: 'status',
     header: 'Status',
     width: '120px',
-    render: (value) => (
-      <span className={`status-badge status-${value}`}>
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    ),
+    render: (value, row) => {
+      const awaiting = value === 'active' && !row.startDate
+      return (
+        <span className={`status-badge ${awaiting ? 'status-awaiting-disbursement' : `status-${value}`}`}>
+          {awaiting ? 'Awaiting disbursement' : (value ? value.charAt(0).toUpperCase() + value.slice(1) : value)}
+        </span>
+      )
+    },
   },
   {
     key: 'createdAt',
@@ -69,6 +75,8 @@ const Loans = memo(() => {
   const [searchInput, setSearchInput] = useState('')
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
+  const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
   
   const showSkeleton = isLoading || !hasFetchedRef.current
 
@@ -139,25 +147,15 @@ const Loans = memo(() => {
   }
 
   return (
-    <div className="loans-page">
+    <div className="loans-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Loans</h1>
-          <p className="page-subtitle">Manage disbursed loans (active, closed, defaulted)</p>
+          <p className="page-subtitle">Manage loans (including awaiting disbursement)</p>
         </div>
-        <button 
-          className="btn-primary"
-          onClick={() => navigate('/dashboard/loans/new')}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          New Loan
-        </button>
       </div>
 
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"
@@ -174,12 +172,25 @@ const Loans = memo(() => {
             onChange={(e) => handleFilterChange('status', e.target.value)}
             placeholder="All Status"
             options={[
+              { value: 'awaiting_disbursement', label: 'Awaiting disbursement' },
               { value: 'active', label: 'Active' },
               { value: 'closed', label: 'Closed' },
               { value: 'defaulted', label: 'Defaulted' }
             ]}
           />
         </div>
+        {can(P.LOAN_APPLICATIONS_WRITE) && (
+        <button
+          className="btn-primary filter-create-btn"
+          onClick={() => navigate('/dashboard/loans/new')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          New Loan
+        </button>
+        )}
       </div>
 
       <DataTable

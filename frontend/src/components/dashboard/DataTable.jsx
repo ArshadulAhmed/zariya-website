@@ -61,11 +61,19 @@ const DataTable = memo(({
         <thead>
           <tr>
             {columns.map((column, index) => (
-              <th key={index} style={{ width: column.width }}>
-                {column.header}
+              <th
+                key={index}
+                style={column.width ? { width: column.width } : undefined}
+                title={column.headerTitle || (typeof column.header === 'string' ? column.header : undefined)}
+              >
+                <div className="data-table-th-inner">{column.header}</div>
               </th>
             ))}
-            {actions && <th style={{ width: '120px' }}>Actions</th>}
+            {actions && (
+              <th style={{ width: '120px' }}>
+                <div className="data-table-th-inner">Actions</div>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

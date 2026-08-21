@@ -7,6 +7,8 @@ import Snackbar from '../../components/Snackbar'
 import LoanInfo from '../../components/dashboard/LoanInfo'
 import LoanActions from '../../components/dashboard/LoanActions'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './LoanDetails.scss'
 
 const LoanDetails = () => {
@@ -17,7 +19,9 @@ const LoanDetails = () => {
   const isLoading = useAppSelector((state) => state.loans.isLoading)
   const error = useAppSelector((state) => state.loans.error)
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const canEditLoan = can(P.LOANS_UPDATE)
+  const canViewLoanReport = can(P.REPORTS_LOAN)
   const hasFetchedRef = useRef(false)
   const lastLoanIdRef = useRef('')
 
@@ -60,7 +64,7 @@ const LoanDetails = () => {
           <p className="page-subtitle">View and manage loan application</p>
         </div>
         <div className="header-actions">
-          {!isLoading && selectedLoan && isAdmin && (
+          {!isLoading && selectedLoan && canEditLoan && (
             <button
               type="button"
               className="btn-edit-loan"
@@ -74,7 +78,7 @@ const LoanDetails = () => {
               Edit
             </button>
           )}
-          {!isLoading && selectedLoan?.loanAccountNumber && (
+          {!isLoading && selectedLoan?.loanAccountNumber && canViewLoanReport && (
             <button
               className="btn-view-report"
               onClick={() => navigate(`/dashboard/reports/loan?loanAccountNumber=${selectedLoan.loanAccountNumber}`)}

@@ -12,6 +12,7 @@ import loanReportReducer from './slices/loanReportSlice'
 import repaymentRecordsReducer from './slices/repaymentRecordsSlice'
 import dailyCollectionReducer from './slices/dailyCollectionSlice'
 import loanDueTrackingReducer from './slices/loanDueTrackingSlice'
+import loanOutstandingReducer from './slices/loanOutstandingSlice'
 import loanQueueReducer from './slices/loanQueueSlice'
 
 export const store = configureStore({
@@ -29,6 +30,7 @@ export const store = configureStore({
     repaymentRecords: repaymentRecordsReducer,
     dailyCollection: dailyCollectionReducer,
     loanDueTracking: loanDueTrackingReducer,
+    loanOutstanding: loanOutstandingReducer,
     loanQueue: loanQueueReducer,
   },
   middleware: (getDefaultMiddleware) =>

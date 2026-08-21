@@ -1,20 +1,64 @@
-import { memo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector } from '../../store/hooks'
 import { loansAPI } from '../../services/api'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import AdditionalInfo from './AdditionalInfo'
 import './LoanInfo.scss'
 
-const LoanInfo = memo(() => {
-  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
 
+const DocumentRow = ({ title, hint, available, allowed, onDownload, loading }) => {
+  if (!allowed) return null
+  return (
+    <div className={`document-row${available ? '' : ' is-locked'}`}>
+      <div className="document-copy">
+        <span className="document-title">{title}</span>
+        <span className="document-hint">{hint}</span>
+      </div>
+      {available ? (
+        <button
+          type="button"
+          className="document-download"
+          onClick={onDownload}
+          disabled={loading}
+        >
+          <DownloadIcon />
+          {loading ? 'Downloading…' : 'Download'}
+        </button>
+      ) : (
+        <span className="document-unavailable">Available after disbursement</span>
+      )}
+    </div>
+  )
+}
+
+const LoanInfo = () => {
+  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+  const user = useAppSelector((state) => state.auth.user)
   const loan = selectedLoan
 
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [downloadingReceipt, setDownloadingReceipt] = useState(false)
   const [downloadingDefaultNotice, setDownloadingDefaultNotice] = useState(false)
+
+  const canDownloadContract = hasPermission(user, P.LOANS_DOWNLOAD_CONTRACT)
+  const canDownloadAcknowledgement = hasPermission(user, P.LOANS_DOWNLOAD_ACKNOWLEDGEMENT)
+  const canDownloadDefaultNotice = hasPermission(user, P.LOANS_DOWNLOAD_DEFAULT_NOTICE)
+  const showDocuments = Boolean(
+    loan?.status === 'active'
+    && (canDownloadContract || canDownloadAcknowledgement || canDownloadDefaultNotice)
+  )
 
   if (!loan) {
     return null
@@ -30,6 +74,20 @@ const LoanInfo = memo(() => {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+      })
+    } catch (e) {
+      return dateString
+    }
+  }
+
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       })
     } catch (e) {
       return dateString
@@ -101,6 +159,13 @@ const LoanInfo = memo(() => {
   }
 
   const membershipId = loan.membership?.userId
+  const disbursed = isLoanDisbursed(loan)
+  const statusLabel = loan.status === 'active' && !disbursed
+    ? 'Awaiting disbursement'
+    : loan.status.charAt(0).toUpperCase() + loan.status.slice(1)
+  const statusClass = loan.status === 'active' && !disbursed
+    ? 'status-awaiting-disbursement'
+    : `status-${loan.status}`
   const memberDisplay = membershipId ? (
     <>
       {loan.membership?.fullName || 'N/A'} (
@@ -129,65 +194,17 @@ const LoanInfo = memo(() => {
   )
 
   const statusBadge = (
-    <span className={`status-badge status-${loan.status}`}>
-      {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+    <span className={`status-badge ${statusClass}`}>
+      {statusLabel}
     </span>
   )
 
   return (
     <div className="details-card">
       <div className="card-header">
-        <div>
-          <span className={`status-badge status-${loan.status}`}>
-            {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
-          </span>
-          {loan.status === 'active' && (
-            <>
-              <button
-                className="download-contract-button"
-                onClick={handleDownloadContract}
-                disabled={downloading}
-                title="Download Contract Form"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {downloading ? 'Downloading...' : 'Download Contract Form'}
-              </button>
-
-              <button
-                className="download-contract-button"
-                onClick={handleDownloadAcknowledgementReceipt}
-                disabled={downloadingReceipt}
-                title="Download Acknowledgment of Loan Receipt"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {downloadingReceipt ? 'Downloading...' : 'Download Acknowledgment'}
-              </button>
-
-              <button
-                className="download-contract-button"
-                onClick={handleDownloadDefaultNotice}
-                disabled={downloadingDefaultNotice}
-                title="Download Notice of Default"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.29 3.86L1.82 18A2 2 0 0 0 3.53 21H20.47A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 9V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {downloadingDefaultNotice ? 'Downloading...' : 'Download Default Notice'}
-              </button>
-            </>
-          )}
-        </div>
+        <span className={`status-badge ${statusClass}`}>
+          {statusLabel}
+        </span>
         <div className="loan-id">
           <span className="id-label">LOAN ACCOUNT NUMBER</span>
           <div className="id-value-wrapper">
@@ -251,6 +268,7 @@ const LoanInfo = memo(() => {
             items={[
               { label: 'Status', value: statusBadge },
               { label: 'Created at', value: formatDate(loan.createdAt) },
+              { label: 'Disbursed at', value: disbursed ? formatDateOnly(loan.startDate) : 'Awaiting disbursement' },
               ...(loan.reviewedBy
                 ? [
                     { label: 'Reviewed by', value: loan.reviewedBy?.fullName || loan.reviewedBy?.username || 'N/A' },
@@ -263,12 +281,59 @@ const LoanInfo = memo(() => {
         </div>
       </div>
 
+      {showDocuments && (
+        <div className="detail-section documents-section">
+          <h3>Documents</h3>
+          <p className="documents-intro">
+            The loan agreement is issued on approval. Receipt and default notice are issued only after cash is disbursed.
+          </p>
+
+          {canDownloadContract && (
+            <div className="document-group">
+              <h4>After approval</h4>
+              <DocumentRow
+                title="Loan agreement"
+                hint="Deed date is the approval date"
+                available
+                allowed={canDownloadContract}
+                onDownload={handleDownloadContract}
+                loading={downloading}
+              />
+            </div>
+          )}
+
+          {(canDownloadAcknowledgement || canDownloadDefaultNotice) && (
+            <div className="document-group">
+              <h4>After disbursement</h4>
+              {canDownloadAcknowledgement && (
+                <DocumentRow
+                  title="Acknowledgment of loan receipt"
+                  hint={disbursed ? 'Confirms cash was given to the member' : 'Not available until disbursement is recorded'}
+                  available={disbursed}
+                  allowed={canDownloadAcknowledgement}
+                  onDownload={handleDownloadAcknowledgementReceipt}
+                  loading={downloadingReceipt}
+                />
+              )}
+              {canDownloadDefaultNotice && (
+                <DocumentRow
+                  title="Notice of default"
+                  hint={disbursed ? 'Demand notice after the loan has started' : 'Not available until disbursement is recorded'}
+                  available={disbursed}
+                  allowed={canDownloadDefaultNotice}
+                  onDownload={handleDownloadDefaultNotice}
+                  loading={downloadingDefaultNotice}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <AdditionalInfo />
     </div>
   )
-})
-
-LoanInfo.displayName = 'LoanInfo'
+}
 
 export default LoanInfo
 

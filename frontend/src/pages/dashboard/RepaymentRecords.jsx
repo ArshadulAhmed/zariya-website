@@ -4,8 +4,13 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchOngoingLoans, closeSnackbar, setSnackbar, setFilters, setPagination } from '../../store/slices/loansSlice'
 import { repaymentsAPI } from '../../services/api'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { REPAYMENT_TYPE, getAllowedRepaymentTypeOptions, repaymentTypeLabel } from '../../utils/repaymentType'
+import { getAllowedPaymentMethodOptions } from '../../utils/paymentMethod'
 import Snackbar from '../../components/Snackbar'
 import DataTable from '../../components/dashboard/DataTable'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './RepaymentRecords.scss'
 
 const formatCurrency = (amount) => {
@@ -31,6 +36,23 @@ const RepaymentRecords = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const loansState = useAppSelector((state) => state.loans)
+  const user = useAppSelector((state) => state.auth.user)
+  const typeOptions = useMemo(
+    () =>
+      getAllowedRepaymentTypeOptions({
+        canLegalNotice: hasPermission(user, P.REPAYMENTS_LEGAL_NOTICE),
+        canPreCloseDiscount: hasPermission(user, P.REPAYMENTS_PRE_CLOSE_DISCOUNT),
+      }),
+    [user]
+  )
+  const paymentMethodOptions = useMemo(
+    () =>
+      getAllowedPaymentMethodOptions({
+        canFundTransfer: hasPermission(user, P.REPAYMENTS_FUND_TRANSFER),
+        includeOther: false,
+      }),
+    [user]
+  )
   
   const loans = loansState?.loans || []
   const isLoading = loansState?.isLoading || false
@@ -47,6 +69,7 @@ const RepaymentRecords = () => {
   const [submittingLoanId, setSubmittingLoanId] = useState(null)
   const [errors, setErrors] = useState({})
   const [searchInput, setSearchInput] = useState(filters.search || '')
+  const { pageRef, filterRef } = useStickyFilterBar()
   
   const dateLimits = getDateLimits()
   const hasFetchedRef = useRef(false)
@@ -111,10 +134,13 @@ const RepaymentRecords = () => {
           paymentDate: getLocalDateString(),
           paymentMethod: 'cash',
           remarks: '',
-          isLateFee: false,
+          repaymentType: REPAYMENT_TYPE.EDI,
         }
       } else {
-        forms[loanId] = repaymentForms[loanId]
+        forms[loanId] = {
+          repaymentType: REPAYMENT_TYPE.EDI,
+          ...repaymentForms[loanId],
+        }
       }
     })
     if (Object.keys(forms).length > 0) {
@@ -179,12 +205,12 @@ const RepaymentRecords = () => {
     }))
   }
 
-  const handleLateFeeChange = (loanId, checked) => {
+  const handleRepaymentTypeChange = (loanId, value) => {
     setRepaymentForms(prev => ({
       ...prev,
       [loanId]: {
         ...prev[loanId],
-        isLateFee: checked,
+        repaymentType: value,
       }
     }))
   }
@@ -250,13 +276,11 @@ const RepaymentRecords = () => {
         paymentDate: paymentDateISO,
         paymentMethod: form.paymentMethod || 'cash',
         remarks: form.remarks?.trim() || undefined,
-        isLateFee: Boolean(form.isLateFee),
+        repaymentType: form.repaymentType || REPAYMENT_TYPE.EDI,
       })
       
       if (response.success) {
-        const message = form.isLateFee
-          ? `Late fee of ${formatCurrency(paymentAmount)} recorded successfully`
-          : `Repayment of ${formatCurrency(paymentAmount)} recorded successfully`
+        const message = `Recorded ${repaymentTypeLabel(form.repaymentType || REPAYMENT_TYPE.EDI)} of ${formatCurrency(paymentAmount)}`
         dispatch(setSnackbar({
           message,
           severity: 'success'
@@ -270,7 +294,7 @@ const RepaymentRecords = () => {
             paymentDate: getLocalDateString(),
             paymentMethod: 'cash',
             remarks: '',
-            isLateFee: false,
+            repaymentType: REPAYMENT_TYPE.EDI,
           }
         }))
         setErrors(prev => {
@@ -311,7 +335,7 @@ const RepaymentRecords = () => {
         paymentDate: getLocalDateString(),
         paymentMethod: 'cash',
         remarks: '',
-        isLateFee: false,
+        repaymentType: REPAYMENT_TYPE.EDI,
       }
       return {
         ...loan,
@@ -404,27 +428,31 @@ const RepaymentRecords = () => {
           onChange={(e) => handlePaymentMethodChange(row.loanId, e.target.value)}
           disabled={row.isSubmitting}
         >
-          <option value="cash">Cash</option>
-          <option value="bank_transfer">Bank Transfer</option>
-          <option value="upi">UPI</option>
+          {paymentMethodOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       ),
     },
     {
-      key: 'isLateFee',
-      header: 'Late Fee',
-      width: '72px',
+      key: 'repaymentType',
+      header: 'Type',
+      width: '160px',
       render: (value, row) => (
-        <label className="late-fee-checkbox-label">
-          <input
-            type="checkbox"
-            className="late-fee-checkbox"
-            checked={Boolean(row.form.isLateFee)}
-            onChange={(e) => handleLateFeeChange(row.loanId, e.target.checked)}
-            disabled={row.isSubmitting}
-          />
-          <span className="late-fee-label-text">Late fee</span>
-        </label>
+        <select
+          className="repayment-method-select"
+          value={row.form.repaymentType || REPAYMENT_TYPE.EDI}
+          onChange={(e) => handleRepaymentTypeChange(row.loanId, e.target.value)}
+          disabled={row.isSubmitting}
+        >
+          {typeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       ),
     },
     {
@@ -443,7 +471,7 @@ const RepaymentRecords = () => {
         />
       ),
     },
-  ], [repaymentForms, submittingLoanId, errors, dateLimits.min, dateLimits.max])
+  ], [repaymentForms, submittingLoanId, errors, dateLimits.min, dateLimits.max, typeOptions, paymentMethodOptions])
 
   // Define actions for DataTable
   const handleActions = (row) => {
@@ -482,7 +510,7 @@ const RepaymentRecords = () => {
   }
   
   return (
-    <div className="repayment-records-page">
+    <div className="repayment-records-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Repayment Records</h1>
@@ -490,7 +518,7 @@ const RepaymentRecords = () => {
         </div>
       </div>
       
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"

@@ -197,7 +197,7 @@ const loanApplicationsSlice = createSlice({
         if (application) state.selectedApplication = application
         state.snackbar = {
           open: true,
-          message: application?.status === 'approved' ? 'Application approved and loan created' : 'Application rejected',
+          message: application?.status === 'approved' ? 'Application approved. Record disbursement when cash is given.' : 'Application rejected',
           severity: 'success',
         }
       })

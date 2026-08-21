@@ -7,6 +7,8 @@ import {
 } from '../../store/slices/loanDueTrackingSlice'
 import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
+import { ReportInfoIcon, NOT_REPAID_INFO } from './reportInfoTooltips'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoansNotUpToDateReport.scss'
 
 const formatDate = (dateString) => {
@@ -70,6 +72,7 @@ const LoansNotUpToDateReport = () => {
 
   const [searchInput, setSearchInput] = useState('')
   const [minPendingInput, setMinPendingInput] = useState('')
+  const { pageRef, filterRef } = useStickyFilterBar()
 
   useEffect(() => {
     dispatch(clearLoanDueTracking())
@@ -143,7 +146,7 @@ const LoansNotUpToDateReport = () => {
   const snapshotDate = sameLastCalculated && items[0]?.last_calculated_at ? items[0].last_calculated_at : null
 
   return (
-    <div className="loans-not-up-to-date-report-page">
+    <div className="loans-not-up-to-date-report-page sticky-filter-page" ref={pageRef}>
       <div className="page-header">
         <div>
           <button className="back-button" onClick={() => navigate('/dashboard/reports')}>
@@ -153,14 +156,17 @@ const LoansNotUpToDateReport = () => {
             </svg>
             Back
           </button>
-          <h1 className="page-title">Loans Not Repaid Up To Date</h1>
+          <h1 className="page-title">
+            Loans Not Repaid Up To Date
+            <ReportInfoIcon title={NOT_REPAID_INFO} />
+          </h1>
           <p className="page-subtitle">
             Active loans where expected EMI till today is greater than EMI paid equivalent. Data is updated daily by the system.
           </p>
         </div>
       </div>
 
-      <div className="search-section">
+      <div className="search-section sticky-filter-bar" ref={filterRef}>
         <div className="search-card">
           <form onSubmit={handleSearch} autoComplete="off">
             <div className="search-filters-row">
@@ -220,13 +226,12 @@ const LoansNotUpToDateReport = () => {
             </div>
           </form>
         </div>
+        {error && (
+          <div className="error-container">
+            <p>{error}</p>
+          </div>
+        )}
       </div>
-
-      {error && (
-        <div className="error-container">
-          <p>{error}</p>
-        </div>
-      )}
 
       <DataTable
         columns={columns}

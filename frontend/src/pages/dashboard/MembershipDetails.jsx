@@ -1,13 +1,17 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
+import { fetchMembership, fetchMembershipCreditScore, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import SecureDocumentImage from '../../components/SecureDocumentImage'
+import MemberHolidaysCard from '../../components/dashboard/MemberHolidaysCard'
+import CreditScoreSummary from '../../components/dashboard/CreditScoreSummary'
 import { formatMobileNumber } from '../../utils/dashboardUtils'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './MembershipDetails.scss'
 
 // Guard so Strict Mode's double effect doesn't trigger two membership fetches
@@ -18,9 +22,10 @@ const MembershipDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { selectedMembership, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
+  const { selectedMembership, selectedCreditScore, isLoadingCreditScore, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
   const user = useAppSelector((state) => state.auth?.user)
-  const isAdmin = user?.role === 'admin'
+  const { can } = useCan()
+  const isAdmin = can(P.MEMBERSHIPS_UPDATE)
 
   const [approveConfirm, setApproveConfirm] = useState({ open: false })
   const [rejectConfirm, setRejectConfirm] = useState({ open: false })
@@ -45,6 +50,13 @@ const MembershipDetails = () => {
       dispatch(fetchMembership(id))
     }
   }, [id, dispatch])
+
+  useEffect(() => {
+    if (!can(P.MEMBERSHIPS_CREDIT_SCORE)) return
+    const membershipKey = selectedMembership?.id || selectedMembership?.userId
+    if (!membershipKey) return
+    dispatch(fetchMembershipCreditScore(membershipKey))
+  }, [selectedMembership?.id, selectedMembership?.userId, dispatch, can])
 
   const handleApprove = async () => {
     if (!id || !selectedMembership?.id) return
@@ -171,7 +183,7 @@ const MembershipDetails = () => {
   const membership = selectedMembership
   const isPending = membership?.status === 'pending'
   const isApproved = membership?.status === 'approved'
-  const canReview = isPending
+  const canReview = isPending && can(P.MEMBERSHIPS_REVIEW)
   const hasMembership = !!membership
 
   return (
@@ -229,7 +241,7 @@ const MembershipDetails = () => {
               </button>
             </>
           )}
-          {!isLoading && isApproved && (
+          {!isLoading && isApproved && can(P.LOAN_APPLICATIONS_WRITE) && (
             <button
               className="btn-primary"
               onClick={handleApplyLoanClick}
@@ -338,6 +350,12 @@ const MembershipDetails = () => {
                   <div className="info-row">
                     <span className="info-label">Mobile Number</span>
                     <span className="info-value">{formatMobileNumber(membership.mobileNumber)}</span>
+                  </div>
+                )}
+                {membership.alternateMobileNumber && (
+                  <div className="info-row">
+                    <span className="info-label">Alternate Mobile</span>
+                    <span className="info-value">{formatMobileNumber(membership.alternateMobileNumber)}</span>
                   </div>
                 )}
                 <div className="info-row">
@@ -503,6 +521,23 @@ const MembershipDetails = () => {
             </div>
           )}
         </div>
+
+        {(can(P.HOLIDAYS_READ) || can(P.HOLIDAYS_WRITE)) && (
+          <MemberHolidaysCard
+            membershipId={membership.userId || membership.id}
+            isAdmin={can(P.HOLIDAYS_WRITE)}
+          />
+        )}
+
+        {can(P.MEMBERSHIPS_CREDIT_SCORE) && (
+          <div className="details-card credit-score-card">
+            <CreditScoreSummary
+              creditScore={selectedCreditScore}
+              loading={isLoadingCreditScore}
+              membershipId={membership.userId || membership.id || id}
+            />
+          </div>
+        )}
       </div>
       ) : null}
 

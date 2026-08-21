@@ -1,13 +1,15 @@
-import { memo, useState, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchUsers, deleteUser, setFilters, closeSnackbar } from '../../store/slices/usersSlice'
+import { fetchUsers, setFilters, closeSnackbar } from '../../store/slices/usersSlice'
 import DataTable from '../../components/dashboard/DataTable'
-import NewUserModal from '../../components/dashboard/NewUserModal'
-import EditUserModal from '../../components/dashboard/EditUserModal'
-import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import FilterSelect from '../../components/dashboard/FilterSelect'
+import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
+import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
+import { rolesAPI } from '../../services/api'
 import './Users.scss'
 
 const Users = memo(() => {
@@ -15,14 +17,32 @@ const Users = memo(() => {
   const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const usersState = useAppSelector((state) => state.users)
+  const { pageRef, filterRef } = useStickyFilterBar()
+  const { can } = useCan()
+  const canManageUsers = can(P.USERS_MANAGE)
+  const [roleOptions, setRoleOptions] = useState([
+    { value: 'admin', label: 'Admin' },
+    { value: 'employee', label: 'Employee' },
+  ])
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    rolesAPI.list()
+      .then((response) => {
+        const roles = response.data?.roles || []
+        if (roles.length) {
+          setRoleOptions(roles.map((role) => ({ value: role.key, label: role.name })))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (currentUser && !canManageUsers) {
       navigate('/dashboard', { replace: true })
     }
-  }, [currentUser, navigate])
+  }, [currentUser, canManageUsers, navigate])
 
-  if (currentUser && currentUser.role !== 'admin') {
+  if (currentUser && !canManageUsers) {
     return null
   }
 
@@ -33,10 +53,6 @@ const Users = memo(() => {
   const pagination = usersState?.pagination || { page: 1, limit: 10, total: 0, pages: 0 }
   const snackbar = usersState?.snackbar || { open: false, message: '', severity: 'error' }
 
-  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false)
-  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, userId: null, userName: '' })
   const hasFetchedRef = useRef(false)
   const lastParamsRef = useRef('')
   
@@ -75,35 +91,23 @@ const Users = memo(() => {
       (user) =>
         user.username?.toLowerCase().includes(searchLower) ||
         user.email?.toLowerCase().includes(searchLower) ||
-        user.fullName?.toLowerCase().includes(searchLower)
+        user.fullName?.toLowerCase().includes(searchLower) ||
+        user.employeeId?.toLowerCase().includes(searchLower) ||
+        user.mobileNumber?.includes(searchLower)
     )
   }, [users, filters.search])
-
-  const handleDeleteClick = (row) => {
-    setDeleteConfirm({
-      open: true,
-      userId: row.id,
-      userName: row.fullName || row.username || 'this user',
-    })
-  }
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteConfirm.userId) return
-
-    await dispatch(deleteUser(deleteConfirm.userId))
-    // Refetch users to update the list - snackbar is handled in Redux
-    const params = {}
-    if (filters.role) params.role = filters.role
-    if (filters.isActive !== '') params.isActive = filters.isActive === 'active' ? 'true' : 'false'
-    dispatch(fetchUsers(params))
-    setDeleteConfirm({ open: false, userId: null, userName: '' })
-  }
 
   const handleFilterChange = (key, value) => {
     dispatch(setFilters({ [key]: value }))
   }
 
   const columns = [
+    {
+      key: 'employeeId',
+      header: 'Employee ID',
+      width: '140px',
+      render: (value) => value || '—',
+    },
     {
       key: 'username',
       header: 'Username',
@@ -117,7 +121,13 @@ const Users = memo(() => {
     {
       key: 'fullName',
       header: 'Full Name',
-      width: '200px',
+      width: '180px',
+    },
+    {
+      key: 'mobileNumber',
+      header: 'Mobile',
+      width: '140px',
+      render: (value) => formatMobileNumberDisplay(value, '—'),
     },
     {
       key: 'role',
@@ -125,7 +135,7 @@ const Users = memo(() => {
       width: '120px',
       render: (value) => (
         <span className={`role-badge role-${value}`}>
-          {value ? value.charAt(0).toUpperCase() + value.slice(1) : '-'}
+          {value ? String(value).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '-'}
         </span>
       ),
     },
@@ -147,40 +157,11 @@ const Users = memo(() => {
   ]
 
   const handleRowClick = (row) => {
-    setSelectedUser(row)
-    setIsEditUserModalOpen(true)
+    navigate(`/dashboard/management/users/${row.id}`)
   }
-
-  const handleEditClick = (row) => {
-    setSelectedUser(row)
-    setIsEditUserModalOpen(true)
-  }
-
-  const handleActions = (row) => (
-    <>
-      <button
-        className="btn-primary"
-        onClick={(e) => {
-          e.stopPropagation()
-          handleEditClick(row)
-        }}
-      >
-        Edit
-      </button>
-      <button
-        className="btn-danger"
-        onClick={(e) => {
-          e.stopPropagation()
-          handleDeleteClick(row)
-        }}
-      >
-        Delete
-      </button>
-    </>
-  )
 
   return (
-    <div className="users-page">
+    <div className="users-page sticky-filter-page" ref={pageRef}>
       <Snackbar
         open={snackbar.open}
         onClose={() => dispatch(closeSnackbar())}
@@ -191,25 +172,15 @@ const Users = memo(() => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Users</h1>
-          <p className="page-subtitle">Manage system users and access control</p>
+          <p className="page-subtitle">Enroll employees, manage KYC records, and control dashboard access</p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => setIsNewUserModalOpen(true)}
-        >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            New User
-        </button>
       </div>
 
-      <div className="page-filters">
+      <div className="page-filters sticky-filter-bar" ref={filterRef}>
         <div className="search-input-group">
           <input
             type="text"
-            placeholder="Search by Username, Email, or Name..."
+            placeholder="Search by ID, Username, Email, or Name..."
             autoComplete="off"
             className="search-input"
             value={filters.search}
@@ -221,10 +192,7 @@ const Users = memo(() => {
             value={filters.role}
             onChange={(e) => handleFilterChange('role', e.target.value)}
             placeholder="All Roles"
-            options={[
-              { value: 'admin', label: 'Admin' },
-              { value: 'employee', label: 'Employee' }
-            ]}
+            options={roleOptions}
           />
           <FilterSelect
             value={filters.isActive}
@@ -236,6 +204,16 @@ const Users = memo(() => {
             ]}
           />
         </div>
+        <button
+          className="btn-primary filter-create-btn"
+          onClick={() => navigate('/dashboard/management/users/new')}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          New Employee
+        </button>
       </div>
 
       <DataTable
@@ -243,48 +221,19 @@ const Users = memo(() => {
         data={filteredUsers}
         loading={showSkeleton}
         onRowClick={handleRowClick}
-        actions={handleActions}
+        actions={(row) => (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/dashboard/management/users/${row.id}`)
+            }}
+          >
+            View
+          </button>
+        )}
         emptyMessage="No users found"
-      />
-
-      <NewUserModal
-        open={isNewUserModalOpen}
-        onClose={() => setIsNewUserModalOpen(false)}
-        onSuccess={() => {
-          // Refetch users after successful creation
-          const params = {}
-          if (filters.role) params.role = filters.role
-          if (filters.isActive !== '') params.isActive = filters.isActive === 'active' ? 'true' : 'false'
-          dispatch(fetchUsers(params))
-        }}
-      />
-
-      <EditUserModal
-        open={isEditUserModalOpen}
-        onClose={() => {
-          setIsEditUserModalOpen(false)
-          setSelectedUser(null)
-        }}
-        user={selectedUser}
-        onSuccess={() => {
-          // Refetch users after successful update
-          const params = {}
-          if (filters.role) params.role = filters.role
-          if (filters.isActive !== '') params.isActive = filters.isActive === 'active' ? 'true' : 'false'
-          lastParamsRef.current = '' // Reset to force refetch
-          dispatch(fetchUsers(params))
-        }}
-      />
-
-      <ConfirmationModal
-        open={deleteConfirm.open}
-        onClose={() => setDeleteConfirm({ open: false, userId: null, userName: '' })}
-        onConfirm={handleDeleteConfirm}
-        title="Delete User"
-        message={`Are you sure you want to delete "${deleteConfirm.userName}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
       />
     </div>
   )

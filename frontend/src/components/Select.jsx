@@ -14,21 +14,25 @@ const Select = ({
   placeholder,
   ...props
 }) => {
+  const selected = value ?? ''
+
   return (
     <FormControl fullWidth error={!!error} disabled={disabled} className="custom-select">
-      <InputLabel required={required}>{label}</InputLabel>
+      <InputLabel id={`${name || label}-label`} required={required}>
+        {label}
+      </InputLabel>
       <MUISelect
+        labelId={`${name || label}-label`}
         label={label}
         name={name}
-        value={value}
+        value={selected}
         onChange={onChange}
         disabled={disabled}
         {...props}
+        displayEmpty={false}
       >
-        {placeholder && (
-          <MenuItem value="" disabled>
-            <em>{placeholder}</em>
-          </MenuItem>
+        {selected === '' && (
+          <MenuItem value="" sx={{ display: 'none' }} />
         )}
         {options.map((option) => {
           const optionValue = typeof option === 'string' ? option : (option.value || option.label)
@@ -48,4 +52,3 @@ const Select = ({
 }
 
 export default Select
-

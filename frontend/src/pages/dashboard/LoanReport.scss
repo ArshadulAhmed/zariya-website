@@ -1,12 +1,31 @@
 @use '../../styles/main.scss' as *;
+@use '../../styles/stickyFilterPage.scss';
 
 .loan-report-page {
   padding: 1.6rem;
   min-height: 100vh;
   background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
 
   .page-header {
-    margin-bottom: 1.6rem;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.8rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-shrink: 0;
+    }
 
     .back-button {
       display: flex;
@@ -47,32 +66,51 @@
   }
 
   .search-section {
-    margin-bottom: 1.6rem;
+    margin-bottom: 0;
 
     .search-card {
       background: white;
       border-radius: 12px;
-      padding: 1.6rem;
+      padding: 1.25rem 1.6rem;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.6rem;
 
-      h2 {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 0 0 0.4rem 0;
+      @media (max-width: 900px) {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1.6rem;
       }
 
-      .search-hint {
-        font-size: 0.76rem;
-        color: var(--text-secondary);
-        margin: 0 0 1.2rem 0;
+      .search-copy {
+        flex: 0 1 280px;
+        min-width: 0;
+
+        h2 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin: 0 0 0.25rem 0;
+        }
+
+        .search-hint {
+          font-size: 0.76rem;
+          color: var(--text-secondary);
+          margin: 0;
+          line-height: 1.45;
+        }
       }
 
       .search-form {
+        flex: 1 1 360px;
+        min-width: 0;
+
         .search-input-group {
           display: flex;
           gap: 0.8rem;
-          align-items: flex-start;
+          align-items: stretch;
 
           @media (max-width: 768px) {
             flex-direction: column;
@@ -80,6 +118,7 @@
 
           .search-input {
             flex: 1;
+            min-width: 0;
             padding: 11px 13px;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
@@ -103,6 +142,7 @@
           .search-buttons {
             display: flex;
             gap: 0.6rem;
+            flex-shrink: 0;
 
             @media (max-width: 768px) {
               width: 100%;
@@ -115,6 +155,7 @@
             button {
               display: flex;
               align-items: center;
+              justify-content: center;
               gap: 0.4rem;
               padding: 0.7rem 1.2rem;
               border-radius: 8px;
@@ -189,24 +230,22 @@
     }
   }
 
-  .report-actions {
-    margin-bottom: 1.6rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.8rem;
-
-    button {
-      display: flex;
+  .header-actions,
+  .section-heading {
+    .btn-primary {
+      display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.6rem 1.2rem;
+      padding: 0.55rem 1rem;
       background: var(--primary-color);
       color: white;
       border: none;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.76rem;
       font-weight: 500;
+      font-family: 'Poppins', sans-serif;
       cursor: pointer;
+      white-space: nowrap;
       transition: all 0.2s ease;
 
       &:hover:not(:disabled) {
@@ -221,31 +260,25 @@
       svg {
         width: 16px;
         height: 16px;
+        flex-shrink: 0;
 
         &.spinner {
           animation: spin 1s linear infinite;
-        }
-      }
-
-      &.btn-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
         }
       }
     }
   }
 
   .loan-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+
     .details-card {
       background: white;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1.6rem;
+      margin-bottom: 0;
       overflow: hidden;
 
       .card-header {
@@ -272,6 +305,11 @@
           &.status-approved {
             background: #d1fae5;
             color: #065f46;
+          }
+
+          &.status-awaiting-disbursement {
+            background: #fef3c7;
+            color: #92400e;
           }
 
           &.status-active {
@@ -371,7 +409,7 @@
       background: white;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1.6rem;
+      margin-bottom: 0;
       overflow: hidden;
 
       .card-header {
@@ -428,26 +466,38 @@
     }
 
     .repayment-history-section {
-      margin-top: 1.6rem;
+      margin-top: 0;
       display: flex;
       flex-direction: column;
       gap: 1.6rem;
 
       .repayment-history-wrapper {
+        .section-heading {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1rem;
+
+          @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: stretch;
+          }
+        }
+
         h2 {
           font-size: 1.2rem;
           font-weight: 600;
           color: var(--text-primary);
-          margin: 0 0 1rem 0;
+          margin: 0;
           font-family: 'Poppins', sans-serif;
         }
       }
 
       .repayment-history-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        // padding: 1.6rem;
+        background: transparent;
+        border-radius: 0;
+        box-shadow: none;
 
         .loading-text,
         .empty-state {
@@ -468,24 +518,8 @@
 
         .repayment-table-container,
         .repayment-list {
-          overflow-x: auto;
-
           .repayment-table {
             width: 100%;
-            border-collapse: collapse;
-
-            thead {
-              background: #f9fafb;
-
-              th {
-                padding: 0.6rem 0.8rem;
-                text-align: left;
-                font-size: 0.7rem;
-                font-weight: 600;
-                color: var(--text-secondary);
-                border-bottom: 1px solid #e5e7eb;
-              }
-            }
 
             tbody {
               tr {
@@ -493,6 +527,48 @@
 
                 &:hover {
                   background: #f9fafb;
+                }
+
+                &.system-missed-row {
+                  background: #fef2f2;
+
+                  &:hover {
+                    background: #fee2e2;
+                  }
+
+                  td {
+                    color: #991b1b;
+
+                    .payment-method-badge {
+                      background: #fecaca;
+                      color: #7f1d1d;
+                    }
+                  }
+                }
+
+                &.system-holiday-row {
+                  background: #eff6ff;
+
+                  &:hover {
+                    background: #dbeafe;
+                  }
+
+                  td {
+                    color: #1e40af;
+
+                    .payment-method-badge {
+                      background: #bfdbfe;
+                      color: #1e3a8a;
+                    }
+                  }
+                }
+
+                &.paid-on-holiday-row {
+                  background: #f8fafc;
+
+                  &:hover {
+                    background: #eff6ff;
+                  }
                 }
 
                 td {

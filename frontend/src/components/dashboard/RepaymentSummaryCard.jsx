@@ -8,33 +8,49 @@ const formatCurrency = (amount) => {
 /**
  * Reusable Repayment Summary card.
  * Used on Repayment Details and Loan Report pages.
- * @param {number} loanAmount
- * @param {number} totalPaid - Principal paid (excludes late fee)
+ * @param {number} loanAmount - principal after pre-closer discount
+ * @param {number} totalPaid - EDI only
  * @param {number} totalLateFeePaid
  * @param {number} remainingAmount - loanAmount - totalPaid
+ * @param {number} [preCloseDiscount]
  * @param {number} [additionalAmountPaid] - Optional, shown only when > 0
+ * @param {number} [missedEmiCount] - Optional payment-date-aware missed EDI days
  */
 const RepaymentSummaryCard = ({
   loanAmount = 0,
   totalPaid = 0,
   totalLateFeePaid = 0,
   remainingAmount,
+  preCloseDiscount = 0,
   additionalAmountPaid = 0,
+  missedEmiCount = null,
 }) => {
   const remaining = remainingAmount ?? Math.max(0, Number(loanAmount) - Number(totalPaid))
+  const discount = Number(preCloseDiscount) || 0
+  const missed = missedEmiCount == null ? null : Number(missedEmiCount) || 0
 
   const summaryItems = [
     {
       label: 'Loan Amount',
       value: formatCurrency(loanAmount),
       valueClass: '',
-      title: 'Original loan principal amount sanctioned.',
+      title: discount > 0
+        ? 'Sanctioned principal after pre-closer discount.'
+        : 'Original loan principal amount sanctioned.',
     },
+    ...(discount > 0
+      ? [{
+          label: 'Pre-closer Discount',
+          value: formatCurrency(discount),
+          valueClass: '',
+          title: 'Deducted from the loan amount, not from EMI paid.',
+        }]
+      : []),
     {
       label: 'Total EMI Paid',
       value: formatCurrency(totalPaid),
       valueClass: 'total-paid',
-      title: 'Total principal/EMI repaid. Late fee payments are not included here.',
+      title: 'EDI collected. Pre-closer discount, late fee, and legal notice are not included.',
     },
     {
       label: 'Total Late Fee Paid',
@@ -42,18 +58,26 @@ const RepaymentSummaryCard = ({
       valueClass: 'late-fee-paid',
       title: 'Total amount paid as late fees. This does not reduce the remaining loan balance.',
     },
+    ...(missed != null
+      ? [{
+          label: 'Missed EDI Days',
+          value: String(missed),
+          valueClass: missed > 0 ? 'missed-edi' : 'paid-full',
+          title: 'Due working days with no EDI recorded on that date (includes days later covered by advance). Credit score treats advance separately.',
+        }]
+      : []),
     {
       label: 'Remaining Amount',
       value: formatCurrency(remaining),
       valueClass: remaining > 0 ? 'remaining' : 'paid-full',
-      title: 'Outstanding principal (Loan Amount minus Total EMI Paid). Late fees do not reduce this.',
+      title: 'Loan amount (after discount) minus EDI. Late fee and legal notice do not reduce this.',
     },
     ...(Number(additionalAmountPaid) > 0
       ? [{
           label: 'Additional Amount Paid',
           value: formatCurrency(additionalAmountPaid),
           valueClass: 'additional-paid',
-          title: 'Total paid in excess of the loan principal (EMI overpayment + all late fees).',
+          title: 'Paid above the reduced loan principal (EDI + late fees). Legal notice is not included.',
         }]
       : []),
   ]

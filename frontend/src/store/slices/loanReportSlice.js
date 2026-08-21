@@ -26,6 +26,8 @@ export const fetchLoanRepayments = createAsyncThunk(
           totalPaid: response.data?.totalPaid || 0,
           totalLateFeePaid: response.data?.totalLateFeePaid ?? 0,
           additionalAmountPaid: response.data?.additionalAmountPaid ?? 0,
+          preCloseDiscount: response.data?.preCloseDiscount || 0,
+          effectiveLoanAmount: response.data?.loan?.effectiveLoanAmount,
           pagination: response.data?.pagination || { page, limit, total: 0, pages: 0 },
         }
       }
@@ -69,6 +71,8 @@ const initialState = {
   totalPaid: 0,
   totalLateFeePaid: 0,
   additionalAmountPaid: 0,
+  preCloseDiscount: 0,
+  effectiveLoanAmount: null,
   isLoading: false,
   isLoadingRepayments: false,
   isLoadingMore: false,
@@ -93,6 +97,8 @@ const loanReportSlice = createSlice({
       state.totalPaid = 0
       state.totalLateFeePaid = 0
       state.additionalAmountPaid = 0
+      state.preCloseDiscount = 0
+      state.effectiveLoanAmount = null
       state.error = null
       state.nocError = null
       state.isLoading = false
@@ -109,6 +115,8 @@ const loanReportSlice = createSlice({
       state.totalPaid = 0
       state.totalLateFeePaid = 0
       state.additionalAmountPaid = 0
+      state.preCloseDiscount = 0
+      state.effectiveLoanAmount = null
       state.error = null
       state.nocError = null
       state.isLoading = false
@@ -139,6 +147,8 @@ const loanReportSlice = createSlice({
         state.totalPaid = 0
         state.totalLateFeePaid = 0
         state.additionalAmountPaid = 0
+      state.preCloseDiscount = 0
+      state.effectiveLoanAmount = null
       })
       .addCase(fetchLoanByAccountNumber.fulfilled, (state, action) => {
         state.isLoading = false
@@ -170,6 +180,8 @@ const loanReportSlice = createSlice({
         state.totalPaid = action.payload.totalPaid
         state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
         state.additionalAmountPaid = action.payload.additionalAmountPaid ?? 0
+        state.preCloseDiscount = action.payload.preCloseDiscount || 0
+        state.effectiveLoanAmount = action.payload.effectiveLoanAmount ?? null
       })
       .addCase(fetchLoanRepayments.rejected, (state, action) => {
         const page = action.meta?.arg?.page || 1
@@ -181,6 +193,10 @@ const loanReportSlice = createSlice({
           state.totalPaid = 0
           state.totalLateFeePaid = 0
           state.additionalAmountPaid = 0
+          state.preCloseDiscount = 0
+          state.effectiveLoanAmount = null
+      state.preCloseDiscount = 0
+      state.effectiveLoanAmount = null
           state.pagination = initialState.pagination
         }
       })

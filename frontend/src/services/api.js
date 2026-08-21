@@ -164,6 +164,58 @@ export const usersAPI = {
       throw error
     }
   },
+
+  setPassword: async (id, password) => {
+    try {
+      return await apiRequest(`/users/${id}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password }),
+      })
+    } catch (error) {
+      console.error('Users API setPassword error:', error)
+      throw error
+    }
+  },
+}
+
+const employeeFormRequest = async (endpoint, method, formData) => {
+  const token = getToken()
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    if (response.status === 401) {
+      handleUnauthorized()
+      throw new Error('Session expired. Please login again.')
+    }
+    const firstError = data.errors?.[0]?.msg
+    throw new Error(firstError || data.message || 'Request failed')
+  }
+  return data
+}
+
+export const employeesAPI = {
+  createEmployee: (formData) => employeeFormRequest('/employees', 'POST', formData),
+
+  updateEmployeeProfile: (userId, formData) =>
+    employeeFormRequest(`/employees/user/${userId}`, 'PUT', formData),
+
+  getDocumentImageBlob: async (employeeId, documentType) => {
+    const token = getToken()
+    const url = `${API_BASE_URL}/employees/${employeeId}/documents/${documentType}/image`
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.message || 'Failed to load document')
+    }
+    return res.blob()
+  },
 }
 
 // Memberships API
@@ -198,6 +250,16 @@ export const membershipsAPI = {
       return data
     } catch (error) {
       console.error('Memberships API getMembershipByUserId error:', error)
+      throw error
+    }
+  },
+
+  getMembershipCreditScore: async (id) => {
+    try {
+      const data = await apiRequest(`/memberships/${id}/credit-score`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Memberships API getMembershipCreditScore error:', error)
       throw error
     }
   },
@@ -310,6 +372,19 @@ export const loansAPI = {
       return data
     } catch (error) {
       console.error('Loans API updateLoan error:', error)
+      throw error
+    }
+  },
+
+  disburseLoan: async (id, disbursementDate) => {
+    try {
+      const data = await apiRequest(`/loans/${id}/disburse`, {
+        method: 'POST',
+        body: JSON.stringify({ disbursementDate }),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API disburseLoan error:', error)
       throw error
     }
   },
@@ -667,6 +742,19 @@ export const loanQueueAPI = {
       throw error
     }
   },
+
+  updateRequest: async (id, requestData) => {
+    try {
+      const data = await apiRequest(`/loan-queue/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(requestData),
+      })
+      return data
+    } catch (error) {
+      console.error('Loan Queue API updateRequest error:', error)
+      throw error
+    }
+  },
 }
 
 // Repayments API
@@ -835,6 +923,114 @@ export const loanDueTrackingAPI = {
       return data
     } catch (error) {
       console.error('Loan due tracking API error:', error)
+      throw error
+    }
+  },
+
+  getOutstandingLoans: async (params = {}) => {
+    try {
+      const { page = 1, limit = 25, search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      query.set('page', String(page))
+      query.set('limit', String(limit))
+      if (search) query.set('search', search)
+      if (status) query.set('status', status)
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const data = await apiRequest(`/loan-due-tracking/outstanding?${query.toString()}`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Loan outstanding API error:', error)
+      throw error
+    }
+  },
+
+  downloadOutstandingCsv: async (params = {}) => {
+    try {
+      const { search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      if (search) query.set('search', search)
+      if (status) query.set('status', status)
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loan-due-tracking/outstanding/export?${query.toString()}`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download outstanding loans')
+      }
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const now = new Date()
+      const dd = String(now.getDate()).padStart(2, '0')
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const yyyy = now.getFullYear()
+      let filename = `${dd}_${mm}_${yyyy}_Loan_outstanding_fine.csv`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i)
+        if (filenameMatch) filename = filenameMatch[1]
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      return { success: true, message: 'Download started' }
+    } catch (error) {
+      console.error('Loan outstanding CSV error:', error)
+      throw error
+    }
+  },
+
+  downloadOutstandingPdf: async (params = {}) => {
+    try {
+      const { search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const query = new URLSearchParams()
+      if (search) query.set('search', search)
+      if (status) query.set('status', status)
+      if (sortBy) query.set('sortBy', sortBy)
+      if (sortOrder) query.set('sortOrder', sortOrder)
+      const token = getToken()
+      const response = await fetch(`${API_BASE_URL}/loan-due-tracking/outstanding/pdf?${query.toString()}`, {
+        method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to download outstanding loans PDF')
+      }
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const now = new Date()
+      const dd = String(now.getDate()).padStart(2, '0')
+      const mm = String(now.getMonth() + 1).padStart(2, '0')
+      const yyyy = now.getFullYear()
+      let filename = `${dd}_${mm}_${yyyy}_Loan_outstanding_fine.pdf`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i)
+        if (filenameMatch) filename = filenameMatch[1]
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      return { success: true, message: 'PDF download started' }
+    } catch (error) {
+      console.error('Loan outstanding PDF error:', error)
       throw error
     }
   },
@@ -1022,6 +1218,47 @@ export const contactAPI = {
       throw error
     }
   },
+}
+
+export const holidaysAPI = {
+  getOrganisationHolidays: async (year) => {
+    const query = year ? `?year=${year}` : ''
+    return apiRequest(`/holidays/organisation${query}`, { method: 'GET' })
+  },
+
+  createOrganisationHoliday: async (payload) =>
+    apiRequest('/holidays/organisation', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteOrganisationHoliday: async (id) =>
+    apiRequest(`/holidays/organisation/${id}`, { method: 'DELETE' }),
+
+  getMemberHolidays: async (membershipId) =>
+    apiRequest(`/holidays/members/${membershipId}`, { method: 'GET' }),
+
+  createMemberHoliday: async (membershipId, payload) =>
+    apiRequest(`/holidays/members/${membershipId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteMemberHoliday: async (membershipId, holidayId) =>
+    apiRequest(`/holidays/members/${membershipId}/${holidayId}`, { method: 'DELETE' }),
+}
+
+export const rolesAPI = {
+  list: async () => apiRequest('/roles', { method: 'GET' }),
+  get: async (key) => apiRequest(`/roles/${key}`, { method: 'GET' }),
+  create: async (payload) =>
+    apiRequest('/roles', { method: 'POST', body: JSON.stringify(payload) }),
+  update: async (key, payload) =>
+    apiRequest(`/roles/${key}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  reset: async (key) =>
+    apiRequest(`/roles/${key}/reset`, { method: 'POST' }),
+  remove: async (key) =>
+    apiRequest(`/roles/${key}`, { method: 'DELETE' }),
 }
 
 export default apiRequest

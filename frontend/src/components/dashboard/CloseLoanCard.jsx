@@ -3,146 +3,184 @@ import { useParams } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { updateLoan, fetchLoan, setSnackbar } from '../../store/slices/loansSlice'
 import { fetchRepayments } from '../../store/slices/repaymentRecordsSlice'
+import { membershipsAPI } from '../../services/api'
 import ConfirmationModal from './ConfirmationModal'
+import CreditScoreSummary from './CreditScoreSummary'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { useCan } from '../../hooks/useCan'
+import { P } from '../../constants/permissions'
 import './CloseLoanCard.scss'
+
+const CLOSURE_OUTCOME_OPTIONS = [
+  { value: 'fully_paid', label: 'Fully paid' },
+  { value: 'settled_late', label: 'Settled late' },
+  { value: 'defaulted', label: 'Defaulted' },
+  { value: 'written_off', label: 'Written off' },
+]
 
 const CloseLoanCard = memo(() => {
   const dispatch = useAppDispatch()
   const { id } = useParams()
-  // Get loan info from repaymentRecords (comes with repayments response)
-  // Fallback to loans.selectedLoan if not available
   const loanInfoFromRepayments = useAppSelector((state) => state.repaymentRecords.loanInfo)
   const missedEmiCount = useAppSelector((state) => state.repaymentRecords.missedEmiCount || 0)
   const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
-  const userRole = useAppSelector((state) => state.auth.user?.role)
   const isLoading = useAppSelector((state) => state.loans.isLoading)
-  
+  const { can } = useCan()
+  const isAdmin = can(P.LOANS_CLOSE)
   const [closeConfirm, setCloseConfirm] = useState({
     open: false,
     isEligibleForNextLoan: true,
     closureRemark: '',
+    closureOutcome: 'fully_paid',
   })
-  
-  const isAdmin = userRole === 'admin'
-  // Use loan info from repayments if available, otherwise use selectedLoan
+  const [creditScore, setCreditScore] = useState(null)
+  const [creditScoreLoading, setCreditScoreLoading] = useState(false)
   const currentLoan = loanInfoFromRepayments || selectedLoan
   const loanStatus = currentLoan?.status
-  
-  // Only show for admin users
+
   if (!isAdmin) {
     return null
   }
-  
-  // Don't show if loan is already closed
+
   if (loanStatus === 'closed') {
     return null
   }
-  
-  // Open modal - loan data should already be available from repayments response
-  // If not, fetch it as fallback
+
+  if (!isLoanDisbursed(loanInfoFromRepayments) && !isLoanDisbursed(selectedLoan)) {
+    return null
+  }
+
+  const resetCloseConfirm = () => {
+    setCloseConfirm({
+      open: false,
+      isEligibleForNextLoan: true,
+      closureRemark: '',
+      closureOutcome: 'fully_paid',
+    })
+    setCreditScore(null)
+    setCreditScoreLoading(false)
+  }
+
   const handleOpenModal = async () => {
     let loanToCheck = currentLoan
-    
-    // If loan data is not available, fetch it (fallback)
+
     if (!loanToCheck) {
       try {
         const result = await dispatch(fetchLoan(id))
         if (fetchLoan.fulfilled.match(result)) {
           loanToCheck = result.payload
         } else {
-          dispatch(setSnackbar({ 
-            message: 'Failed to load loan details', 
-            severity: 'error' 
+          dispatch(setSnackbar({
+            message: 'Failed to load loan details',
+            severity: 'error',
           }))
           return
         }
-      } catch (error) {
-        dispatch(setSnackbar({ 
-          message: 'Failed to load loan details', 
-          severity: 'error' 
+      } catch {
+        dispatch(setSnackbar({
+          message: 'Failed to load loan details',
+          severity: 'error',
         }))
         return
       }
     }
-    
-    // If still no loan data, can't proceed
+
     if (!loanToCheck) {
-      dispatch(setSnackbar({ 
-        message: 'Loan details not available', 
-        severity: 'error' 
+      dispatch(setSnackbar({
+        message: 'Loan details not available',
+        severity: 'error',
       }))
       return
     }
-    
-    // Check if loan can be closed (must be active)
-    const loanStatus = loanToCheck.status
-    
-    if (loanStatus !== 'active') {
-      dispatch(setSnackbar({ 
-        message: 'Only active loans can be closed', 
-        severity: 'error' 
+
+    if (loanToCheck.status !== 'active') {
+      dispatch(setSnackbar({
+        message: 'Only active loans can be closed',
+        severity: 'error',
       }))
       return
     }
-    
-    // All checks passed - open the modal
+
+    const membershipId =
+      loanToCheck.membership?._id ||
+      loanToCheck.membership?.id ||
+      loanToCheck.membership?.userId
+    setCreditScore(null)
+    if (membershipId && can(P.MEMBERSHIPS_CREDIT_SCORE)) {
+      setCreditScoreLoading(true)
+      try {
+        const scoreResponse = await membershipsAPI.getMembershipCreditScore(membershipId)
+        if (scoreResponse?.success) {
+          setCreditScore(scoreResponse.data.creditScore)
+        }
+      } catch {
+        setCreditScore(null)
+      } finally {
+        setCreditScoreLoading(false)
+      }
+    }
+
     setCloseConfirm({
       open: true,
       isEligibleForNextLoan: loanToCheck.membership?.isEligibleForNextLoan !== false,
       closureRemark: '',
+      closureOutcome: 'fully_paid',
     })
   }
 
   const handleCloseLoan = async () => {
-    // Get current loan data (should be available since modal is open)
     const loanToClose = currentLoan
     if (!loanToClose) {
-      dispatch(setSnackbar({ 
-        message: 'Loan details not available', 
-        severity: 'error' 
+      dispatch(setSnackbar({
+        message: 'Loan details not available',
+        severity: 'error',
       }))
-      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
+      resetCloseConfirm()
       return
     }
-    
+
     const currentLoanId = loanToClose._id || loanToClose.id
     if (!currentLoanId) {
-      dispatch(setSnackbar({ 
-        message: 'Loan ID not found', 
-        severity: 'error' 
+      dispatch(setSnackbar({
+        message: 'Loan ID not found',
+        severity: 'error',
       }))
-      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
+      resetCloseConfirm()
       return
     }
-    
+
+    const hardNegative = ['defaulted', 'written_off'].includes(closeConfirm.closureOutcome)
+
     const result = await dispatch(
       updateLoan({
         id: currentLoanId,
         loanData: {
           status: 'closed',
-          isEligibleForNextLoan: closeConfirm.isEligibleForNextLoan,
+          isEligibleForNextLoan: hardNegative ? false : closeConfirm.isEligibleForNextLoan,
           closureRemark: closeConfirm.closureRemark.trim(),
+          closureOutcome: closeConfirm.closureOutcome,
         },
       })
     )
-    
+
     if (updateLoan.fulfilled.match(result)) {
-      setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })
-      dispatch(setSnackbar({ 
-        message: 'Loan closed successfully', 
-        severity: 'success' 
+      resetCloseConfirm()
+      dispatch(setSnackbar({
+        message: 'Loan closed successfully',
+        severity: 'success',
       }))
-      // Refresh repayments
       dispatch(fetchRepayments({ loanId: id, page: 1, limit: 50 }))
     } else {
-      dispatch(setSnackbar({ 
-        message: result.payload || 'Failed to close loan', 
-        severity: 'error' 
+      dispatch(setSnackbar({
+        message: result.payload || 'Failed to close loan',
+        severity: 'error',
       }))
     }
   }
-  
+
   const memberName = currentLoan?.membership?.fullName
+  const hardNegativeSelected = ['defaulted', 'written_off'].includes(closeConfirm.closureOutcome)
+
   return (
     <>
       <div className="close-loan-card">
@@ -150,7 +188,7 @@ const CloseLoanCard = memo(() => {
           <div>
             <h3>Close Loan</h3>
             <p className="warning-text">
-              <strong>Warning:</strong> Only close this loan after verifying all repayments and any applicable late fees have been recorded. 
+              <strong>Warning:</strong> Only close this loan after verifying all repayments and any applicable late fees have been recorded.
               This action will mark the loan as closed and cannot be undone.
             </p>
           </div>
@@ -168,7 +206,7 @@ const CloseLoanCard = memo(() => {
       </div>
       <ConfirmationModal
         open={closeConfirm.open}
-        onClose={() => setCloseConfirm({ open: false, isEligibleForNextLoan: true, closureRemark: '' })}
+        onClose={resetCloseConfirm}
         onConfirm={handleCloseLoan}
         title="Close Loan Review"
         message={
@@ -178,6 +216,20 @@ const CloseLoanCard = memo(() => {
               <span>This will mark the loan for <b>{memberName || 'this member'}</b> as closed. This action cannot be undone.</span>
             </div>
 
+            {can(P.MEMBERSHIPS_CREDIT_SCORE) && (
+              <CreditScoreSummary
+                creditScore={creditScore}
+                loading={creditScoreLoading}
+                compact
+                membershipId={
+                  currentLoan?.membership?.userId ||
+                  currentLoan?.membership?.id ||
+                  currentLoan?.membership?._id ||
+                  null
+                }
+              />
+            )}
+
             <div className="close-loan-review-grid">
               <div className="close-loan-review-item">
                 <span className="review-label">Missed EMI</span>
@@ -186,7 +238,8 @@ const CloseLoanCard = memo(() => {
               <label className="close-loan-eligibility-toggle">
                 <input
                   type="checkbox"
-                  checked={closeConfirm.isEligibleForNextLoan}
+                  checked={hardNegativeSelected ? false : closeConfirm.isEligibleForNextLoan}
+                  disabled={hardNegativeSelected}
                   onChange={(event) =>
                     setCloseConfirm((prev) => ({
                       ...prev,
@@ -197,6 +250,28 @@ const CloseLoanCard = memo(() => {
                 <span>Eligible for next loan</span>
               </label>
             </div>
+
+            <label className="close-loan-remark-field">
+              <span>Closure outcome</span>
+              <select
+                value={closeConfirm.closureOutcome}
+                onChange={(event) =>
+                  setCloseConfirm((prev) => ({
+                    ...prev,
+                    closureOutcome: event.target.value,
+                    isEligibleForNextLoan: ['defaulted', 'written_off'].includes(event.target.value)
+                      ? false
+                      : prev.isEligibleForNextLoan,
+                  }))
+                }
+              >
+                {CLOSURE_OUTCOME_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label className="close-loan-remark-field">
               <span>Closure remark</span>
@@ -236,4 +311,3 @@ const CloseLoanCard = memo(() => {
 CloseLoanCard.displayName = 'CloseLoanCard'
 
 export default CloseLoanCard
-
