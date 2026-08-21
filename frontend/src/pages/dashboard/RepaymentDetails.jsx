@@ -24,6 +24,7 @@ const RepaymentDetails = () => {
   const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
   const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
   const preCloseDiscount = repaymentRecordsState?.preCloseDiscount || 0
+  const missedEmiCount = repaymentRecordsState?.missedEmiCount ?? 0
   const loanInfo = repaymentRecordsState?.loanInfo
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
@@ -158,6 +159,7 @@ const RepaymentDetails = () => {
             remainingAmount={remainingAmount}
             preCloseDiscount={preCloseDiscount}
             additionalAmountPaid={additionalAmountPaid}
+            missedEmiCount={missedEmiCount}
           />
           <RepaymentHistory 
             hasMore={pagination.page < pagination.pages}

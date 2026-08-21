@@ -51,7 +51,7 @@ const paymentMethodLabel = (method) => {
 
 const repaymentTypeDisplay = (repayment) => {
   if (isHolidayRow(repayment)) return 'Holiday'
-  if (repayment?.isSystemGenerated) return '-'
+  if (repayment?.isSystemGenerated) return 'Missed'
   return repaymentTypeLabel(repayment.repaymentType)
 }
 

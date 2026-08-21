@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import CreditScoreGuideModal from './CreditScoreGuideModal'
 import './CreditScoreDetail.scss'
 
@@ -128,6 +129,18 @@ const CreditScoreDetail = ({ creditScore, memberName, memberUserId }) => {
               {coveragePct != null ? `${coveragePct}%` : '—'}
             </StatCell>
             <StatCell
+              label="Missed payment instances"
+              tone={(metrics.missedPaymentInstances || 0) > 0 ? 'is-warn' : undefined}
+            >
+              {metrics.missedPaymentInstances ?? 0}
+            </StatCell>
+            <StatCell
+              label="Late fee instances"
+              tone={(metrics.lateFeeInstances || 0) > 0 ? 'is-warn' : undefined}
+            >
+              {metrics.lateFeeInstances ?? 0}
+            </StatCell>
+            <StatCell
               label="Pending EDI"
               tone={(metrics.pendingEmiEquivalent || 0) > 0 ? 'is-warn' : undefined}
             >
@@ -150,6 +163,12 @@ const CreditScoreDetail = ({ creditScore, memberName, memberUserId }) => {
               tone={(metrics.advanceAmount || 0) > 0 ? 'is-ok' : undefined}
             >
               {formatCurrency(metrics.advanceAmount || 0)}
+            </StatCell>
+            <StatCell
+              label="Advance EDI"
+              tone={(metrics.advanceEmiEquivalent || 0) > 0 ? 'is-ok' : undefined}
+            >
+              {metrics.advanceEmiEquivalent ?? 0}
             </StatCell>
             <StatCell label="Late fee paid">
               {formatCurrency(metrics.totalLateFeePaid || 0)}
@@ -193,7 +212,12 @@ const CreditScoreDetail = ({ creditScore, memberName, memberUserId }) => {
                 <article key={loan.loanId || loan.loanAccountNumber} className="credit-score-loan-card">
                   <div className="loan-card-top">
                     <div>
-                      <strong>{loan.loanAccountNumber}</strong>
+                      <Link
+                        to={`/dashboard/repayment-records/${encodeURIComponent(loan.loanAccountNumber || loan.loanId)}`}
+                        className="loan-account-link"
+                      >
+                        {loan.loanAccountNumber}
+                      </Link>
                       <p>
                         {formatCurrency(loan.loanAmount)} · EDI {formatCurrency(loan.emiAmount)}
                         {loan.tenureDays ? ` · ${loan.tenureDays} days` : ''}
@@ -221,6 +245,18 @@ const CreditScoreDetail = ({ creditScore, memberName, memberUserId }) => {
                       {formatCurrency(loan.remainingPrincipal || 0)}
                     </LoanField>
                     <LoanField
+                      label="Missed instances"
+                      tone={(loan.missedPaymentInstances || 0) > 0 ? 'is-warn' : undefined}
+                    >
+                      {loan.missedPaymentInstances ?? 0}
+                    </LoanField>
+                    <LoanField
+                      label="Late fee instances"
+                      tone={(loan.lateFeeInstances || 0) > 0 ? 'is-warn' : undefined}
+                    >
+                      {loan.lateFeeInstances ?? 0}
+                    </LoanField>
+                    <LoanField
                       label="Pending amount"
                       tone={(loan.pendingAmount || 0) > 0 ? 'is-warn' : undefined}
                     >
@@ -232,8 +268,17 @@ const CreditScoreDetail = ({ creditScore, memberName, memberUserId }) => {
                     >
                       {loan.pendingEmiEquivalent ?? 0}
                     </LoanField>
-                    <LoanField label="Advance">
+                    <LoanField
+                      label="Advance"
+                      tone={(loan.advanceAmount || 0) > 0 ? 'is-ok' : undefined}
+                    >
                       {formatCurrency(loan.advanceAmount || 0)}
+                    </LoanField>
+                    <LoanField
+                      label="Advance EDI"
+                      tone={(loan.advanceEmiEquivalent || 0) > 0 ? 'is-ok' : undefined}
+                    >
+                      {loan.advanceEmiEquivalent ?? 0}
                     </LoanField>
                     <LoanField
                       label="Outstanding fine"

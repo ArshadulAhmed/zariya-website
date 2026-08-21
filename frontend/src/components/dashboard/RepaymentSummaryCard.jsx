@@ -14,6 +14,7 @@ const formatCurrency = (amount) => {
  * @param {number} remainingAmount - loanAmount - totalPaid
  * @param {number} [preCloseDiscount]
  * @param {number} [additionalAmountPaid] - Optional, shown only when > 0
+ * @param {number} [missedEmiCount] - Optional payment-date-aware missed EDI days
  */
 const RepaymentSummaryCard = ({
   loanAmount = 0,
@@ -22,9 +23,11 @@ const RepaymentSummaryCard = ({
   remainingAmount,
   preCloseDiscount = 0,
   additionalAmountPaid = 0,
+  missedEmiCount = null,
 }) => {
   const remaining = remainingAmount ?? Math.max(0, Number(loanAmount) - Number(totalPaid))
   const discount = Number(preCloseDiscount) || 0
+  const missed = missedEmiCount == null ? null : Number(missedEmiCount) || 0
 
   const summaryItems = [
     {
@@ -55,6 +58,14 @@ const RepaymentSummaryCard = ({
       valueClass: 'late-fee-paid',
       title: 'Total amount paid as late fees. This does not reduce the remaining loan balance.',
     },
+    ...(missed != null
+      ? [{
+          label: 'Missed EDI Days',
+          value: String(missed),
+          valueClass: missed > 0 ? 'missed-edi' : 'paid-full',
+          title: 'Due working days with no EDI recorded on that date (includes days later covered by advance). Credit score treats advance separately.',
+        }]
+      : []),
     {
       label: 'Remaining Amount',
       value: formatCurrency(remaining),

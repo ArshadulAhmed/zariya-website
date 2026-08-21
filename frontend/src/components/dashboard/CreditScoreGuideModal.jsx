@@ -16,17 +16,27 @@ const FACTORS = [
   {
     title: 'EDI coverage (holiday-aware)',
     detail:
-      'Uses due-tracking (pending till today), so Sundays/holidays are respected. If paid principal is below expected EDI till today, score drops (up to −250). Paying ahead can add a small bonus (up to +40).',
+      'Uses due-tracking (pending till today), so Sundays/holidays are respected. Below-expected coverage reduces the score (up to −250).',
   },
   {
-    title: 'Pending / bounced EDI',
+    title: 'Advance payment',
     detail:
-      'Unpaid EDI equivalent (missed or late daily instalments still outstanding) reduces the score (about −12 per pending EDI, capped at −180).',
+      'Paying ahead of schedule is positive. Advance amount / advance EDI days improve the score (up to +60) and never count as missed payments.',
+  },
+  {
+    title: 'Pending / missed EDI',
+    detail:
+      'Unpaid EDI equivalent still outstanding reduces the score (about −12 per pending EDI, capped at −180). Not applied when the member is in advance.',
+  },
+  {
+    title: 'Late fee instances',
+    detail:
+      'Each recorded late-fee repayment is one historical miss instance. Mild score impact (−8 each, capped at −80). Impact is reduced if the member is currently in advance with no outstanding fine.',
   },
   {
     title: 'Outstanding fine',
     detail:
-      'Unpaid late fee / fine left on due tracking hurts the score. Paid late fees do not add points back; only unpaid outstanding fine penalises.',
+      'Unpaid late fee / fine left on due tracking hurts the score. Paying late fees clears outstanding fine but historical instances still remain on the report.',
   },
   {
     title: 'Loan closures',
@@ -47,6 +57,15 @@ const FACTORS = [
 
 const METRICS = [
   {
+    title: 'Missed payment instances',
+    detail:
+      'Working days the member was behind schedule based on payment dates (including days later caught up). Advance / on-time days are not counted. Separate from current pending EDI.',
+  },
+  {
+    title: 'Late fee instances',
+    detail: 'How many late-fee repayments were recorded (historical miss catch-ups).',
+  },
+  {
     title: 'Pending EDI',
     detail: 'How many EDI units are still unpaid till today (from due tracking).',
   },
@@ -63,8 +82,8 @@ const METRICS = [
     detail: 'Unpaid fine accumulated on loans (not yet collected as late-fee repayments).',
   },
   {
-    title: 'Advance paid',
-    detail: 'Amount paid beyond what was expected till today.',
+    title: 'Advance paid / Advance EDI',
+    detail: 'Amount and EDI-equivalent paid beyond what was expected till today — positive for score.',
   },
   {
     title: 'Principal paid',
