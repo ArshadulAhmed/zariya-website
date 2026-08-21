@@ -4,6 +4,8 @@ import { membershipsAPI } from '../../services/api'
 const initialState = {
   memberships: [],
   selectedMembership: null,
+  selectedCreditScore: null,
+  isLoadingCreditScore: false,
   isLoading: false,
   isLoadingMore: false,
   error: null,
@@ -117,6 +119,21 @@ export const updateMembership = createAsyncThunk(
   }
 )
 
+export const fetchMembershipCreditScore = createAsyncThunk(
+  'memberships/fetchMembershipCreditScore',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await membershipsAPI.getMembershipCreditScore(id)
+      if (response.success) {
+        return response.data.creditScore
+      }
+      return rejectWithValue(response.message || 'Failed to fetch credit score')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch credit score')
+    }
+  }
+)
+
 const membershipsSlice = createSlice({
   name: 'memberships',
   initialState,
@@ -129,6 +146,8 @@ const membershipsSlice = createSlice({
     },
     clearSelectedMembership: (state) => {
       state.selectedMembership = null
+      state.selectedCreditScore = null
+      state.isLoadingCreditScore = false
     },
     clearError: (state) => {
       state.error = null
@@ -431,6 +450,17 @@ const membershipsSlice = createSlice({
           message: action.payload || 'Failed to update membership',
           severity: 'error',
         }
+      })
+      .addCase(fetchMembershipCreditScore.pending, (state) => {
+        state.isLoadingCreditScore = true
+      })
+      .addCase(fetchMembershipCreditScore.fulfilled, (state, action) => {
+        state.isLoadingCreditScore = false
+        state.selectedCreditScore = action.payload
+      })
+      .addCase(fetchMembershipCreditScore.rejected, (state) => {
+        state.isLoadingCreditScore = false
+        state.selectedCreditScore = null
       })
   },
 })

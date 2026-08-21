@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
-import { fetchMembership, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
+import { fetchMembership, fetchMembershipCreditScore, reviewMembership, closeSnackbar, clearSelectedMembership } from '../../store/slices/membershipsSlice'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import Snackbar from '../../components/Snackbar'
 import TextField from '../../components/TextField'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import SecureDocumentImage from '../../components/SecureDocumentImage'
 import MemberHolidaysCard from '../../components/dashboard/MemberHolidaysCard'
+import CreditScoreSummary from '../../components/dashboard/CreditScoreSummary'
 import { formatMobileNumber } from '../../utils/dashboardUtils'
 import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
@@ -21,7 +22,7 @@ const MembershipDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { selectedMembership, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
+  const { selectedMembership, selectedCreditScore, isLoadingCreditScore, isLoading, error, snackbar } = useAppSelector((state) => state.memberships)
   const user = useAppSelector((state) => state.auth?.user)
   const { can } = useCan()
   const isAdmin = can(P.MEMBERSHIPS_UPDATE)
@@ -49,6 +50,13 @@ const MembershipDetails = () => {
       dispatch(fetchMembership(id))
     }
   }, [id, dispatch])
+
+  useEffect(() => {
+    if (!can(P.MEMBERSHIPS_CREDIT_SCORE)) return
+    const membershipKey = selectedMembership?.id || selectedMembership?.userId
+    if (!membershipKey) return
+    dispatch(fetchMembershipCreditScore(membershipKey))
+  }, [selectedMembership?.id, selectedMembership?.userId, dispatch, can])
 
   const handleApprove = async () => {
     if (!id || !selectedMembership?.id) return
@@ -519,6 +527,16 @@ const MembershipDetails = () => {
             membershipId={membership.userId || membership.id}
             isAdmin={can(P.HOLIDAYS_WRITE)}
           />
+        )}
+
+        {can(P.MEMBERSHIPS_CREDIT_SCORE) && (
+          <div className="details-card credit-score-card">
+            <CreditScoreSummary
+              creditScore={selectedCreditScore}
+              loading={isLoadingCreditScore}
+              membershipId={membership.userId || membership.id || id}
+            />
+          </div>
         )}
       </div>
       ) : null}

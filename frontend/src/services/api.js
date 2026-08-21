@@ -254,6 +254,16 @@ export const membershipsAPI = {
     }
   },
 
+  getMembershipCreditScore: async (id) => {
+    try {
+      const data = await apiRequest(`/memberships/${id}/credit-score`, { method: 'GET' })
+      return data
+    } catch (error) {
+      console.error('Memberships API getMembershipCreditScore error:', error)
+      throw error
+    }
+  },
+
   /**
    * Fetch document image (or PDF) via backend proxy. Returns blob for use with createObjectURL.
    * No Cloudinary URL is ever exposed; backend streams the file after auth check.

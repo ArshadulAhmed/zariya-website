@@ -15,6 +15,7 @@ import './styles/App.scss'
 // Lazy load other dashboard pages
 const Memberships = lazy(() => import('./pages/dashboard/Memberships'))
 const MembershipDetails = lazy(() => import('./pages/dashboard/MembershipDetails'))
+const CreditScoreDetails = lazy(() => import('./pages/dashboard/CreditScoreDetails'))
 const EditMembership = lazy(() => import('./pages/dashboard/EditMembership'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
@@ -186,6 +187,16 @@ function App() {
             <PermissionRoute permission={P.MEMBERSHIPS_UPDATE}>
               <Suspense fallback={<PageLoader />}>
                 <EditMembership />
+              </Suspense>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="memberships/:id/credit-score"
+          element={
+            <PermissionRoute permission={P.MEMBERSHIPS_CREDIT_SCORE}>
+              <Suspense fallback={<PageLoader />}>
+                <CreditScoreDetails />
               </Suspense>
             </PermissionRoute>
           }

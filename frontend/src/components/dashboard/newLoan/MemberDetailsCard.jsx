@@ -1,12 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppSelector } from '../../../store/hooks'
 import SecureDocumentImage from '../../SecureDocumentImage'
+import CreditScoreSummary from '../CreditScoreSummary'
+import { membershipsAPI } from '../../../services/api'
 import { formatMobileNumber } from '../../../utils/dashboardUtils'
+import { useCan } from '../../../hooks/useCan'
+import { P } from '../../../constants/permissions'
 import './MemberDetailsCard.scss'
 
 const MemberDetailsCard = () => {
   const membership = useAppSelector((state) => state.newLoan.selectedMembership)
+  const { can } = useCan()
+  const canViewCreditScore = can(P.MEMBERSHIPS_CREDIT_SCORE)
   const [enlargedImage, setEnlargedImage] = useState(null)
+  const [creditScore, setCreditScore] = useState(null)
+  const [creditScoreLoading, setCreditScoreLoading] = useState(false)
+
+  useEffect(() => {
+    const membershipKey = membership?.id || membership?.userId
+    if (!membershipKey || !canViewCreditScore) {
+      setCreditScore(null)
+      return
+    }
+    let cancelled = false
+    setCreditScoreLoading(true)
+    membershipsAPI
+      .getMembershipCreditScore(membershipKey)
+      .then((response) => {
+        if (!cancelled && response?.success) {
+          setCreditScore(response.data.creditScore)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCreditScore(null)
+      })
+      .finally(() => {
+        if (!cancelled) setCreditScoreLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [membership?.id, membership?.userId, canViewCreditScore])
 
   if (!membership) {
     return null
@@ -135,6 +169,29 @@ const MemberDetailsCard = () => {
             </div>
           )}
         </div>
+
+        {canViewCreditScore && (
+          <div className="member-credit-score-section">
+            <CreditScoreSummary
+              creditScore={creditScore}
+              loading={creditScoreLoading}
+              compact
+              membershipId={membership.userId || membership.id || null}
+            />
+            {membership.isEligibleForNextLoan === false && (
+              <div className="member-loan-ineligible-warning">
+                This member is currently not eligible for the next loan. Admin must update eligibility before a new application can be created.
+              </div>
+            )}
+          </div>
+        )}
+        {!canViewCreditScore && membership.isEligibleForNextLoan === false && (
+          <div className="member-credit-score-section">
+            <div className="member-loan-ineligible-warning">
+              This member is currently not eligible for the next loan. Admin must update eligibility before a new application can be created.
+            </div>
+          </div>
+        )}
 
         {(hasDocument(membership.aadharUpload) || hasDocument(membership.aadharUploadBack) || hasDocument(membership.panUpload) || hasDocument(membership.passportPhoto)) && (
           <div className="documents-section">
