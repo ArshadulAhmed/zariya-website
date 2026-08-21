@@ -126,7 +126,7 @@ const Login = () => {
             </div>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit} noValidate autoComplete="off">
+          <form className="login-form" onSubmit={handleSubmit} noValidate>
 
             <div className="form-group">
               <TextField
@@ -138,6 +138,7 @@ const Login = () => {
                 error={errors.email}
                 placeholder="Enter your email address"
                 required
+                inputProps={{ autoComplete: 'email' }}
               />
             </div>
 
@@ -151,6 +152,7 @@ const Login = () => {
                 error={errors.password}
                 placeholder="Enter your password"
                 required
+                inputProps={{ autoComplete: 'new-password' }}
               />
             </div>
 

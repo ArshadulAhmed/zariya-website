@@ -106,6 +106,7 @@ const RepaymentEdit = () => {
   const totalPaid = repaymentRecordsState?.totalPaid || 0
   const totalLateFeePaid = repaymentRecordsState?.totalLateFeePaid ?? 0
   const additionalAmountPaid = repaymentRecordsState?.additionalAmountPaid || 0
+  const preCloseDiscount = repaymentRecordsState?.preCloseDiscount || 0
   const loanInfo = repaymentRecordsState?.loanInfo
   const pagination = repaymentRecordsState?.pagination || { page: 1, limit: 50, total: 0, pages: 0 }
   const error = repaymentRecordsState?.error
@@ -147,7 +148,10 @@ const RepaymentEdit = () => {
     }
   }, [id, dispatch])
 
-  const loanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const originalLoanAmount = loanInfo?.loanAmount ? Number(loanInfo.loanAmount) : 0
+  const loanAmount = loanInfo?.effectiveLoanAmount != null
+    ? Number(loanInfo.effectiveLoanAmount)
+    : Math.max(0, originalLoanAmount - preCloseDiscount)
   const remainingAmount = Math.max(0, loanAmount - totalPaid)
   const showSkeleton = isLoadingRepayments && repayments.length === 0
 
@@ -309,6 +313,7 @@ const RepaymentEdit = () => {
             totalPaid={totalPaid}
             totalLateFeePaid={totalLateFeePaid}
             remainingAmount={remainingAmount}
+            preCloseDiscount={preCloseDiscount}
             additionalAmountPaid={additionalAmountPaid}
           />
           <div className="repayment-history-card">

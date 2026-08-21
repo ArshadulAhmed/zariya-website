@@ -7,8 +7,6 @@ import {
   resetLoanReport,
   clearError,
   setError,
-  clearNOCError,
-  clearRepaymentHistoryError,
   fetchLoanByAccountNumber,
   fetchLoanRepayments,
   downloadNOC,
@@ -18,8 +16,8 @@ import RepaymentSummaryCard from '../../components/dashboard/RepaymentSummaryCar
 import RepaymentHistory from '../../components/dashboard/RepaymentHistory'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
-import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
 import './LoanReport.scss'
 
@@ -83,6 +81,8 @@ const LoanReport = () => {
     totalPaid,
     totalLateFeePaid,
     additionalAmountPaid,
+    preCloseDiscount,
+    effectiveLoanAmount,
     isLoading,
     isLoadingRepayments,
     isLoadingMore,
@@ -90,12 +90,14 @@ const LoanReport = () => {
     isDownloadingNOC,
     isDownloadingRepaymentHistory,
     error,
-    nocError,
-    repaymentHistoryError,
   } = useAppSelector((state) => state.loanReport)
 
-  const { can } = useCan()
-  const isAdmin = can(P.LOANS_NOC)
+  const user = useAppSelector((state) => state.auth.user)
+  const canDownloadNoc = hasPermission(user, P.LOANS_NOC)
+  const canPrintRepaymentPdf = (
+    hasPermission(user, P.REPORTS_DOWNLOAD_REPAYMENT_PDF)
+    || hasPermission(user, P.LOANS_DOWNLOAD_REPAYMENT_HISTORY)
+  )
 
   const handleLoadMoreRepayments = useCallback(() => {
     if (!loan) return
@@ -142,22 +144,6 @@ const LoanReport = () => {
       dispatch(resetLoanReport())
     }
   }, [dispatch])
-
-  // Show NOC error if any
-  useEffect(() => {
-    if (nocError) {
-      alert(nocError)
-      dispatch(clearNOCError())
-    }
-  }, [nocError, dispatch])
-
-  // Show Repayment History error if any
-  useEffect(() => {
-    if (repaymentHistoryError) {
-      alert(repaymentHistoryError)
-      dispatch(clearRepaymentHistoryError())
-    }
-  }, [repaymentHistoryError, dispatch])
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -219,7 +205,7 @@ const LoanReport = () => {
           <h1 className="page-title">Loan Report</h1>
           <p className="page-subtitle">View comprehensive loan details and repayment history</p>
         </div>
-        {loan?.status === 'closed' && isAdmin && (
+        {loan?.status === 'closed' && canDownloadNoc && (
           <div className="header-actions">
             <button
               type="button"
@@ -424,15 +410,20 @@ const LoanReport = () => {
             {['active', 'closed'].includes(loan.status) && (
               <div className="repayment-history-section">
                 <RepaymentSummaryCard
-                  loanAmount={loan.loanAmount}
+                  loanAmount={
+                    effectiveLoanAmount != null
+                      ? Number(effectiveLoanAmount)
+                      : Math.max(0, Number(loan.loanAmount || 0) - Number(preCloseDiscount || 0))
+                  }
                   totalPaid={totalPaid}
                   totalLateFeePaid={totalLateFeePaid}
                   additionalAmountPaid={additionalAmountPaid}
+                  preCloseDiscount={preCloseDiscount}
                 />
                 <div className="repayment-history-wrapper">
                   <div className="section-heading">
                     <h2>Repayment History</h2>
-                    {repayments.length > 0 && (
+                    {repayments.length > 0 && canPrintRepaymentPdf && (
                       <button
                         type="button"
                         className="btn-primary"

@@ -8,8 +8,8 @@ import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import PromptModal from '../../components/dashboard/PromptModal'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
-import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './LoanApplicationDetails.scss'
 
 const LoanApplicationDetails = () => {
@@ -39,10 +39,10 @@ const LoanApplicationDetails = () => {
     return () => dispatch(clearSelectedApplication())
   }, [dispatch])
 
-  const { can } = useCan()
-  const canUpdate = can(P.LOAN_APPLICATIONS_UPDATE)
-  const canReview = can(P.LOAN_APPLICATIONS_REVIEW)
-  const canRead = can(P.LOAN_APPLICATIONS_READ)
+  const canUpdate = hasPermission(user, P.LOAN_APPLICATIONS_UPDATE)
+  const canReview = hasPermission(user, P.LOAN_APPLICATIONS_REVIEW)
+  const canRead = hasPermission(user, P.LOAN_APPLICATIONS_READ)
+  const canDownloadContract = hasPermission(user, P.LOAN_APPLICATIONS_DOWNLOAD_CONTRACT)
   const underReview = application?.status === 'under_review'
   const [downloading, setDownloading] = useState(false)
   const [approveModal, setApproveModal] = useState(false)
@@ -264,7 +264,7 @@ const LoanApplicationDetails = () => {
               </button>
             </>
           )}
-          {canRead && (
+          {canDownloadContract && (
             <button
               className="btn-secondary"
               onClick={handleDownload}

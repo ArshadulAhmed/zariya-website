@@ -21,6 +21,7 @@ const LoanDetails = () => {
   const user = useAppSelector((state) => state.auth?.user)
   const { can } = useCan()
   const canEditLoan = can(P.LOANS_UPDATE)
+  const canViewLoanReport = can(P.REPORTS_LOAN)
   const hasFetchedRef = useRef(false)
   const lastLoanIdRef = useRef('')
 
@@ -77,7 +78,7 @@ const LoanDetails = () => {
               Edit
             </button>
           )}
-          {!isLoading && selectedLoan?.loanAccountNumber && (
+          {!isLoading && selectedLoan?.loanAccountNumber && canViewLoanReport && (
             <button
               className="btn-view-report"
               onClick={() => navigate(`/dashboard/reports/loan?loanAccountNumber=${selectedLoan.loanAccountNumber}`)}

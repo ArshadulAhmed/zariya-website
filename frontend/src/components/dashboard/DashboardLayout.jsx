@@ -6,8 +6,8 @@ import { closeSnackbar } from '../../store/slices/loansSlice'
 import { closeSnackbar as closeLoanApplicationsSnackbar } from '../../store/slices/loanApplicationsSlice'
 import { closeSnackbar as closeMembershipsSnackbar } from '../../store/slices/membershipsSlice'
 import { authAPI } from '../../services/api'
-import { P } from '../../constants/permissions'
-import { hasPermission } from '../../utils/permissions'
+import { P, ALL_REPORT_PERMISSIONS } from '../../constants/permissions'
+import { hasAnyPermission, hasPermission } from '../../utils/permissions'
 import logoImage from '../../assets/logo.png'
 import './DashboardLayout.scss'
 
@@ -72,17 +72,25 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     let cancelled = false
-    authAPI.getMe()
-      .then((response) => {
-        if (!cancelled && response?.data?.user) {
-          dispatch(sessionUser(response.data.user))
-        }
-      })
-      .catch(() => {})
+    const refreshSession = () => {
+      authAPI.getMe()
+        .then((response) => {
+          if (!cancelled && response?.data?.user) {
+            dispatch(sessionUser(response.data.user))
+          }
+        })
+        .catch(() => {})
+    }
+    refreshSession()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refreshSession()
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [dispatch])
+  }, [dispatch, location.pathname])
 
   const menuItems = [
     {
@@ -158,7 +166,7 @@ const DashboardLayout = () => {
     {
       key: '/dashboard/reports',
       label: 'Reports',
-      permission: P.REPORTS_READ,
+      anyOf: ALL_REPORT_PERMISSIONS,
       icon: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -176,7 +184,11 @@ const DashboardLayout = () => {
     navigate('/login')
   }
 
-  const visibleMenuItems = menuItems.filter((item) => hasPermission(user, item.permission))
+  const visibleMenuItems = menuItems.filter((item) => (
+    item.anyOf?.length
+      ? hasAnyPermission(user, item.anyOf)
+      : hasPermission(user, item.permission)
+  ))
 
   const managementItems = [
     {
@@ -201,14 +213,25 @@ const DashboardLayout = () => {
       key: '/dashboard/management/holidays',
       label: 'Holiday Calendar',
       icon: calendarIcon,
-      permission: P.HOLIDAYS_WRITE,
+      anyOf: [P.HOLIDAYS_READ, P.HOLIDAYS_WRITE],
     },
-  ].filter((item) => hasPermission(user, item.permission))
+  ].filter((item) => (
+    item.anyOf?.length
+      ? hasAnyPermission(user, item.anyOf)
+      : hasPermission(user, item.permission)
+  ))
 
   const showManagement = managementItems.length > 0
   const isManagementActive =
     location.pathname.startsWith('/dashboard/management') ||
     location.pathname.startsWith('/dashboard/settings')
+
+  useEffect(() => {
+    // Nested menus are easy to miss when a role only has one Management item (e.g. holidays:read).
+    if (showManagement && visibleMenuItems.length <= 2) {
+      setManagementExpanded(true)
+    }
+  }, [showManagement, visibleMenuItems.length])
 
   const renderNavItem = (item) => {
     const isActive = location.pathname === item.key
@@ -250,7 +273,7 @@ const DashboardLayout = () => {
             <div className={`nav-group ${isManagementActive ? 'active-group' : ''}`}>
               <button
                 type="button"
-                className={`nav-item nav-group-toggle ${isManagementActive ? 'active' : ''}`}
+                className={`nav-item nav-group-toggle ${isManagementActive ? 'is-section-active' : ''}`}
                 onClick={() => {
                   if (sidebarCollapsed) {
                     navigate(managementItems[0].key)

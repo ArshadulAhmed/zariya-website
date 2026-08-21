@@ -10,6 +10,8 @@ import DataTable from '../../components/dashboard/DataTable'
 import Snackbar from '../../components/Snackbar'
 import { ReportInfoIcon, OUTSTANDING_INFO } from './reportInfoTooltips'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './LoansNotUpToDateReport.scss'
 
 const formatDate = (dateString) => {
@@ -37,25 +39,26 @@ const statusLabel = (value) => {
 }
 
 const COLUMNS = [
-  { header: 'S.No', key: '_sno', width: '60px' },
-  { header: 'Member Name', key: 'member_name', width: '180px' },
+  { header: 'S.No', key: '_sno', width: '6%' },
+  { header: 'Member', headerTitle: 'Member name', key: 'member_name', width: '14%' },
   {
     header: 'Loan ID',
     key: 'loan_account_number',
-    width: '140px',
+    width: '12%',
     render: (v, row) => row.loan_account_number || row.loan_id || 'N/A',
   },
   {
     header: 'Status',
     key: 'loan_status',
-    width: '110px',
+    width: '9%',
     render: (v) => <span className={`status-badge status-${v}`}>{statusLabel(v)}</span>,
   },
-  { header: 'Loan Amount', key: 'loan_amount', width: '120px', render: (v) => formatCurrency(v) },
+  { header: 'Loan Amount', key: 'loan_amount', width: '12%', render: (v) => formatCurrency(v) },
   {
-    header: 'Pending till today',
+    header: 'Pending',
+    headerTitle: 'Pending till today',
     key: 'pending_amount_till_today',
-    width: '160px',
+    width: '12%',
     render: (v) => {
       const amount = Number(v || 0)
       if (amount < 0) {
@@ -68,21 +71,24 @@ const COLUMNS = [
     },
   },
   {
-    header: 'Remaining Principal',
+    header: 'Remaining',
+    headerTitle: 'Remaining principal',
     key: 'remaining_amount',
-    width: '150px',
+    width: '12%',
     render: (v) => formatCurrency(v),
   },
   {
-    header: 'Total EDI Missed',
+    header: 'EDI missed',
+    headerTitle: 'Total EDI missed',
     key: 'pending_emi_count',
-    width: '140px',
+    width: '8%',
     render: (v) => Number(v || 0),
   },
   {
-    header: 'Fine Outstanding',
+    header: 'Fine',
+    headerTitle: 'Fine outstanding',
     key: 'total_fine_accumulated',
-    width: '140px',
+    width: '11%',
     render: (v) => <span className="amount-cell fine">{formatCurrency(v)}</span>,
   },
 ]
@@ -90,6 +96,8 @@ const COLUMNS = [
 const LoanOutstandingReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const user = useAppSelector((state) => state.auth.user)
+  const canDownloadCsv = hasPermission(user, P.REPORTS_DOWNLOAD_OUTSTANDING_CSV)
   const { items, pagination, isLoading, isLoadingMore, isDownloading, error } = useAppSelector(
     (state) => state.loanOutstanding
   )
@@ -240,14 +248,16 @@ const LoanOutstandingReport = () => {
                 <button type="button" className="btn-secondary" onClick={handleReset} disabled={isLoading}>
                   Reset
                 </button>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleDownload}
-                  disabled={isDownloading || isLoading}
-                >
-                  {isDownloading ? 'Downloading...' : 'Download CSV'}
-                </button>
+                {canDownloadCsv && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={handleDownload}
+                    disabled={isDownloading || isLoading}
+                  >
+                    {isDownloading ? 'Downloading...' : 'Download CSV'}
+                  </button>
+                )}
               </div>
               {snapshotDate && !isLoading && (
                 <div className="report-snapshot-info">

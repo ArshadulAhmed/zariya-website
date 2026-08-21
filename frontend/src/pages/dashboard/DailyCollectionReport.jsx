@@ -8,6 +8,8 @@ import DataTable from '../../components/dashboard/DataTable'
 import { getLocalDateString } from '../../utils/dashboardUtils'
 import { repaymentTypeLabel } from '../../utils/repaymentType'
 import useStickyFilterBar from '../../hooks/useStickyFilterBar'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './DailyCollectionReport.scss'
 
 const formatDate = (dateString) => {
@@ -63,6 +65,8 @@ const SummaryMetric = ({ label, tooltip, value, valueClass = '' }) => (
 const DailyCollectionReport = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const user = useAppSelector((state) => state.auth.user)
+  const canPrintReport = hasPermission(user, P.REPORTS_DOWNLOAD_DAILY_COLLECTION_PDF)
   const { collections, totalCollection, totalLateFee, emiCollection, legalNoticeCollection, collectionByMethod, totalCount, isLoading, isDownloading, error, date, pagination, isLoadingMore } = useAppSelector((state) => state.dailyCollection)
   
   const [selectedDate, setSelectedDate] = useState('')
@@ -268,26 +272,28 @@ const DailyCollectionReport = () => {
               >
                 Summary
               </button>
-              <button
-                type="button"
-                className="btn-primary toolbar-btn"
-                onClick={handlePrint}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <>
-                    <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
-                        <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
-                        <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
-                      </circle>
-                    </svg>
-                    Generating PDF...
-                  </>
-                ) : (
-                  'Print Report'
-                )}
-              </button>
+              {canPrintReport && (
+                <button
+                  type="button"
+                  className="btn-primary toolbar-btn"
+                  onClick={handlePrint}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <>
+                      <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeDashoffset="32">
+                          <animate attributeName="stroke-dasharray" dur="2s" values="0 32;16 16;0 32;0 32" repeatCount="indefinite"/>
+                          <animate attributeName="stroke-dashoffset" dur="2s" values="0;-16;-32;-32" repeatCount="indefinite"/>
+                        </circle>
+                      </svg>
+                      Generating PDF...
+                    </>
+                  ) : (
+                    'Print Report'
+                  )}
+                </button>
+              )}
             </div>
           )}
         </div>

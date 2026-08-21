@@ -3,32 +3,28 @@
   --sticky-bar-bg: #f5f7fa;
 
   .data-table-th-inner {
-    padding: 13px;
+    padding: 10px 12px;
   }
 
   &.is-header-stuck {
-    .data-table thead th:first-child .data-table-th-inner,
-    .data-table thead th:first-child:not(:has(.data-table-th-inner)),
-    .repayment-table thead th:first-child .data-table-th-inner,
-    .repayment-table thead th:first-child:not(:has(.data-table-th-inner)) {
+    .data-table thead th:first-child,
+    .repayment-table thead th:first-child {
       border-top-left-radius: 0;
     }
 
-    .data-table thead th:last-child .data-table-th-inner,
-    .data-table thead th:last-child:not(:has(.data-table-th-inner)),
-    .repayment-table thead th:last-child .data-table-th-inner,
-    .repayment-table thead th:last-child:not(:has(.data-table-th-inner)) {
+    .data-table thead th:last-child,
+    .repayment-table thead th:last-child {
       border-top-right-radius: 0;
     }
   }
 
   .data-table-wrapper,
   .repayment-history-card {
-    overflow: visible;
-    border: none;
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
     .repayment-list,
     .repayment-table-container {
@@ -39,65 +35,49 @@
     .repayment-table {
       border-collapse: separate;
       border-spacing: 0;
+      width: 100%;
+      table-layout: fixed;
 
       thead {
-        background: transparent;
-        border: 0;
+        background: #f9fafb;
       }
 
       thead th {
         position: sticky;
-        top: var(--sticky-filter-height, 0px);
-        z-index: 21;
+        top: 0;
+        z-index: 2;
         background: #f9fafb;
         padding: 0;
         border: 0;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: bottom;
+        white-space: normal;
 
-        &:not(:has(.data-table-th-inner)) {
-          padding: 13px;
-          border-top: 1px solid #e5e7eb;
-          border-bottom: 1px solid #e5e7eb;
+        &:first-child {
+          border-top-left-radius: 12px;
+        }
+
+        &:last-child {
+          border-top-right-radius: 12px;
         }
 
         .data-table-th-inner {
-          background: #f9fafb;
-          border-top: 1px solid #e5e7eb;
-          border-bottom: 1px solid #e5e7eb;
-          overflow: hidden;
-        }
-
-        &:first-child .data-table-th-inner {
-          border-left: 1px solid #e5e7eb;
-          border-top-left-radius: 12px;
-        }
-
-        &:last-child .data-table-th-inner {
-          border-right: 1px solid #e5e7eb;
-          border-top-right-radius: 12px;
-        }
-
-        &:first-child:not(:has(.data-table-th-inner)) {
-          border-left: 1px solid #e5e7eb;
-          border-top-left-radius: 12px;
-        }
-
-        &:last-child:not(:has(.data-table-th-inner)) {
-          border-right: 1px solid #e5e7eb;
-          border-top-right-radius: 12px;
+          background: transparent;
+          border: 0;
+          overflow: visible;
+          white-space: normal;
+          min-height: 44px;
+          height: 100%;
+          display: flex;
+          align-items: flex-end;
         }
       }
 
       tbody td {
         background: #fff;
         border-bottom: 1px solid #e5e7eb;
-
-        &:first-child {
-          border-left: 1px solid #e5e7eb;
-        }
-
-        &:last-child {
-          border-right: 1px solid #e5e7eb;
-        }
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       tbody tr:last-child td {

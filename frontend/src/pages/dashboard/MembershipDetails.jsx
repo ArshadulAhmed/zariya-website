@@ -514,10 +514,12 @@ const MembershipDetails = () => {
           )}
         </div>
 
-        <MemberHolidaysCard
-          membershipId={membership.userId || membership.id}
-          isAdmin={can(P.HOLIDAYS_WRITE)}
-        />
+        {(can(P.HOLIDAYS_READ) || can(P.HOLIDAYS_WRITE)) && (
+          <MemberHolidaysCard
+            membershipId={membership.userId || membership.id}
+            isAdmin={can(P.HOLIDAYS_WRITE)}
+          />
+        )}
       </div>
       ) : null}
 

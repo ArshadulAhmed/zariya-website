@@ -5,6 +5,9 @@ import DataTable from '../../components/dashboard/DataTable'
 import FilterSelect from '../../components/dashboard/FilterSelect'
 import ConfirmationModal from '../../components/dashboard/ConfirmationModal'
 import { getLocalDateString } from '../../utils/dashboardUtils'
+import { useAppSelector } from '../../store/hooks'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import './OrganisationHolidays.scss'
 
 const formatHolidayDate = (dateKey) => {
@@ -20,6 +23,17 @@ const formatHolidayDate = (dateKey) => {
 }
 
 const OrganisationHolidays = () => {
+  const user = useAppSelector((state) => state.auth.user)
+  // Re-subscribe when permission list changes (avoids stale session UI).
+  useAppSelector((state) => (
+    Array.isArray(state.auth.user?.permissions)
+      ? state.auth.user.permissions.join('|')
+      : ''
+  ))
+
+  const canView = hasPermission(user, P.HOLIDAYS_READ) || hasPermission(user, P.HOLIDAYS_WRITE)
+  const canCreate = hasPermission(user, P.HOLIDAYS_WRITE)
+
   const currentYear = Number(getLocalDateString().slice(0, 4))
   const yearOptions = useMemo(
     () => Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map((year) => ({
@@ -43,6 +57,11 @@ const OrganisationHolidays = () => {
   const yearEnd = `${year}-12-31`
 
   const fetchHolidays = useCallback(async (selectedYear) => {
+    if (!canView) {
+      setHolidays([])
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     try {
       const response = await holidaysAPI.getOrganisationHolidays(selectedYear)
@@ -56,7 +75,7 @@ const OrganisationHolidays = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [canView])
 
   useEffect(() => {
     fetchHolidays(year)
@@ -76,6 +95,10 @@ const OrganisationHolidays = () => {
 
   const handleAdd = async (event) => {
     event.preventDefault()
+    if (!canCreate) {
+      setFormError('You do not have permission to add holidays')
+      return
+    }
     if (!date) {
       setFormError('Select a date')
       return
@@ -108,7 +131,7 @@ const OrganisationHolidays = () => {
   }
 
   const handleDelete = async () => {
-    if (!deleteConfirm.holiday) return
+    if (!canCreate || !deleteConfirm.holiday) return
     setIsSubmitting(true)
     try {
       const response = await holidaysAPI.deleteOrganisationHoliday(deleteConfirm.holiday.id)
@@ -150,6 +173,19 @@ const OrganisationHolidays = () => {
     },
   ]
 
+  if (!canView) {
+    return (
+      <div className="organisation-holidays-page">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Holiday Calendar</h1>
+            <p className="page-subtitle">You do not have permission to view holidays.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="organisation-holidays-page">
       <Snackbar
@@ -162,7 +198,11 @@ const OrganisationHolidays = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Holiday Calendar</h1>
-          <p className="page-subtitle">Organisation-wide days with no EDI due and no fine. Admin only.</p>
+          <p className="page-subtitle">
+            {canCreate
+              ? 'Organisation-wide days with no EDI due and no fine. You can add or remove holidays.'
+              : 'Organisation-wide days with no EDI due and no fine. View only.'}
+          </p>
         </div>
         <FilterSelect
           value={year}
@@ -171,43 +211,45 @@ const OrganisationHolidays = () => {
         />
       </div>
 
-      <form className="holiday-add-card" onSubmit={handleAdd}>
-        <div className="holiday-add-fields">
-          <label>
-            Date ({year})
-            <input
-              type="date"
-              value={date}
-              min={yearStart}
-              max={yearEnd}
-              onChange={(event) => setDate(event.target.value)}
-              disabled={isSubmitting}
-            />
-          </label>
-          <label className="holiday-name-field">
-            Holiday name
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Diwali"
-              maxLength={120}
-              disabled={isSubmitting}
-            />
-          </label>
-          <button type="submit" className="btn-primary" disabled={isSubmitting}>
-            Add holiday
-          </button>
-        </div>
-        {formError ? <p className="holiday-form-error">{formError}</p> : null}
-      </form>
+      {canCreate ? (
+        <form className="holiday-add-card" onSubmit={handleAdd}>
+          <div className="holiday-add-fields">
+            <label>
+              Date ({year})
+              <input
+                type="date"
+                value={date}
+                min={yearStart}
+                max={yearEnd}
+                onChange={(event) => setDate(event.target.value)}
+                disabled={isSubmitting}
+              />
+            </label>
+            <label className="holiday-name-field">
+              Holiday name
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="e.g. Diwali"
+                maxLength={120}
+                disabled={isSubmitting}
+              />
+            </label>
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+              Add holiday
+            </button>
+          </div>
+          {formError ? <p className="holiday-form-error">{formError}</p> : null}
+        </form>
+      ) : null}
 
       <DataTable
         columns={columns}
         data={holidays}
         loading={isLoading}
         emptyMessage={`No organisation holidays for ${year}`}
-        actions={(row) => (
+        actions={canCreate ? ((row) => (
           <button
             type="button"
             className="btn-danger"
@@ -215,7 +257,7 @@ const OrganisationHolidays = () => {
           >
             Remove
           </button>
-        )}
+        )) : undefined}
       />
 
       <ConfirmationModal

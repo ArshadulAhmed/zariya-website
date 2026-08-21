@@ -1,21 +1,64 @@
-import { memo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppSelector } from '../../store/hooks'
 import { loansAPI } from '../../services/api'
 import { formatMobileNumberDisplay } from '../../utils/dashboardUtils'
 import { isLoanDisbursed } from '../../utils/loanDisbursement'
+import { P } from '../../constants/permissions'
+import { hasPermission } from '../../utils/permissions'
 import AdditionalInfo from './AdditionalInfo'
 import './LoanInfo.scss'
 
-const LoanInfo = memo(() => {
-  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
 
+const DocumentRow = ({ title, hint, available, allowed, onDownload, loading }) => {
+  if (!allowed) return null
+  return (
+    <div className={`document-row${available ? '' : ' is-locked'}`}>
+      <div className="document-copy">
+        <span className="document-title">{title}</span>
+        <span className="document-hint">{hint}</span>
+      </div>
+      {available ? (
+        <button
+          type="button"
+          className="document-download"
+          onClick={onDownload}
+          disabled={loading}
+        >
+          <DownloadIcon />
+          {loading ? 'Downloading…' : 'Download'}
+        </button>
+      ) : (
+        <span className="document-unavailable">Available after disbursement</span>
+      )}
+    </div>
+  )
+}
+
+const LoanInfo = () => {
+  const selectedLoan = useAppSelector((state) => state.loans.selectedLoan)
+  const user = useAppSelector((state) => state.auth.user)
   const loan = selectedLoan
 
   const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [downloadingReceipt, setDownloadingReceipt] = useState(false)
   const [downloadingDefaultNotice, setDownloadingDefaultNotice] = useState(false)
+
+  const canDownloadContract = hasPermission(user, P.LOANS_DOWNLOAD_CONTRACT)
+  const canDownloadAcknowledgement = hasPermission(user, P.LOANS_DOWNLOAD_ACKNOWLEDGEMENT)
+  const canDownloadDefaultNotice = hasPermission(user, P.LOANS_DOWNLOAD_DEFAULT_NOTICE)
+  const showDocuments = Boolean(
+    loan?.status === 'active'
+    && (canDownloadContract || canDownloadAcknowledgement || canDownloadDefaultNotice)
+  )
 
   if (!loan) {
     return null
@@ -156,36 +199,6 @@ const LoanInfo = memo(() => {
     </span>
   )
 
-  const DownloadIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-
-  const DocumentRow = ({ title, hint, available, onDownload, loading }) => (
-    <div className={`document-row${available ? '' : ' is-locked'}`}>
-      <div className="document-copy">
-        <span className="document-title">{title}</span>
-        <span className="document-hint">{hint}</span>
-      </div>
-      {available ? (
-        <button
-          type="button"
-          className="document-download"
-          onClick={onDownload}
-          disabled={loading}
-        >
-          <DownloadIcon />
-          {loading ? 'Downloading…' : 'Download'}
-        </button>
-      ) : (
-        <span className="document-unavailable">Available after disbursement</span>
-      )}
-    </div>
-  )
-
   return (
     <div className="details-card">
       <div className="card-header">
@@ -268,50 +281,59 @@ const LoanInfo = memo(() => {
         </div>
       </div>
 
-      {loan.status === 'active' && (
+      {showDocuments && (
         <div className="detail-section documents-section">
           <h3>Documents</h3>
           <p className="documents-intro">
             The loan agreement is issued on approval. Receipt and default notice are issued only after cash is disbursed.
           </p>
 
-          <div className="document-group">
-            <h4>After approval</h4>
-            <DocumentRow
-              title="Loan agreement"
-              hint="Deed date is the approval date"
-              available
-              onDownload={handleDownloadContract}
-              loading={downloading}
-            />
-          </div>
+          {canDownloadContract && (
+            <div className="document-group">
+              <h4>After approval</h4>
+              <DocumentRow
+                title="Loan agreement"
+                hint="Deed date is the approval date"
+                available
+                allowed={canDownloadContract}
+                onDownload={handleDownloadContract}
+                loading={downloading}
+              />
+            </div>
+          )}
 
-          <div className="document-group">
-            <h4>After disbursement</h4>
-            <DocumentRow
-              title="Acknowledgment of loan receipt"
-              hint={disbursed ? 'Confirms cash was given to the member' : 'Not available until disbursement is recorded'}
-              available={disbursed}
-              onDownload={handleDownloadAcknowledgementReceipt}
-              loading={downloadingReceipt}
-            />
-            <DocumentRow
-              title="Notice of default"
-              hint={disbursed ? 'Demand notice after the loan has started' : 'Not available until disbursement is recorded'}
-              available={disbursed}
-              onDownload={handleDownloadDefaultNotice}
-              loading={downloadingDefaultNotice}
-            />
-          </div>
+          {(canDownloadAcknowledgement || canDownloadDefaultNotice) && (
+            <div className="document-group">
+              <h4>After disbursement</h4>
+              {canDownloadAcknowledgement && (
+                <DocumentRow
+                  title="Acknowledgment of loan receipt"
+                  hint={disbursed ? 'Confirms cash was given to the member' : 'Not available until disbursement is recorded'}
+                  available={disbursed}
+                  allowed={canDownloadAcknowledgement}
+                  onDownload={handleDownloadAcknowledgementReceipt}
+                  loading={downloadingReceipt}
+                />
+              )}
+              {canDownloadDefaultNotice && (
+                <DocumentRow
+                  title="Notice of default"
+                  hint={disbursed ? 'Demand notice after the loan has started' : 'Not available until disbursement is recorded'}
+                  available={disbursed}
+                  allowed={canDownloadDefaultNotice}
+                  onDownload={handleDownloadDefaultNotice}
+                  loading={downloadingDefaultNotice}
+                />
+              )}
+            </div>
+          )}
         </div>
       )}
 
       <AdditionalInfo />
     </div>
   )
-})
-
-LoanInfo.displayName = 'LoanInfo'
+}
 
 export default LoanInfo
 

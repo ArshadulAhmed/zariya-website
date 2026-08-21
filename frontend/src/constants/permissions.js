@@ -1,3 +1,5 @@
+export const LEGACY_REPORTS_READ = 'reports:read'
+
 export const P = Object.freeze({
   DASHBOARD_READ: 'dashboard:read',
   LOAN_QUEUE_READ: 'loan_queue:read',
@@ -12,22 +14,46 @@ export const P = Object.freeze({
   LOAN_APPLICATIONS_WRITE: 'loan_applications:write',
   LOAN_APPLICATIONS_UPDATE: 'loan_applications:update',
   LOAN_APPLICATIONS_REVIEW: 'loan_applications:review',
+  LOAN_APPLICATIONS_DOWNLOAD_CONTRACT: 'loan_applications:download_contract',
   LOANS_READ: 'loans:read',
   LOANS_UPDATE: 'loans:update',
   LOANS_DISBURSE: 'loans:disburse',
   LOANS_CLOSE: 'loans:close',
+  LOANS_DOWNLOAD_CONTRACT: 'loans:download_contract',
+  LOANS_DOWNLOAD_ACKNOWLEDGEMENT: 'loans:download_acknowledgement',
+  LOANS_DOWNLOAD_DEFAULT_NOTICE: 'loans:download_default_notice',
+  LOANS_DOWNLOAD_REPAYMENT_HISTORY: 'loans:download_repayment_history',
   LOANS_NOC: 'loans:noc',
   REPAYMENTS_READ: 'repayments:read',
   REPAYMENTS_WRITE: 'repayments:write',
   REPAYMENTS_UPDATE: 'repayments:update',
   REPAYMENTS_DELETE: 'repayments:delete',
-  REPORTS_READ: 'reports:read',
+  REPORTS_LOAN: 'reports:loan',
+  REPORTS_DAILY_COLLECTION: 'reports:daily_collection',
+  REPORTS_NOT_UP_TO_DATE: 'reports:not_up_to_date',
+  REPORTS_OUTSTANDING: 'reports:outstanding',
+  REPORTS_DOWNLOAD_REPAYMENT_PDF: 'reports:download_repayment_pdf',
+  REPORTS_DOWNLOAD_DAILY_COLLECTION_PDF: 'reports:download_daily_collection_pdf',
+  REPORTS_DOWNLOAD_OUTSTANDING_CSV: 'reports:download_outstanding_csv',
   HOLIDAYS_READ: 'holidays:read',
   HOLIDAYS_WRITE: 'holidays:write',
   USERS_MANAGE: 'users:manage',
   ROLES_MANAGE: 'roles:manage',
   DOCUMENTS_UPLOAD: 'documents:upload',
 })
+
+export const ALL_REPORT_PERMISSIONS = [
+  P.REPORTS_LOAN,
+  P.REPORTS_DAILY_COLLECTION,
+  P.REPORTS_NOT_UP_TO_DATE,
+  P.REPORTS_OUTSTANDING,
+]
+
+export const ALL_REPORT_DOWNLOAD_PERMISSIONS = [
+  P.REPORTS_DOWNLOAD_REPAYMENT_PDF,
+  P.REPORTS_DOWNLOAD_DAILY_COLLECTION_PDF,
+  P.REPORTS_DOWNLOAD_OUTSTANDING_CSV,
+]
 
 export const ALL_PERMISSIONS = Object.values(P)
 
@@ -39,10 +65,16 @@ export const EMPLOYEE_DEFAULT_PERMISSIONS = [
   P.MEMBERSHIPS_REVIEW,
   P.LOAN_APPLICATIONS_READ,
   P.LOAN_APPLICATIONS_WRITE,
+  P.LOAN_APPLICATIONS_DOWNLOAD_CONTRACT,
   P.LOANS_READ,
+  P.LOANS_DOWNLOAD_CONTRACT,
+  P.LOANS_DOWNLOAD_ACKNOWLEDGEMENT,
+  P.LOANS_DOWNLOAD_DEFAULT_NOTICE,
+  P.LOANS_DOWNLOAD_REPAYMENT_HISTORY,
   P.REPAYMENTS_READ,
   P.REPAYMENTS_WRITE,
-  P.REPORTS_READ,
+  ...ALL_REPORT_PERMISSIONS,
+  ...ALL_REPORT_DOWNLOAD_PERMISSIONS,
   P.HOLIDAYS_READ,
   P.DOCUMENTS_UPLOAD,
 ]

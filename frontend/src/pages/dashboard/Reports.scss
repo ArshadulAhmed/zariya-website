@@ -60,6 +60,16 @@
     gap: 19px;
   }
 
+  .reports-empty {
+    padding: 32px 24px;
+    border-radius: 12px;
+    border: 1px dashed #d1d5db;
+    background: #fff;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
   .report-card {
     background: white;
     border-radius: 12px;

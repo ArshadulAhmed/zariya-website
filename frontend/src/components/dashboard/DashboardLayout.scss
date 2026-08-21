@@ -116,11 +116,11 @@
       }
 
       &.active {
-        background: var(--primary-color);
-        color: white;
+        background: rgba(26, 95, 63, 0.35);
+        color: rgba(255, 255, 255, 0.95);
 
         .nav-icon {
-          color: white;
+          color: rgba(255, 255, 255, 0.95);
         }
       }
     }
@@ -128,8 +128,28 @@
     .nav-group {
       margin-bottom: 3px;
 
-      &.active-group > .nav-group-toggle {
-        color: rgba(255, 255, 255, 0.95);
+      &.active-group {
+        > .nav-group-toggle {
+          background: transparent;
+          color: rgba(255, 255, 255, 0.95);
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.08);
+          }
+
+          .nav-icon {
+            color: var(--secondary-color);
+          }
+
+          .nav-chevron {
+            opacity: 1;
+            color: var(--secondary-color);
+          }
+        }
+
+        .nav-subitems {
+          border-left-color: rgba(16, 185, 129, 0.5);
+        }
       }
     }
 
@@ -163,6 +183,11 @@
       .nav-icon svg {
         width: 14px;
         height: 14px;
+      }
+
+      &.active {
+        background: rgba(26, 95, 63, 0.35);
+        color: rgba(255, 255, 255, 0.95);
       }
     }
   }
@@ -267,6 +292,15 @@
           display: none;
         }
       }
+
+      .nav-group.active-group > .nav-group-toggle.is-section-active {
+        background: rgba(26, 95, 63, 0.35);
+        color: rgba(255, 255, 255, 0.95);
+
+        .nav-icon {
+          color: rgba(255, 255, 255, 0.95);
+        }
+      }
     }
 
     .sidebar-footer {
@@ -289,14 +323,20 @@
 
   .dashboard-main {
     margin-left: 64px;
+    width: calc(100% - 64px);
+    max-width: calc(100% - 64px);
   }
 }
 
 .dashboard-main {
   flex: 1;
+  min-width: 0;
   margin-left: 208px;
-  transition: margin-left 0.3s ease;
+  width: calc(100% - 208px);
+  max-width: calc(100% - 208px);
+  transition: margin-left 0.3s ease, width 0.3s ease, max-width 0.3s ease;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 // Responsive
@@ -312,10 +352,14 @@
 
   .dashboard-main {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .dashboard-layout.collapsed .dashboard-main {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
 }
 

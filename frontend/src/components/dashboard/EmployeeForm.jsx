@@ -214,11 +214,21 @@ const EmployeeForm = ({
           <div className="section-number">01</div>
           <div className="section-title-group">
             <h2>Account access</h2>
-            <p className="section-description">Login credentials and role for Zariya dashboard</p>
+            <p className="section-description">Login credentials and role. Email is used to sign in.</p>
           </div>
         </div>
         <div className="form-grid">
-          <TextField label="Full Name" name="fullName" value={form.fullName} onChange={handleChange} error={!!errors.fullName} helperText={errors.fullName || undefined} required disabled={isSubmitting} />
+          <TextField
+            label="Full Name"
+            name="fullName"
+            value={form.fullName}
+            onChange={handleChange}
+            error={!!errors.fullName}
+            helperText={errors.fullName || undefined}
+            required
+            disabled={isSubmitting}
+            inputProps={{ autoComplete: 'name' }}
+          />
           <TextField
             label="Email"
             name="email"
@@ -226,9 +236,10 @@ const EmployeeForm = ({
             value={form.email}
             onChange={handleChange}
             error={!!errors.email}
-            helperText={errors.email || 'Used to sign in to the dashboard'}
+            helperText={errors.email || undefined}
             required
             disabled={isSubmitting}
+            inputProps={{ autoComplete: 'email' }}
           />
           {!isCreate && (
             <TextField
@@ -262,13 +273,35 @@ const EmployeeForm = ({
               disabled={isSubmitting}
             />
           )}
-          {isCreate && (
-            <>
-              <TextField label="Password" name="password" type="password" value={form.password} onChange={handleChange} error={!!errors.password} helperText={errors.password || undefined} required disabled={isSubmitting} />
-              <TextField label="Confirm Password" name="verifyPassword" type="password" value={form.verifyPassword} onChange={handleChange} error={!!errors.verifyPassword} helperText={errors.verifyPassword || undefined} required disabled={isSubmitting} />
-            </>
-          )}
         </div>
+        {isCreate && (
+          <div className="form-grid form-grid-passwords">
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              error={!!errors.password}
+              helperText={errors.password || undefined}
+              required
+              disabled={isSubmitting}
+              inputProps={{ autoComplete: 'new-password' }}
+            />
+            <TextField
+              label="Confirm Password"
+              name="verifyPassword"
+              type="password"
+              value={form.verifyPassword}
+              onChange={handleChange}
+              error={!!errors.verifyPassword}
+              helperText={errors.verifyPassword || undefined}
+              required
+              disabled={isSubmitting}
+              inputProps={{ autoComplete: 'new-password' }}
+            />
+          </div>
+        )}
       </section>
 
       <section className="form-section">
@@ -314,8 +347,6 @@ const EmployeeForm = ({
               { value: 'female', label: 'Female' },
               { value: 'other', label: 'Other' },
             ]}
-            placeholder="Select gender"
-            displayEmpty
             disabled={isSubmitting}
           />
           <TextField label="Father / Husband Name" name="fatherOrHusbandName" value={form.fatherOrHusbandName} onChange={handleChange} disabled={isSubmitting} />

@@ -8,10 +8,11 @@ const formatCurrency = (amount) => {
 /**
  * Reusable Repayment Summary card.
  * Used on Repayment Details and Loan Report pages.
- * @param {number} loanAmount
- * @param {number} totalPaid - EDI + pre-closer discount (excludes late fee and legal notice)
+ * @param {number} loanAmount - principal after pre-closer discount
+ * @param {number} totalPaid - EDI only
  * @param {number} totalLateFeePaid
  * @param {number} remainingAmount - loanAmount - totalPaid
+ * @param {number} [preCloseDiscount]
  * @param {number} [additionalAmountPaid] - Optional, shown only when > 0
  */
 const RepaymentSummaryCard = ({
@@ -19,22 +20,34 @@ const RepaymentSummaryCard = ({
   totalPaid = 0,
   totalLateFeePaid = 0,
   remainingAmount,
+  preCloseDiscount = 0,
   additionalAmountPaid = 0,
 }) => {
   const remaining = remainingAmount ?? Math.max(0, Number(loanAmount) - Number(totalPaid))
+  const discount = Number(preCloseDiscount) || 0
 
   const summaryItems = [
     {
       label: 'Loan Amount',
       value: formatCurrency(loanAmount),
       valueClass: '',
-      title: 'Original loan principal amount sanctioned.',
+      title: discount > 0
+        ? 'Sanctioned principal after pre-closer discount.'
+        : 'Original loan principal amount sanctioned.',
     },
+    ...(discount > 0
+      ? [{
+          label: 'Pre-closer Discount',
+          value: formatCurrency(discount),
+          valueClass: '',
+          title: 'Deducted from the loan amount, not from EMI paid.',
+        }]
+      : []),
     {
       label: 'Total EMI Paid',
       value: formatCurrency(totalPaid),
       valueClass: 'total-paid',
-      title: 'EDI plus pre-closer discount. Late fee and legal notice are not included.',
+      title: 'EDI collected. Pre-closer discount, late fee, and legal notice are not included.',
     },
     {
       label: 'Total Late Fee Paid',
@@ -46,14 +59,14 @@ const RepaymentSummaryCard = ({
       label: 'Remaining Amount',
       value: formatCurrency(remaining),
       valueClass: remaining > 0 ? 'remaining' : 'paid-full',
-      title: 'Loan amount minus EDI minus pre-closer discount. Late fee and legal notice do not reduce this.',
+      title: 'Loan amount (after discount) minus EDI. Late fee and legal notice do not reduce this.',
     },
     ...(Number(additionalAmountPaid) > 0
       ? [{
           label: 'Additional Amount Paid',
           value: formatCurrency(additionalAmountPaid),
           valueClass: 'additional-paid',
-          title: 'Paid above the loan principal (EDI + pre-closer discount + late fees). Legal notice is not included.',
+          title: 'Paid above the reduced loan principal (EDI + late fees). Legal notice is not included.',
         }]
       : []),
   ]

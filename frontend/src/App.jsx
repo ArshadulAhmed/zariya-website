@@ -9,7 +9,7 @@ import PermissionRoute from './components/PermissionRoute'
 import PublicRoute from './components/PublicRoute'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import DashboardHome from './pages/dashboard/DashboardHome'
-import { P } from './constants/permissions'
+import { P, ALL_REPORT_PERMISSIONS } from './constants/permissions'
 import './styles/App.scss'
 
 // Lazy load other dashboard pages
@@ -353,7 +353,7 @@ function App() {
         <Route
           path="management/holidays"
           element={
-            <PermissionRoute permission={P.HOLIDAYS_WRITE}>
+            <PermissionRoute anyOf={[P.HOLIDAYS_READ, P.HOLIDAYS_WRITE]}>
               <Suspense fallback={<PageLoader />}>
                 <OrganisationHolidays />
               </Suspense>
@@ -394,7 +394,7 @@ function App() {
         <Route
           path="reports"
           element={
-            <PermissionRoute permission={P.REPORTS_READ}>
+            <PermissionRoute anyOf={ALL_REPORT_PERMISSIONS}>
               <Suspense fallback={<PageLoader />}>
                 <Reports />
               </Suspense>
@@ -404,7 +404,7 @@ function App() {
         <Route
           path="reports/loan"
           element={
-            <PermissionRoute permission={P.REPORTS_READ}>
+            <PermissionRoute permission={P.REPORTS_LOAN}>
               <Suspense fallback={<PageLoader />}>
                 <LoanReport />
               </Suspense>
@@ -414,7 +414,7 @@ function App() {
         <Route
           path="reports/daily-collection"
           element={
-            <PermissionRoute permission={P.REPORTS_READ}>
+            <PermissionRoute permission={P.REPORTS_DAILY_COLLECTION}>
               <Suspense fallback={<PageLoader />}>
                 <DailyCollectionReport />
               </Suspense>
@@ -424,7 +424,7 @@ function App() {
         <Route
           path="reports/loans-not-up-to-date"
           element={
-            <PermissionRoute permission={P.REPORTS_READ}>
+            <PermissionRoute permission={P.REPORTS_NOT_UP_TO_DATE}>
               <Suspense fallback={<PageLoader />}>
                 <LoansNotUpToDateReport />
               </Suspense>
@@ -434,7 +434,7 @@ function App() {
         <Route
           path="reports/loan-outstanding"
           element={
-            <PermissionRoute permission={P.REPORTS_READ}>
+            <PermissionRoute permission={P.REPORTS_OUTSTANDING}>
               <Suspense fallback={<PageLoader />}>
                 <LoanOutstandingReport />
               </Suspense>
