@@ -28,11 +28,14 @@
 }
 
 .member-holidays-form {
+  margin-bottom: 0.8rem;
+}
+
+.member-holidays-fields {
   display: grid;
-  grid-template-columns: 160px 1fr 1.4fr auto;
+  grid-template-columns: 160px 160px 1fr auto;
   gap: 0.7rem;
   align-items: end;
-  margin-bottom: 0.8rem;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr 1fr;
@@ -85,6 +88,67 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+  }
+}
+
+.member-holiday-day-list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0.85rem 0 0;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 240px;
+  overflow-y: auto;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(140px, 210px) 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.3rem 0.2rem;
+    border-radius: 8px;
+
+    &:hover {
+      background: #f9fafb;
+    }
+  }
+
+  .holiday-day-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    font-size: 0.74rem;
+    color: #4b5563;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  input[type='text'] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: 'Poppins', sans-serif;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(26, 95, 63, 0.1);
+    }
+  }
+
+  .past-badge {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
   }
 }
 

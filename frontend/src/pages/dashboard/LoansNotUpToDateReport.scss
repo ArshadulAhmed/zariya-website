@@ -97,6 +97,9 @@
           }
 
           .filter-group {
+            display: flex;
+            align-items: center;
+
             label {
               display: block;
               font-size: 0.76rem;
@@ -133,6 +136,8 @@
             font-size: 0.8rem;
             font-family: 'Poppins', sans-serif;
             min-width: 140px;
+            height: 42px;
+            box-sizing: border-box;
 
             &:focus {
               outline: none;
@@ -149,12 +154,29 @@
             }
           }
 
+          .filter-input-search {
+            width: 240px;
+
+            @media (max-width: 768px) {
+              width: 100%;
+            }
+          }
+
+          .filter-input-pending {
+            width: 180px;
+
+            @media (max-width: 768px) {
+              width: 100%;
+            }
+          }
+
           .filter-select {
             min-width: 160px;
           }
 
           .btn-primary {
             padding: 11px 24px;
+            height: 42px;
             background: var(--primary-color);
             color: white;
             border: none;
@@ -178,6 +200,7 @@
 
           .btn-secondary {
             padding: 11px 24px;
+            height: 42px;
             background: white;
             color: var(--text-primary);
             border: 1px solid #e5e7eb;

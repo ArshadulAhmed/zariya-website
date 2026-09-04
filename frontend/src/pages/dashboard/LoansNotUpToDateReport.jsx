@@ -90,7 +90,7 @@ const LoansNotUpToDateReport = () => {
         page: 1,
         limit: 25,
         search: '',
-        sortBy: 'last_calculated_at',
+        sortBy: 'loan_account_number',
         sortOrder: 'desc',
       })
     )
@@ -103,6 +103,8 @@ const LoansNotUpToDateReport = () => {
         limit: pagination?.limit || 25,
         search: searchInput.trim(),
         minPendingEmi: minPendingInput.trim() ? parseInt(minPendingInput, 10) : undefined,
+        sortBy: 'loan_account_number',
+        sortOrder: 'desc',
       })
     )
   }
@@ -120,6 +122,8 @@ const LoansNotUpToDateReport = () => {
         page: 1,
         limit: pagination?.limit || 25,
         search: '',
+        sortBy: 'loan_account_number',
+        sortOrder: 'desc',
       })
     )
   }
@@ -172,25 +176,25 @@ const LoansNotUpToDateReport = () => {
             <div className="search-filters-row">
               <div className="search-filters-left">
                 <div className="filter-group">
-                  <label htmlFor="search">Member name / Loan ID</label>
                   <input
                     type="text"
                     id="search"
-                    className="filter-input"
-                    placeholder="Search..."
+                    className="filter-input filter-input-search"
+                    placeholder="Member name / Loan ID"
+                    aria-label="Member name / Loan ID"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
                 </div>
                 <div className="filter-group">
-                  <label htmlFor="minPending">Min. pending EMIs</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     id="minPending"
-                    className="filter-input"
-                    placeholder="Any"
+                    className="filter-input filter-input-pending"
+                    placeholder="Min. pending EMIs"
+                    aria-label="Min. pending EMIs"
                     min={0}
                     value={minPendingInput}
                     onChange={(e) => setMinPendingInput(e.target.value.replace(/\D/g, '').slice(0, 5))}

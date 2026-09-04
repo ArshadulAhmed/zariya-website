@@ -4,7 +4,7 @@ import { loanDueTrackingAPI } from '../../services/api'
 export const fetchLoansNotRepaidUpToDate = createAsyncThunk(
   'loanDueTracking/fetchLoansNotRepaidUpToDate',
   async (
-    { page = 1, limit = 25, search = '', minPendingEmi, hasFine, sortBy = 'last_calculated_at', sortOrder = 'desc' },
+    { page = 1, limit = 25, search = '', minPendingEmi, hasFine, sortBy = 'loan_account_number', sortOrder = 'desc' },
     { rejectWithValue }
   ) => {
     try {
@@ -37,7 +37,7 @@ const initialState = {
     search: '',
     minPendingEmi: '',
     hasFine: false,
-    sortBy: 'last_calculated_at',
+    sortBy: 'loan_account_number',
     sortOrder: 'desc',
   },
   isLoading: false,

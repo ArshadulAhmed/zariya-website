@@ -910,7 +910,7 @@ export const dashboardAPI = {
 export const loanDueTrackingAPI = {
   getLoansNotRepaidUpToDate: async (params = {}) => {
     try {
-      const { page = 1, limit = 25, search = '', minPendingEmi, hasFine, sortBy = 'last_calculated_at', sortOrder = 'desc' } = params
+      const { page = 1, limit = 25, search = '', minPendingEmi, hasFine, sortBy = 'loan_account_number', sortOrder = 'desc' } = params
       const query = new URLSearchParams()
       query.set('page', String(page))
       query.set('limit', String(limit))
@@ -929,7 +929,7 @@ export const loanDueTrackingAPI = {
 
   getOutstandingLoans: async (params = {}) => {
     try {
-      const { page = 1, limit = 25, search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const { page = 1, limit = 25, search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' } = params
       const query = new URLSearchParams()
       query.set('page', String(page))
       query.set('limit', String(limit))
@@ -947,7 +947,7 @@ export const loanDueTrackingAPI = {
 
   downloadOutstandingCsv: async (params = {}) => {
     try {
-      const { search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const { search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' } = params
       const query = new URLSearchParams()
       if (search) query.set('search', search)
       if (status) query.set('status', status)
@@ -992,7 +992,7 @@ export const loanDueTrackingAPI = {
 
   downloadOutstandingPdf: async (params = {}) => {
     try {
-      const { search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' } = params
+      const { search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' } = params
       const query = new URLSearchParams()
       if (search) query.set('search', search)
       if (status) query.set('status', status)
@@ -1232,6 +1232,12 @@ export const holidaysAPI = {
       body: JSON.stringify(payload),
     }),
 
+  createOrganisationHolidaysBulk: async (payload) =>
+    apiRequest('/holidays/organisation/bulk', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   deleteOrganisationHoliday: async (id) =>
     apiRequest(`/holidays/organisation/${id}`, { method: 'DELETE' }),
 
@@ -1240,6 +1246,12 @@ export const holidaysAPI = {
 
   createMemberHoliday: async (membershipId, payload) =>
     apiRequest(`/holidays/members/${membershipId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createMemberHolidaysBulk: async (membershipId, payload) =>
+    apiRequest(`/holidays/members/${membershipId}/bulk`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

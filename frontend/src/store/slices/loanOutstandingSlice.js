@@ -4,7 +4,7 @@ import { loanDueTrackingAPI } from '../../services/api'
 export const fetchOutstandingLoans = createAsyncThunk(
   'loanOutstanding/fetchOutstandingLoans',
   async (
-    { page = 1, limit = 25, search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' },
+    { page = 1, limit = 25, search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' },
     { rejectWithValue }
   ) => {
     try {
@@ -31,7 +31,7 @@ export const fetchOutstandingLoans = createAsyncThunk(
 
 export const downloadOutstandingCsv = createAsyncThunk(
   'loanOutstanding/downloadOutstandingCsv',
-  async ({ search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' }, { rejectWithValue }) => {
+  async ({ search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' }, { rejectWithValue }) => {
     try {
       await loanDueTrackingAPI.downloadOutstandingCsv({ search, status, sortBy, sortOrder })
       return { success: true }
@@ -43,7 +43,7 @@ export const downloadOutstandingCsv = createAsyncThunk(
 
 export const downloadOutstandingPdf = createAsyncThunk(
   'loanOutstanding/downloadOutstandingPdf',
-  async ({ search = '', status = '', sortBy = 'remaining_amount', sortOrder = 'desc' }, { rejectWithValue }) => {
+  async ({ search = '', status = '', sortBy = 'loan_account_number', sortOrder = 'desc' }, { rejectWithValue }) => {
     try {
       await loanDueTrackingAPI.downloadOutstandingPdf({ search, status, sortBy, sortOrder })
       return { success: true }

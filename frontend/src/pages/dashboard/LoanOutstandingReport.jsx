@@ -41,19 +41,13 @@ const statusLabel = (value) => {
 
 const COLUMNS = [
   { header: 'S.No', key: '_sno', width: '5%' },
-  { header: 'Member Name', key: 'member_name', width: '13%' },
   {
     header: 'Loan ID',
     key: 'loan_account_number',
     width: '11%',
     render: (v, row) => row.loan_account_number || row.loan_id || 'N/A',
   },
-  {
-    header: 'Status',
-    key: 'loan_status',
-    width: '8%',
-    render: (v) => <span className={`status-badge status-${v}`}>{statusLabel(v)}</span>,
-  },
+  { header: 'Member Name', key: 'member_name', width: '13%' },
   { header: 'Loan Amount', key: 'loan_amount', width: '11%', render: (v) => formatCurrency(v) },
   {
     header: 'Pending till today',
@@ -88,6 +82,12 @@ const COLUMNS = [
     width: '11%',
     render: (v) => <span className="amount-cell fine">{formatCurrency(v)}</span>,
   },
+  {
+    header: 'Status',
+    key: 'loan_status',
+    width: '8%',
+    render: (v) => <span className={`status-badge status-${v}`}>{statusLabel(v)}</span>,
+  },
 ]
 
 const LoanOutstandingReport = () => {
@@ -113,7 +113,7 @@ const LoanOutstandingReport = () => {
     limit: pagination?.limit || 25,
     search: searchInput.trim(),
     status: statusInput,
-    sortBy: 'remaining_amount',
+    sortBy: 'loan_account_number',
     sortOrder: 'desc',
   })
 
@@ -134,7 +134,7 @@ const LoanOutstandingReport = () => {
         limit: 25,
         search: '',
         status: '',
-        sortBy: 'remaining_amount',
+        sortBy: 'loan_account_number',
         sortOrder: 'desc',
       })
     )
@@ -176,7 +176,7 @@ const LoanOutstandingReport = () => {
         limit: pagination?.limit || 25,
         search: '',
         status: '',
-        sortBy: 'remaining_amount',
+        sortBy: 'loan_account_number',
         sortOrder: 'desc',
       })
     )
@@ -190,7 +190,7 @@ const LoanOutstandingReport = () => {
   const downloadArgs = () => ({
     search: searchInput.trim(),
     status: statusInput,
-    sortBy: 'remaining_amount',
+    sortBy: 'loan_account_number',
     sortOrder: 'desc',
   })
 
