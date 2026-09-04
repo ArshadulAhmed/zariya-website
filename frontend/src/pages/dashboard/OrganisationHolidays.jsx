@@ -10,6 +10,8 @@ import { P } from '../../constants/permissions'
 import { hasPermission } from '../../utils/permissions'
 import './OrganisationHolidays.scss'
 
+const MAX_RANGE_DAYS = 62
+
 const formatHolidayDate = (dateKey) => {
   if (!dateKey) return 'N/A'
   const [year, month, day] = String(dateKey).split('-').map(Number)
@@ -22,9 +24,30 @@ const formatHolidayDate = (dateKey) => {
   })
 }
 
+const addDaysToKey = (dateKey, days) => {
+  const [year, month, day] = String(dateKey).split('-').map(Number)
+  if (!year || !month || !day) return null
+  const next = new Date(Date.UTC(year, month - 1, day + Number(days || 0)))
+  return next.toISOString().slice(0, 10)
+}
+
+const buildDateKeysInclusive = (startKey, endKey) => {
+  if (!startKey) return []
+  const end = endKey || startKey
+  if (end < startKey) return []
+  const keys = []
+  let cursor = startKey
+  let guard = 0
+  while (cursor && cursor <= end && guard < MAX_RANGE_DAYS + 1) {
+    keys.push(cursor)
+    cursor = addDaysToKey(cursor, 1)
+    guard += 1
+  }
+  return keys
+}
+
 const OrganisationHolidays = () => {
   const user = useAppSelector((state) => state.auth.user)
-  // Re-subscribe when permission list changes (avoids stale session UI).
   useAppSelector((state) => (
     Array.isArray(state.auth.user?.permissions)
       ? state.auth.user.permissions.join('|')
@@ -36,9 +59,9 @@ const OrganisationHolidays = () => {
 
   const currentYear = Number(getLocalDateString().slice(0, 4))
   const yearOptions = useMemo(
-    () => Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map((year) => ({
-      value: String(year),
-      label: String(year),
+    () => Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map((y) => ({
+      value: String(y),
+      label: String(y),
     })),
     [currentYear]
   )
@@ -46,14 +69,32 @@ const OrganisationHolidays = () => {
   const [year, setYear] = useState(String(currentYear))
   const [holidays, setHolidays] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [date, setDate] = useState('')
-  const [name, setName] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [dayNames, setDayNames] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, holiday: null })
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   const yearStart = `${year}-01-01`
   const yearEnd = `${year}-12-31`
+
+  const dateKeys = useMemo(() => {
+    if (!startDate) return []
+    const effectiveEnd = endDate || startDate
+    if (effectiveEnd < startDate) return []
+    const keys = buildDateKeysInclusive(startDate, effectiveEnd)
+    if (keys.length > MAX_RANGE_DAYS) return []
+    return keys
+  }, [startDate, endDate])
+
+  const rangeTooLong = useMemo(() => {
+    if (!startDate) return false
+    const effectiveEnd = endDate || startDate
+    if (effectiveEnd < startDate) return false
+    return buildDateKeysInclusive(startDate, effectiveEnd).length > MAX_RANGE_DAYS
+  }, [startDate, endDate])
 
   const fetchHolidays = useCallback(async (selectedYear) => {
     if (!canView) {
@@ -81,14 +122,27 @@ const OrganisationHolidays = () => {
   }, [year, fetchHolidays])
 
   useEffect(() => {
-    if (date && date.slice(0, 4) !== year) {
-      setDate('')
-    }
-  }, [year, date])
+    if (startDate && startDate.slice(0, 4) !== year) setStartDate('')
+    if (endDate && endDate.slice(0, 4) !== year) setEndDate('')
+  }, [year, startDate, endDate])
+
+  useEffect(() => {
+    setDayNames({})
+    setFormError('')
+  }, [startDate, endDate])
 
   const handleYearChange = (event) => {
     setYear(event.target.value)
-    setDate('')
+    setStartDate('')
+    setEndDate('')
+    setDayNames({})
+    setFormError('')
+  }
+
+  const resetForm = () => {
+    setStartDate('')
+    setEndDate('')
+    setDayNames({})
     setFormError('')
   }
 
@@ -98,65 +152,65 @@ const OrganisationHolidays = () => {
       setFormError('You do not have permission to add holidays')
       return
     }
-    if (!date) {
-      setFormError('Select a date')
+    if (!startDate) {
+      setFormError('Select a start date')
       return
     }
-    if (date.slice(0, 4) !== year) {
-      setFormError(`Date must be in ${year}`)
+    const effectiveEnd = endDate || startDate
+    if (effectiveEnd < startDate) {
+      setFormError('End date must be on or after start date')
       return
     }
-    if (!name.trim()) {
-      setFormError('Enter a holiday name')
+    if (startDate.slice(0, 4) !== year || effectiveEnd.slice(0, 4) !== year) {
+      setFormError(`Dates must be in ${year}`)
       return
     }
+    if (rangeTooLong) {
+      setFormError(`You can add at most ${MAX_RANGE_DAYS} consecutive days at once`)
+      return
+    }
+    if (!dateKeys.length) {
+      setFormError('Select a valid date range')
+      return
+    }
+
+    const payloadDays = dateKeys.map((date) => ({
+      date,
+      name: String(dayNames[date] || '').trim(),
+    }))
+
+    const missing = payloadDays.find((row) => !row.name)
+    if (missing) {
+      setFormError(`Enter a name for ${formatHolidayDate(missing.date)}`)
+      return
+    }
+
     setFormError('')
-    const optimisticDate = date
-    const optimisticName = name.trim()
-    const tempId = `temp-${Date.now()}`
-    const optimisticHoliday = {
-      id: tempId,
-      date: optimisticDate,
-      year: Number(year),
-      name: optimisticName,
-      reason: '',
-      isPast: optimisticDate < getLocalDateString(),
-      createdBy: {
-        fullName: user?.fullName || '',
-        username: user?.username || '',
-      },
-    }
-
-    setDate('')
-    setName('')
-    setHolidays((prev) =>
-      [...prev.filter((item) => item.date !== optimisticDate), optimisticHoliday].sort((a, b) =>
-        String(a.date).localeCompare(String(b.date))
-      )
-    )
-    setSnackbar({ open: true, message: 'Holiday added', severity: 'success' })
-
+    setIsSubmitting(true)
     try {
-      const response = await holidaysAPI.createOrganisationHoliday({
-        date: optimisticDate,
-        name: optimisticName,
+      const response = await holidaysAPI.createOrganisationHolidaysBulk({
+        holidays: payloadDays,
       })
-      if (response.success && response.data?.holiday) {
-        const created = response.data.holiday
-        setHolidays((prev) =>
-          [...prev.filter((item) => item.id !== tempId && item.id !== created.id), created].sort(
-            (a, b) => String(a.date).localeCompare(String(b.date))
-          )
-        )
+      if (response.success) {
+        resetForm()
+        await fetchHolidays(year)
+        const created = response.data?.createdCount ?? response.data?.holidays?.length ?? 0
+        const skipped = response.data?.skippedDates || []
+        const message = skipped.length
+          ? `Added ${created}; skipped ${skipped.length} already listed`
+          : created === 1
+            ? 'Holiday added'
+            : `Added ${created} holidays`
+        setSnackbar({ open: true, message, severity: 'success' })
       } else {
-        setHolidays((prev) => prev.filter((item) => item.id !== tempId))
-        setFormError(response.message || 'Failed to add holiday')
-        setSnackbar({ open: true, message: response.message || 'Failed to add holiday', severity: 'error' })
+        setFormError(response.message || 'Failed to add holidays')
+        setSnackbar({ open: true, message: response.message || 'Failed to add holidays', severity: 'error' })
       }
     } catch (error) {
-      setHolidays((prev) => prev.filter((item) => item.id !== tempId))
-      setFormError(error.message || 'Failed to add holiday')
-      setSnackbar({ open: true, message: error.message || 'Failed to add holiday', severity: 'error' })
+      setFormError(error.message || 'Failed to add holidays')
+      setSnackbar({ open: true, message: error.message || 'Failed to add holidays', severity: 'error' })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -165,17 +219,13 @@ const OrganisationHolidays = () => {
     const removed = deleteConfirm.holiday
     const removedId = removed.id
     setDeleteConfirm({ open: false, holiday: null })
-    setHolidays((prev) => prev.filter((item) => item.id !== removedId))
-    setSnackbar({ open: true, message: 'Holiday removed', severity: 'success' })
-
-    if (String(removedId).startsWith('temp-')) return
 
     try {
       const response = await holidaysAPI.deleteOrganisationHoliday(removedId)
-      if (!response.success) {
-        setHolidays((prev) =>
-          [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
-        )
+      if (response.success) {
+        setHolidays((prev) => prev.filter((item) => item.id !== removedId))
+        setSnackbar({ open: true, message: 'Holiday removed', severity: 'success' })
+      } else {
         setSnackbar({
           open: true,
           message: response.message || 'Failed to remove holiday',
@@ -183,9 +233,6 @@ const OrganisationHolidays = () => {
         })
       }
     } catch (error) {
-      setHolidays((prev) =>
-        [...prev, removed].sort((a, b) => String(a.date).localeCompare(String(b.date)))
-      )
       setSnackbar({
         open: true,
         message: error.message || 'Failed to remove holiday',
@@ -245,7 +292,7 @@ const OrganisationHolidays = () => {
           <h1 className="page-title">Holiday Calendar</h1>
           <p className="page-subtitle">
             {canCreate
-              ? 'Organisation-wide days with no EDI due and no fine. You can add or remove holidays.'
+              ? 'Organisation-wide days with no EDI due and no fine. Add one day or a date range.'
               : 'Organisation-wide days with no EDI due and no fine. View only.'}
           </p>
         </div>
@@ -260,29 +307,68 @@ const OrganisationHolidays = () => {
         <form className="holiday-add-card" onSubmit={handleAdd}>
           <div className="holiday-add-fields">
             <label>
-              Date ({year})
+              From ({year})
               <input
                 type="date"
-                value={date}
+                value={startDate}
                 min={yearStart}
                 max={yearEnd}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => {
+                  const next = event.target.value
+                  setStartDate(next)
+                  if (endDate && next && endDate < next) setEndDate(next)
+                }}
               />
             </label>
-            <label className="holiday-name-field">
-              Holiday name
+            <label>
+              To (optional)
               <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Diwali"
-                maxLength={120}
+                type="date"
+                value={endDate}
+                min={startDate || yearStart}
+                max={yearEnd}
+                onChange={(event) => setEndDate(event.target.value)}
               />
             </label>
-            <button type="submit" className="btn-primary">
-              Add holiday
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting || !startDate || dateKeys.length === 0 || rangeTooLong}
+            >
+              {isSubmitting
+                ? 'Adding…'
+                : dateKeys.length > 1
+                  ? `Add ${dateKeys.length} holidays`
+                  : 'Add holiday'}
             </button>
           </div>
+
+          {rangeTooLong ? (
+            <p className="holiday-form-error">
+              Range is too long — max {MAX_RANGE_DAYS} days at once.
+            </p>
+          ) : null}
+
+          {dateKeys.length > 0 ? (
+            <ul className="holiday-day-list">
+              {dateKeys.map((dateKey) => (
+                <li key={dateKey}>
+                  <span className="holiday-day-date">{formatHolidayDate(dateKey)}</span>
+                  <input
+                    type="text"
+                    value={dayNames[dateKey] || ''}
+                    onChange={(event) =>
+                      setDayNames((prev) => ({ ...prev, [dateKey]: event.target.value }))
+                    }
+                    placeholder="Holiday name"
+                    maxLength={120}
+                    aria-label={`Name for ${dateKey}`}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
           {formError ? <p className="holiday-form-error">{formError}</p> : null}
         </form>
       ) : null}

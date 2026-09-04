@@ -1232,6 +1232,12 @@ export const holidaysAPI = {
       body: JSON.stringify(payload),
     }),
 
+  createOrganisationHolidaysBulk: async (payload) =>
+    apiRequest('/holidays/organisation/bulk', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   deleteOrganisationHoliday: async (id) =>
     apiRequest(`/holidays/organisation/${id}`, { method: 'DELETE' }),
 
@@ -1240,6 +1246,12 @@ export const holidaysAPI = {
 
   createMemberHoliday: async (membershipId, payload) =>
     apiRequest(`/holidays/members/${membershipId}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createMemberHolidaysBulk: async (membershipId, payload) =>
+    apiRequest(`/holidays/members/${membershipId}/bulk`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
