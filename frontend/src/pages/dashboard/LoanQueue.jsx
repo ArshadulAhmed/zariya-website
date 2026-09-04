@@ -24,9 +24,19 @@ import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
 import './LoanQueue.scss'
 
+const MAX_WINDOW_DAYS = 31
+
 function statusLabel(value) {
   if (!value) return ''
   return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+const dayCountInclusive = (from, to) => {
+  if (!from || !to) return 0
+  const start = new Date(`${from}T00:00:00Z`)
+  const end = new Date(`${to}T00:00:00Z`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0
+  return Math.floor((end - start) / (24 * 60 * 60 * 1000)) + 1
 }
 
 const initialForm = {
@@ -34,13 +44,17 @@ const initialForm = {
   mobileNumber: '',
   membershipUserId: '',
   requestedAmount: '',
-  expectedLoanDate: '',
+  expectedLoanDateFrom: '',
+  expectedLoanDateTo: '',
 }
 
 const LoanQueue = memo(function LoanQueue() {
   const dispatch = useAppDispatch()
   const { can } = useCan()
+  const canCreateQueue = can(P.LOAN_QUEUE_WRITE)
+  const canEditQueue = can(P.LOAN_QUEUE_UPDATE)
   const canReviewQueue = can(P.LOAN_QUEUE_REVIEW)
+  const showQueueActions = canEditQueue || canReviewQueue
   const { dateGroups, isLoading, isLoadingMore, isSubmitting, filters, pagination, snackbar } =
     useAppSelector((state) => state.loanQueue)
   const paginationSafe = pagination || { page: 1, limit: 15, total: 0, pages: 0 }
@@ -105,10 +119,29 @@ const LoanQueue = memo(function LoanQueue() {
 
   const handleFormChange = (event) => {
     const { name, value } = event.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [name]: value }
+      if (name === 'expectedLoanDateFrom' && value && (!prev.expectedLoanDateTo || prev.expectedLoanDateTo < value)) {
+        next.expectedLoanDateTo = value
+      }
+      return next
+    })
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: '' }))
     }
+  }
+
+  const validateWindow = (from, to) => {
+    const errors = {}
+    if (!from) errors.expectedLoanDateFrom = 'Start date is required'
+    if (!to) errors.expectedLoanDateTo = 'End date is required'
+    if (from && to && to < from) {
+      errors.expectedLoanDateTo = 'End date must be on or after start date'
+    }
+    if (from && to && dayCountInclusive(from, to) > MAX_WINDOW_DAYS) {
+      errors.expectedLoanDateTo = `Window cannot exceed ${MAX_WINDOW_DAYS} days`
+    }
+    return errors
   }
 
   const validateForm = () => {
@@ -119,14 +152,12 @@ const LoanQueue = memo(function LoanQueue() {
     if (!form.requestedAmount || parseFloat(form.requestedAmount) <= 0) {
       errors.requestedAmount = 'Requested amount must be greater than 0'
     }
-    if (!form.expectedLoanDate) {
-      errors.expectedLoanDate = 'Expected loan date is required'
-    }
+    Object.assign(errors, validateWindow(form.expectedLoanDateFrom, form.expectedLoanDateTo))
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
 
-  const refetchGroups = () => {
+  const refetchList = () => {
     dispatch(setPagination({ page: 1 }))
     dispatch(fetchLoanQueueRequests({
       page: 1,
@@ -147,7 +178,7 @@ const LoanQueue = memo(function LoanQueue() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    if (!validateForm()) return
+    if (!canCreateQueue || !validateForm()) return
 
     const result = await dispatch(
       createLoanQueueRequest({
@@ -155,20 +186,27 @@ const LoanQueue = memo(function LoanQueue() {
         mobileNumber: stripMobileDigits(form.mobileNumber),
         membershipUserId: form.membershipUserId.trim(),
         requestedAmount: parseFloat(form.requestedAmount),
-        expectedLoanDate: form.expectedLoanDate,
+        expectedLoanDateFrom: form.expectedLoanDateFrom,
+        expectedLoanDateTo: form.expectedLoanDateTo || form.expectedLoanDateFrom,
       })
     )
 
     if (createLoanQueueRequest.fulfilled.match(result)) {
       setForm(initialForm)
       setFormErrors({})
-      refetchGroups()
+      refetchList()
     }
   }
 
   const handleEditFormChange = (event) => {
     const { name, value } = event.target
-    setEditForm((prev) => ({ ...prev, [name]: value }))
+    setEditForm((prev) => {
+      const next = { ...prev, [name]: value }
+      if (name === 'expectedLoanDateFrom' && value && (!prev.expectedLoanDateTo || prev.expectedLoanDateTo < value)) {
+        next.expectedLoanDateTo = value
+      }
+      return next
+    })
     if (editFormErrors[name]) {
       setEditFormErrors((prev) => ({ ...prev, [name]: '' }))
     }
@@ -182,21 +220,21 @@ const LoanQueue = memo(function LoanQueue() {
     if (!editForm.requestedAmount || parseFloat(editForm.requestedAmount) <= 0) {
       errors.requestedAmount = 'Requested amount must be greater than 0'
     }
-    if (!editForm.expectedLoanDate) {
-      errors.expectedLoanDate = 'Expected loan date is required'
-    }
+    Object.assign(errors, validateWindow(editForm.expectedLoanDateFrom, editForm.expectedLoanDateTo))
     setEditFormErrors(errors)
     return Object.keys(errors).length === 0
   }
 
   const openEditModal = (request) => {
+    if (!canEditQueue) return
     setEditConfirm({ open: true, request })
     setEditForm({
       fullName: request.fullName || '',
       mobileNumber: request.mobileNumber || '',
       membershipUserId: request.membershipUserId || '',
       requestedAmount: request.requestedAmount != null ? String(request.requestedAmount) : '',
-      expectedLoanDate: request.expectedLoanDateInput || '',
+      expectedLoanDateFrom: request.expectedLoanDateFromInput || '',
+      expectedLoanDateTo: request.expectedLoanDateToInput || request.expectedLoanDateFromInput || '',
     })
     setEditFormErrors({})
   }
@@ -209,7 +247,7 @@ const LoanQueue = memo(function LoanQueue() {
   }
 
   const handleEditSave = async () => {
-    if (!editConfirm.request || !validateEditForm()) return
+    if (!canEditQueue || !editConfirm.request || !validateEditForm()) return
 
     const result = await dispatch(
       updateLoanQueueRequest({
@@ -219,7 +257,8 @@ const LoanQueue = memo(function LoanQueue() {
           mobileNumber: stripMobileDigits(editForm.mobileNumber),
           membershipUserId: editForm.membershipUserId.trim(),
           requestedAmount: parseFloat(editForm.requestedAmount),
-          expectedLoanDate: editForm.expectedLoanDate,
+          expectedLoanDateFrom: editForm.expectedLoanDateFrom,
+          expectedLoanDateTo: editForm.expectedLoanDateTo || editForm.expectedLoanDateFrom,
         },
       })
     )
@@ -228,11 +267,12 @@ const LoanQueue = memo(function LoanQueue() {
       setEditConfirm({ open: false, request: null })
       setEditForm(initialForm)
       setEditFormErrors({})
-      refetchGroups()
+      refetchList()
     }
   }
 
   const openReviewModal = (request, status) => {
+    if (!canReviewQueue) return
     setReviewConfirm({
       open: true,
       request,
@@ -243,7 +283,7 @@ const LoanQueue = memo(function LoanQueue() {
   }
 
   const handleReview = async () => {
-    if (!reviewConfirm.request) return
+    if (!canReviewQueue || !reviewConfirm.request) return
 
     if (reviewConfirm.status === 'rejected' && !reviewConfirm.rejectionReason.trim()) {
       setReviewError('Rejection reason is required')
@@ -271,21 +311,27 @@ const LoanQueue = memo(function LoanQueue() {
   const renderApplicationActions = (application) => {
     if (application.status !== 'pending') return '—'
 
+    const showEdit = canEditQueue
+    const showReview = canReviewQueue
+    if (!showEdit && !showReview) return '—'
+
     return (
       <div className="loan-queue-actions">
-        <button
-          type="button"
-          className="btn-icon btn-edit"
-          title="Edit"
-          aria-label="Edit"
-          onClick={() => openEditModal(application)}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {canReviewQueue && (
+        {showEdit && (
+          <button
+            type="button"
+            className="btn-icon btn-edit"
+            title="Edit"
+            aria-label="Edit"
+            onClick={() => openEditModal(application)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+        {showReview && (
           <>
             <button
               type="button"
@@ -349,7 +395,7 @@ const LoanQueue = memo(function LoanQueue() {
           <table className="loan-queue-apps-table">
             <thead>
               <tr>
-                <th className="date-header">Expected Loan Date</th>
+                <th className="date-header">Expected Loan Window</th>
                 <th>Name</th>
                 <th>Mobile</th>
                 <th>Membership ID</th>
@@ -359,7 +405,7 @@ const LoanQueue = memo(function LoanQueue() {
                 <th>Updated By</th>
                 <th>Status</th>
                 <th>Reason</th>
-                <th>Actions</th>
+                {showQueueActions && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -371,7 +417,7 @@ const LoanQueue = memo(function LoanQueue() {
                   >
                     {index === 0 && (
                       <td className="date-cell" rowSpan={group.applications.length}>
-                        <span className="date-label">{group.expectedLoanDateLabel}</span>
+                        <span className="date-label">{group.expectedLoanWindowLabel}</span>
                         <span className="date-count">
                           {group.totalCount} application{group.totalCount === 1 ? '' : 's'}
                         </span>
@@ -393,7 +439,7 @@ const LoanQueue = memo(function LoanQueue() {
                       </span>
                     </td>
                     <td>{application.rejectionReason || '—'}</td>
-                    <td>{renderApplicationActions(application)}</td>
+                    {showQueueActions && <td>{renderApplicationActions(application)}</td>}
                   </tr>
                 ))
               )}
@@ -415,76 +461,93 @@ const LoanQueue = memo(function LoanQueue() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Loan Queue</h1>
-          <p className="page-subtitle">Track upcoming loan requests waiting due to financial constraints</p>
+          <p className="page-subtitle">
+            Track upcoming loan requests waiting due to financial constraints. Promise a date window — the loan can be provided any day in that range.
+          </p>
         </div>
       </div>
 
-      <section className="loan-queue-form-section">
-        <h2 className="section-title">Add to Queue</h2>
-        <form className="loan-queue-form" onSubmit={handleSubmit}>
-          <TextField
-            label="Full Name"
-            name="fullName"
-            value={form.fullName}
-            onChange={handleFormChange}
-            error={!!formErrors.fullName}
-            helperText={formErrors.fullName}
-            required
-            disabled={isSubmitting}
-          />
-          <MobileNumberField
-            label="Mobile Number"
-            name="mobileNumber"
-            value={form.mobileNumber}
-            onChange={handleFormChange}
-            error={!!formErrors.mobileNumber}
-            helperText={formErrors.mobileNumber}
-            required
-            disabled={isSubmitting}
-          />
-          <TextField
-            label="Membership ID (optional)"
-            name="membershipUserId"
-            value={form.membershipUserId}
-            onChange={handleFormChange}
-            placeholder="ZMID-0000001"
-            disabled={isSubmitting}
-          />
-          <TextField
-            label="Requested Amount"
-            name="requestedAmount"
-            type="number"
-            value={form.requestedAmount}
-            onChange={handleFormChange}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault()
-            }}
-            placeholder="Enter amount"
-            error={!!formErrors.requestedAmount}
-            helperText={formErrors.requestedAmount}
-            required
-            disabled={isSubmitting}
-            inputProps={{ min: 1, step: 0.01 }}
-          />
-          <TextField
-            label="Expected Loan Date"
-            name="expectedLoanDate"
-            type="date"
-            value={form.expectedLoanDate}
-            onChange={handleFormChange}
-            error={!!formErrors.expectedLoanDate}
-            helperText={formErrors.expectedLoanDate}
-            required
-            disabled={isSubmitting}
-            InputLabelProps={{ shrink: true }}
-          />
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add to Queue'}
-            </button>
-          </div>
-        </form>
-      </section>
+      {canCreateQueue && (
+        <section className="loan-queue-form-section">
+          <h2 className="section-title">Add to Queue</h2>
+          <form className="loan-queue-form" onSubmit={handleSubmit}>
+            <TextField
+              label="Full Name"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleFormChange}
+              error={!!formErrors.fullName}
+              helperText={formErrors.fullName}
+              required
+              disabled={isSubmitting}
+            />
+            <MobileNumberField
+              label="Mobile Number"
+              name="mobileNumber"
+              value={form.mobileNumber}
+              onChange={handleFormChange}
+              error={!!formErrors.mobileNumber}
+              helperText={formErrors.mobileNumber}
+              required
+              disabled={isSubmitting}
+            />
+            <TextField
+              label="Membership ID (optional)"
+              name="membershipUserId"
+              value={form.membershipUserId}
+              onChange={handleFormChange}
+              placeholder="ZMID-0000001"
+              disabled={isSubmitting}
+            />
+            <TextField
+              label="Requested Amount"
+              name="requestedAmount"
+              type="number"
+              value={form.requestedAmount}
+              onChange={handleFormChange}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault()
+              }}
+              placeholder="Enter amount"
+              error={!!formErrors.requestedAmount}
+              helperText={formErrors.requestedAmount}
+              required
+              disabled={isSubmitting}
+              inputProps={{ min: 1, step: 0.01 }}
+            />
+            <TextField
+              label="Window From"
+              name="expectedLoanDateFrom"
+              type="date"
+              value={form.expectedLoanDateFrom}
+              onChange={handleFormChange}
+              error={!!formErrors.expectedLoanDateFrom}
+              helperText={formErrors.expectedLoanDateFrom}
+              required
+              disabled={isSubmitting}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Window To"
+              name="expectedLoanDateTo"
+              type="date"
+              value={form.expectedLoanDateTo}
+              onChange={handleFormChange}
+              error={!!formErrors.expectedLoanDateTo}
+              helperText={formErrors.expectedLoanDateTo}
+              required
+              disabled={isSubmitting}
+              inputProps={form.expectedLoanDateFrom ? { min: form.expectedLoanDateFrom } : undefined}
+              InputLabelProps={{ shrink: true }}
+            />
+            <div className="form-actions">
+              <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Adding...' : 'Add to Queue'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="loan-queue-table-section">
         <div className="page-filters">
@@ -502,7 +565,7 @@ const LoanQueue = memo(function LoanQueue() {
             <input
               type="date"
               className="date-input"
-              title="Filter by expected loan date"
+              title="Filter by date overlapping expected loan window"
               value={filters?.date || ''}
               onChange={(e) => {
                 dispatch(setFilters({ date: e.target.value }))
@@ -629,20 +692,31 @@ const LoanQueue = memo(function LoanQueue() {
               disabled={isSubmitting}
               inputProps={{ min: 1, step: 0.01 }}
             />
-            <div className="field-full">
-              <TextField
-                label="Expected Loan Date"
-                name="expectedLoanDate"
-                type="date"
-                value={editForm.expectedLoanDate}
-                onChange={handleEditFormChange}
-                error={!!editFormErrors.expectedLoanDate}
-                helperText={editFormErrors.expectedLoanDate || undefined}
-                required
-                disabled={isSubmitting}
-                InputLabelProps={{ shrink: true }}
-              />
-            </div>
+            <TextField
+              label="Window From"
+              name="expectedLoanDateFrom"
+              type="date"
+              value={editForm.expectedLoanDateFrom}
+              onChange={handleEditFormChange}
+              error={!!editFormErrors.expectedLoanDateFrom}
+              helperText={editFormErrors.expectedLoanDateFrom || undefined}
+              required
+              disabled={isSubmitting}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Window To"
+              name="expectedLoanDateTo"
+              type="date"
+              value={editForm.expectedLoanDateTo}
+              onChange={handleEditFormChange}
+              error={!!editFormErrors.expectedLoanDateTo}
+              helperText={editFormErrors.expectedLoanDateTo || undefined}
+              required
+              disabled={isSubmitting}
+              inputProps={editForm.expectedLoanDateFrom ? { min: editForm.expectedLoanDateFrom } : undefined}
+              InputLabelProps={{ shrink: true }}
+            />
           </div>
         }
         confirmText="Save Changes"

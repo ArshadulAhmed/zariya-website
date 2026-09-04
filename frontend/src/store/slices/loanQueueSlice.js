@@ -38,6 +38,7 @@ const formatDateOnly = (dateStr) => {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      timeZone: 'UTC',
     })
   } catch (e) {
     return ''
@@ -49,38 +50,59 @@ const toDateInputValue = (dateStr) => {
   try {
     const date = new Date(dateStr)
     if (Number.isNaN(date.getTime())) return ''
-    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+    return date.toISOString().slice(0, 10)
   } catch (e) {
     return ''
   }
 }
 
-const mapRequest = (request) => ({
-  id: String(request.id || request._id || ''),
-  requestNumber: String(request.requestNumber || ''),
-  fullName: String(request.fullName || ''),
-  mobileNumber: String(request.mobileNumber || ''),
-  membershipUserId: String(request.membershipUserId || ''),
-  requestedAmount: request.requestedAmount != null && request.requestedAmount !== ''
-    ? Number(request.requestedAmount)
-    : null,
-  expectedLoanDate: formatDateOnly(request.expectedLoanDate),
-  expectedLoanDateInput: toDateInputValue(request.expectedLoanDate),
-  status: String(request.status || 'pending'),
-  rejectionReason: String(request.rejectionReason || ''),
-  entryDate: formatDateOnly(request.createdAt),
-  entryBy: request.createdBy
-    ? String(request.createdBy.fullName || request.createdBy.username || '')
-    : '',
-  updatedBy: request.updatedBy
-    ? String(request.updatedBy.fullName || request.updatedBy.username || '')
-    : '',
-  reviewedAt: formatDate(request.reviewedAt),
-})
+const formatWindowLabel = (from, to) => {
+  const fromLabel = formatDateOnly(from)
+  const toLabel = formatDateOnly(to || from)
+  if (!fromLabel) return '—'
+  // Always show From – To (including single-day migrated windows) so the range is visible.
+  if (!toLabel) return fromLabel
+  return `${fromLabel} – ${toLabel}`
+}
 
-const mapDateGroup = (group) => ({
-  dateKey: String(group.dateKey || ''),
-  expectedLoanDateLabel: formatDateOnly(group.expectedLoanDate || group.dateKey),
+const mapRequest = (request) => {
+  const from = request.expectedLoanDateFrom || request.expectedLoanDate
+  const to = request.expectedLoanDateTo || from
+  return {
+    id: String(request.id || request._id || ''),
+    requestNumber: String(request.requestNumber || ''),
+    fullName: String(request.fullName || ''),
+    mobileNumber: String(request.mobileNumber || ''),
+    membershipUserId: String(request.membershipUserId || ''),
+    requestedAmount: request.requestedAmount != null && request.requestedAmount !== ''
+      ? Number(request.requestedAmount)
+      : null,
+    expectedLoanDateFrom: formatDateOnly(from),
+    expectedLoanDateTo: formatDateOnly(to),
+    expectedLoanDateFromInput: toDateInputValue(from),
+    expectedLoanDateToInput: toDateInputValue(to),
+    expectedLoanWindowLabel: formatWindowLabel(from, to),
+    status: String(request.status || 'pending'),
+    rejectionReason: String(request.rejectionReason || ''),
+    entryDate: formatDateOnly(request.createdAt),
+    entryBy: request.createdBy
+      ? String(request.createdBy.fullName || request.createdBy.username || '')
+      : '',
+    updatedBy: request.updatedBy
+      ? String(request.updatedBy.fullName || request.updatedBy.username || '')
+      : '',
+    reviewedAt: formatDate(request.reviewedAt),
+  }
+}
+
+const mapWindowGroup = (group) => ({
+  windowKey: String(group.windowKey || group._id || ''),
+  fromKey: String(group.fromKey || ''),
+  toKey: String(group.toKey || ''),
+  expectedLoanWindowLabel: formatWindowLabel(
+    group.expectedLoanDateFrom || group.fromKey,
+    group.expectedLoanDateTo || group.toKey
+  ),
   totalCount: Number(group.totalCount) || 0,
   pendingCount: Number(group.pendingCount) || 0,
   applications: (group.applications || []).map(mapRequest),
@@ -106,7 +128,7 @@ export const fetchLoanQueueRequests = createAsyncThunk(
       const response = await loanQueueAPI.getRequests(params)
       if (response.success) {
         return {
-          dateGroups: (response.data.groups || []).map(mapDateGroup),
+          dateGroups: (response.data.groups || []).map(mapWindowGroup),
           pagination: response.data.pagination || initialState.pagination,
           page: params.page || 1,
         }
