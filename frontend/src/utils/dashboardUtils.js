@@ -35,6 +35,21 @@ export const formatIndianCurrency = (num) => {
 }
 
 /**
+ * Format rupee amount with full Indian grouping (no L/Cr rounding).
+ * @param {number|string} num
+ * @returns {string} - e.g. "₹17,70,000.00"
+ */
+export const formatExactIndianCurrency = (num) => {
+  if (num == null || num === '') return '₹0.00'
+  const numValue = typeof num === 'string' ? parseFloat(num) : num
+  if (Number.isNaN(numValue)) return '₹0.00'
+  return `₹${numValue.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+/**
  * Format number with commas
  * @param {number} num - Number to format
  * @returns {string} - Formatted string with commas

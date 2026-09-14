@@ -33,6 +33,7 @@ const formatDateTime = (value) => {
 /**
  * @param {{ showSummary?: boolean, hideMetrics?: boolean }} props
  * hideMetrics — used on Close Loan page where snapshot already shows fine figures
+ * Shown for any disbursed loan (active, closed, defaulted) — not limited to close flow.
  */
 const FineRelaxationCard = memo(({ showSummary = false, hideMetrics = false }) => {
   const { id } = useParams()
@@ -57,10 +58,15 @@ const FineRelaxationCard = memo(({ showSummary = false, hideMetrics = false }) =
     [loan?.fineRelaxationHistory]
   )
 
+  // Disbursed loans only (active / closed / defaulted). No status gate — closed loans with unpaid fine need this too.
   if (!loan || !isLoanDisbursed(loan)) {
     return null
   }
   if (!canRelaxFine && !showSummary) {
+    return null
+  }
+  // On Loan Details (showSummary): hide when there is nothing useful to show and user cannot act
+  if (showSummary && !canRelaxFine && unpaidFine <= 0 && history.length === 0) {
     return null
   }
 
@@ -109,6 +115,8 @@ const FineRelaxationCard = memo(({ showSummary = false, hideMetrics = false }) =
     }
   }
 
+  const isClosed = loan.status === 'closed' || loan.status === 'defaulted'
+
   return (
     <>
       <div className={`fine-relaxation-card details-card${hideMetrics ? ' is-compact' : ''}`}>
@@ -116,7 +124,9 @@ const FineRelaxationCard = memo(({ showSummary = false, hideMetrics = false }) =
           <div className="fine-relaxation-copy">
             <h3>Fine relaxation</h3>
             <p>
-              Reduce unpaid fine without recording cash. This does not appear in daily collection.
+              {isClosed
+                ? 'Reduce unpaid fine on this closed loan without recording cash. This does not appear in daily collection.'
+                : 'Reduce unpaid fine without recording cash. This does not appear in daily collection.'}
             </p>
           </div>
           {canRelaxFine && (
