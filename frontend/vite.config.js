@@ -107,8 +107,9 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'Cache-Control': 'public, max-age=31536000'
-    }
+      // Dev must not long-cache modules — stale bundles caused old Close Loan modal to reappear.
+      'Cache-Control': 'no-store',
+    },
   },
   css: {
     preprocessorOptions: {

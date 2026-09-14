@@ -34,6 +34,7 @@ const TextField = ({
   maxLength,
   inputProps,
   InputProps,
+  InputLabelProps,
   onKeyDown,
   onWheel,
   ...props
@@ -66,6 +67,12 @@ const TextField = ({
 
     if (!/^\d$/.test(event.key)) event.preventDefault()
   }
+
+  const shouldShrinkLabel = Boolean(
+    InputLabelProps?.shrink ||
+    placeholder ||
+    (multiline && (value === 0 || value === '0' || Boolean(value)))
+  )
 
   return (
     <MUITextField
@@ -108,6 +115,10 @@ const TextField = ({
             }
           : InputProps
       }
+      InputLabelProps={{
+        ...InputLabelProps,
+        ...(shouldShrinkLabel || InputLabelProps?.shrink ? { shrink: true } : {}),
+      }}
       fullWidth
       variant="outlined"
       className="custom-text-field"

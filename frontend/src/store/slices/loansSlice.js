@@ -124,6 +124,21 @@ export const disburseLoan = createAsyncThunk(
   }
 )
 
+export const applyFineRelaxation = createAsyncThunk(
+  'loans/applyFineRelaxation',
+  async ({ id, amount, reason }, { rejectWithValue }) => {
+    try {
+      const response = await loansAPI.applyFineRelaxation(id, { amount, reason })
+      if (response.success) {
+        return response.data.loan
+      }
+      return rejectWithValue(response.message || 'Failed to apply fine relaxation')
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to apply fine relaxation')
+    }
+  }
+)
+
 
 const loansSlice = createSlice({
   name: 'loans',
@@ -437,6 +452,28 @@ const loansSlice = createSlice({
         state.snackbar = {
           open: true,
           message: action.payload || 'Failed to disburse loan',
+          severity: 'error',
+        }
+      })
+      .addCase(applyFineRelaxation.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(applyFineRelaxation.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.selectedLoan = action.payload
+        state.snackbar = {
+          open: true,
+          message: 'Fine relaxation applied successfully',
+          severity: 'success',
+        }
+      })
+      .addCase(applyFineRelaxation.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || 'Failed to apply fine relaxation'
+        state.snackbar = {
+          open: true,
+          message: action.payload || 'Failed to apply fine relaxation',
           severity: 'error',
         }
       })
