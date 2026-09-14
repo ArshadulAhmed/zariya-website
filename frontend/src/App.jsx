@@ -20,6 +20,7 @@ const EditMembership = lazy(() => import('./pages/dashboard/EditMembership'))
 const Loans = lazy(() => import('./pages/dashboard/Loans'))
 const LoanDetails = lazy(() => import('./pages/dashboard/LoanDetails'))
 const EditLoan = lazy(() => import('./pages/dashboard/EditLoan'))
+const CloseLoan = lazy(() => import('./pages/dashboard/CloseLoan'))
 const LoanApplications = lazy(() => import('./pages/dashboard/LoanApplications'))
 const LoanQueue = lazy(() => import('./pages/dashboard/LoanQueue'))
 const LoanApplicationDetails = lazy(() => import('./pages/dashboard/LoanApplicationDetails'))
@@ -277,6 +278,16 @@ function App() {
             <PermissionRoute permission={P.LOANS_UPDATE}>
               <Suspense fallback={<PageLoader />}>
                 <EditLoan />
+              </Suspense>
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="loans/:id/close"
+          element={
+            <PermissionRoute permission={P.LOANS_CLOSE}>
+              <Suspense fallback={<PageLoader />}>
+                <CloseLoan />
               </Suspense>
             </PermissionRoute>
           }

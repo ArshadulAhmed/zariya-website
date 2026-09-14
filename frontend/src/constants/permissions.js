@@ -21,6 +21,7 @@ export const P = Object.freeze({
   LOANS_UPDATE: 'loans:update',
   LOANS_DISBURSE: 'loans:disburse',
   LOANS_CLOSE: 'loans:close',
+  LOANS_FINE_RELAXATION: 'loans:fine_relaxation',
   LOANS_DOWNLOAD_CONTRACT: 'loans:download_contract',
   LOANS_DOWNLOAD_ACKNOWLEDGEMENT: 'loans:download_acknowledgement',
   LOANS_DOWNLOAD_DEFAULT_NOTICE: 'loans:download_default_notice',

@@ -84,9 +84,23 @@
 
   // Ensure TextField has consistent height and vertical centering
   .MuiOutlinedInput-root {
-    height: 56px; // MUI default height for medium size OutlinedInput
     display: flex;
     align-items: center;
+
+    // Single-line only — fixed height breaks multiline + floating labels
+    &:not(.MuiInputBase-multiline) {
+      height: 56px;
+    }
+
+    &.MuiInputBase-multiline {
+      height: auto;
+      align-items: flex-start;
+      padding: 0;
+
+      textarea {
+        padding: 14px;
+      }
+    }
 
     input:-webkit-autofill,
     input:-webkit-autofill:hover,
@@ -121,6 +135,12 @@
     input::placeholder {
       line-height: 1.4375em;
       opacity: 0.6;
+    }
+
+    &.MuiOutlinedInput-inputMultiline {
+      display: block;
+      padding: 14px;
+      align-items: stretch;
     }
   }
 }

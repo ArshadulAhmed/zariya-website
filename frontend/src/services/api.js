@@ -389,6 +389,19 @@ export const loansAPI = {
     }
   },
 
+  applyFineRelaxation: async (id, payload) => {
+    try {
+      const data = await apiRequest(`/loans/${id}/fine-relaxation`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      return data
+    } catch (error) {
+      console.error('Loans API applyFineRelaxation error:', error)
+      throw error
+    }
+  },
+
   downloadContract: async (id) => {
     try {
       const token = getToken()

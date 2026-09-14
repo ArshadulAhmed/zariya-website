@@ -7,6 +7,7 @@ const initialState = {
   totalLateFeePaid: 0,
   additionalAmountPaid: 0,
   preCloseDiscount: 0,
+  remainingAmount: null,
   missedEmiCount: 0,
   isLoadingRepayments: false,
   isLoadingMore: false,
@@ -53,6 +54,7 @@ const repaymentRecordsSlice = createSlice({
       state.totalLateFeePaid = 0
       state.additionalAmountPaid = 0
       state.preCloseDiscount = 0
+      state.remainingAmount = null
       state.missedEmiCount = 0
       state.loanInfo = null
       state.pagination = initialState.pagination
@@ -88,6 +90,8 @@ const repaymentRecordsSlice = createSlice({
         state.totalLateFeePaid = action.payload.totalLateFeePaid ?? 0
         state.additionalAmountPaid = action.payload.additionalAmountPaid || 0
         state.preCloseDiscount = action.payload.preCloseDiscount || 0
+        state.remainingAmount =
+          action.payload.remainingAmount == null ? null : Number(action.payload.remainingAmount)
         state.missedEmiCount = action.payload.missedEmiCount || 0
         state.loanInfo = action.payload.loanInfo || null
       })
@@ -102,7 +106,8 @@ const repaymentRecordsSlice = createSlice({
           state.totalPaid = 0
           state.totalLateFeePaid = 0
           state.additionalAmountPaid = 0
-      state.preCloseDiscount = 0
+          state.preCloseDiscount = 0
+          state.remainingAmount = null
           state.missedEmiCount = 0
           state.loanInfo = null
         }
