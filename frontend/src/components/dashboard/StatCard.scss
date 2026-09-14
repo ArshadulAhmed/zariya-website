@@ -31,12 +31,13 @@
     }
 
     .stat-value {
-      font-size: 1.6rem;
+      font-size: clamp(1.1rem, 2.4vw, 1.6rem);
       font-weight: 700;
       color: #111827;
       margin-bottom: 8px;
       font-family: 'Poppins', sans-serif;
       line-height: 1.2;
+      word-break: break-word;
 
       &.loading-skeleton {
         background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);

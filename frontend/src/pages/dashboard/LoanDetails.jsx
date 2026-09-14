@@ -7,6 +7,8 @@ import Snackbar from '../../components/Snackbar'
 import LoanInfo from '../../components/dashboard/LoanInfo'
 import LoanActions from '../../components/dashboard/LoanActions'
 import DetailsSkeleton from '../../components/dashboard/DetailsSkeleton'
+import FineRelaxationCard from '../../components/dashboard/FineRelaxationCard'
+import { isLoanDisbursed } from '../../utils/loanDisbursement'
 import { useCan } from '../../hooks/useCan'
 import { P } from '../../constants/permissions'
 import './LoanDetails.scss'
@@ -118,6 +120,9 @@ const LoanDetails = () => {
       ) : selectedLoan ? (
         <div className="details-container">
           <LoanInfo />
+          {isLoanDisbursed(selectedLoan) && (
+            <FineRelaxationCard showSummary />
+          )}
         </div>
       ) : null}
 

@@ -2,7 +2,7 @@ import { memo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { fetchDashboardStats, fetchRecentActivity } from '../../store/slices/dashboardSlice'
-import { formatIndianCurrency, formatNumber, getTimeAgo } from '../../utils/dashboardUtils'
+import { formatExactIndianCurrency, formatNumber, getTimeAgo } from '../../utils/dashboardUtils'
 import StatCard from '../../components/dashboard/StatCard'
 import ActivitySkeleton from '../../components/dashboard/ActivitySkeleton'
 import { useCan } from '../../hooks/useCan'
@@ -54,8 +54,8 @@ const DashboardHome = memo(() => {
     {
       title: 'To Recover from Market',
       value: stats.marketRecoverable
-        ? formatIndianCurrency(stats.marketRecoverable.value)
-        : '₹0',
+        ? formatExactIndianCurrency(stats.marketRecoverable.value)
+        : '₹0.00',
       trend: stats.marketRecoverable?.trend || 'neutral',
       trendValue: stats.marketRecoverable?.trendValue || 'From daily snapshot',
       color: 'warning',
@@ -68,7 +68,9 @@ const DashboardHome = memo(() => {
     },
     {
       title: 'Total Disbursed',
-      value: stats.totalDisbursed ? formatIndianCurrency(stats.totalDisbursed.value) : '₹0',
+      value: stats.totalDisbursed
+        ? formatExactIndianCurrency(stats.totalDisbursed.value)
+        : '₹0.00',
       trend: stats.totalDisbursed?.trend || 'neutral',
       trendValue: stats.totalDisbursed?.trendValue || '',
       color: 'info',
