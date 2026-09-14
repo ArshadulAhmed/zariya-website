@@ -6,6 +6,7 @@ const initialState = {
     totalMembers: null,
     totalLoans: null,
     marketRecoverable: null,
+    fineRecoverable: null,
     totalDisbursed: null,
   },
   activities: [],

@@ -62,11 +62,20 @@
     }
   }
 
+  // Single row of 5 on desktop; stack only on smaller screens
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 19px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
     margin-bottom: 26px;
+
+    @media (max-width: 1100px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .dashboard-content-grid {
@@ -259,6 +268,7 @@
 
     .stats-grid {
       grid-template-columns: 1fr;
+      gap: 12px;
     }
 
     .dashboard-content-grid {
