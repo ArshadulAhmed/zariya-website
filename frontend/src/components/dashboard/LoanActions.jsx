@@ -61,12 +61,12 @@ const LoanActions = () => {
         isLoading={isLoading}
         message={(
           <div className="disburse-modal-body">
-            <p>Record the day cash was given to the member. EDI starts the next calendar day. The loan agreement date stays the approval date.</p>
+            <p>Select the disbursement date (today or a future date). EDI starts the next calendar day. The loan agreement date stays the approval date.</p>
             <DatePicker
               label="Disbursement date"
               value={disbursementDate}
               onChange={setDisbursementDate}
-              maxDate={today}
+              minDate={today}
               required
             />
           </div>
